@@ -20,6 +20,7 @@ import {
   Home,
   Image,
   Leaf,
+  LogOut,
   Mail,
   MapPin,
   Menu,
@@ -43,6 +44,16 @@ import {
   X,
 } from 'lucide-react'
 import './AdminApp.css'
+import {
+  checkAdminAccess,
+  createAdminProduct,
+  getAdminSession,
+  isSupabaseConfigured,
+  loadAdminProducts,
+  removeAdminProducts,
+  signInAdmin,
+  signOutAdmin,
+} from './lib/storeApi'
 
 const initialProducts = [
   { id: 1, name: 'Artisan Sourdough Loaf', category: 'Bread & Bakery', sku: 'BRD-1001', price: 6.5, stock: 42, status: 'active', unit: '500g', image: 'https://images.unsplash.com/photo-1549931319-a545dcf3bc73?auto=format&fit=crop&w=160&q=85' },
@@ -255,7 +266,7 @@ function SetupCard({ id, title, copy, button, children, wide, tasks, onToggle })
   )
 }
 
-function ProductsPage({ products, setProducts, onCreate }) {
+function ProductsPage({ products, onCreate, onRemove }) {
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState('all')
   const [selected, setSelected] = useState([])
@@ -263,11 +274,11 @@ function ProductsPage({ products, setProducts, onCreate }) {
     const matchesQuery = `${product.name} ${product.sku} ${product.category}`.toLowerCase().includes(query.toLowerCase())
     return matchesQuery && (filter === 'all' || product.status === filter)
   })
-  const removeProduct = (id) => setProducts((current) => current.filter((product) => product.id !== id))
+  const removeProduct = (id) => onRemove([id])
   const toggleAll = () => setSelected(selected.length === visible.length ? [] : visible.map((product) => product.id))
   const toggle = (id) => setSelected((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])
-  const removeSelected = () => {
-    setProducts((current) => current.filter((product) => !selected.includes(product.id)))
+  const removeSelected = async () => {
+    await onRemove(selected)
     setSelected([])
   }
 
@@ -524,6 +535,35 @@ function Modal({ title, children, onClose }) {
   )
 }
 
+function AdminLogin({ status, error, onSubmit }) {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const submit = async (event) => {
+    event.preventDefault()
+    setSubmitting(true)
+    await onSubmit(email, password)
+    setSubmitting(false)
+  }
+
+  return (
+    <div className="admin-login-page">
+      <form className="admin-login-card" onSubmit={submit}>
+        <AdminLogo />
+        <p className="admin-eyebrow">Restricted workspace</p>
+        <h1>Đăng nhập quản trị</h1>
+        <p>Đăng nhập bằng tài khoản Supabase Auth đã được thêm vào bảng <b>admin_users</b>.</p>
+        <label><span>Email</span><input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} /></label>
+        <label><span>Mật khẩu</span><input required type="password" value={password} onChange={(event) => setPassword(event.target.value)} /></label>
+        {status === 'unauthorized' && <div className="admin-auth-error">Tài khoản này chưa có quyền quản trị.</div>}
+        {error && <div className="admin-auth-error">{error}</div>}
+        <button className="admin-primary" type="submit" disabled={submitting}>{submitting ? 'Đang đăng nhập...' : 'Đăng nhập'}</button>
+        <a href="/">Quay lại storefront</a>
+      </form>
+    </div>
+  )
+}
+
 function AdminApp() {
   const getPage = () => window.location.pathname.replace(/^\/admin\/?/, '') || 'dashboard'
   const [page, setPage] = useState(getPage)
@@ -535,6 +575,8 @@ function AdminApp() {
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [tasks, setTasks] = useState(['name'])
   const [globalSearch, setGlobalSearch] = useState('')
+  const [authStatus, setAuthStatus] = useState(isSupabaseConfigured ? 'loading' : 'demo')
+  const [adminError, setAdminError] = useState('')
 
   const searchMatches = useMemo(() => {
     if (!globalSearch.trim()) return []
@@ -551,6 +593,42 @@ function AdminApp() {
     return () => window.removeEventListener('popstate', update)
   }, [])
 
+  useEffect(() => {
+    if (!isSupabaseConfigured) return
+
+    let ignore = false
+    const bootstrap = async () => {
+      try {
+        const session = await getAdminSession()
+        if (!session) {
+          if (!ignore) setAuthStatus('signed-out')
+          return
+        }
+
+        const hasAccess = await checkAdminAccess()
+        if (!hasAccess) {
+          if (!ignore) setAuthStatus('unauthorized')
+          return
+        }
+
+        const remoteProducts = await loadAdminProducts()
+        if (!ignore) {
+          setProducts(remoteProducts)
+          setAuthStatus('ready')
+        }
+      } catch (error) {
+        console.error(error)
+        if (!ignore) {
+          setAdminError(error.message)
+          setAuthStatus('signed-out')
+        }
+      }
+    }
+
+    bootstrap()
+    return () => { ignore = true }
+  }, [])
+
   const navigate = (nextPage) => {
     if (nextPage === 'online-store') {
       window.location.assign('/')
@@ -561,9 +639,56 @@ function AdminApp() {
     setMenuOpen(false)
   }
 
-  const addProduct = (product) => {
-    setProducts((current) => [{ ...product, id: Date.now() }, ...current])
-    setProductModal(false)
+  const login = async (email, password) => {
+    setAdminError('')
+    try {
+      await signInAdmin(email, password)
+      const hasAccess = await checkAdminAccess()
+      if (!hasAccess) {
+        setAuthStatus('unauthorized')
+        return
+      }
+      const remoteProducts = await loadAdminProducts()
+      setProducts(remoteProducts)
+      setAuthStatus('ready')
+    } catch (error) {
+      console.error(error)
+      setAdminError(error.message)
+    }
+  }
+
+  const logout = async () => {
+    setAdminError('')
+    try {
+      await signOutAdmin()
+      setAuthStatus('signed-out')
+    } catch (error) {
+      console.error(error)
+      setAdminError(error.message)
+    }
+  }
+
+  const addProduct = async (product) => {
+    setAdminError('')
+    try {
+      const createdProduct = await createAdminProduct(product)
+      setProducts((current) => [createdProduct, ...current])
+      setProductModal(false)
+    } catch (error) {
+      console.error(error)
+      setAdminError(error.message)
+    }
+  }
+
+  const removeProducts = async (ids) => {
+    setAdminError('')
+    try {
+      await removeAdminProducts(ids)
+      setProducts((current) => current.filter((product) => !ids.includes(product.id)))
+    } catch (error) {
+      console.error(error)
+      setAdminError(error.message)
+    }
   }
 
   const addDiscount = (discount) => {
@@ -573,7 +698,7 @@ function AdminApp() {
 
   const renderPage = () => {
     if (page === 'dashboard') return <Dashboard tasks={tasks} setTasks={setTasks} />
-    if (page === 'products') return <ProductsPage products={products} setProducts={setProducts} onCreate={() => setProductModal(true)} />
+    if (page === 'products') return <ProductsPage products={products} onCreate={() => setProductModal(true)} onRemove={removeProducts} />
     if (page === 'orders') return <OrdersPage />
     if (page === 'customers') return <CustomersPage />
     if (page === 'marketing') return <MarketingPage />
@@ -583,6 +708,11 @@ function AdminApp() {
     if (page === 'locations') return <LocationsPage />
     if (page === 'settings') return <SettingsPage />
     return <Dashboard tasks={tasks} setTasks={setTasks} />
+  }
+
+  if (authStatus === 'loading') return <div className="admin-auth-loading">Đang kết nối Supabase...</div>
+  if (authStatus === 'signed-out' || authStatus === 'unauthorized') {
+    return <AdminLogin status={authStatus} error={adminError} onSubmit={login} />
   }
 
   return (
@@ -599,6 +729,7 @@ function AdminApp() {
         <div className="topbar-actions">
           <button type="button"><CircleHelp size={18} /></button>
           <button type="button" onClick={() => setNotificationsOpen(!notificationsOpen)}><Bell size={18} /><i></i></button>
+          {isSupabaseConfigured && <button type="button" onClick={logout} title="Đăng xuất"><LogOut size={18} /></button>}
           <button className="store-switcher" type="button"><span>LY</span><b>LyLy Market</b><ChevronDown size={14} /></button>
         </div>
         {notificationsOpen && <div className="notification-popover"><div><b>Thông báo</b><button type="button" onClick={() => setNotificationsOpen(false)}><X size={14} /></button></div><p><Truck size={16} /> Có 3 đơn hàng mới cần xử lý.</p><p><Package size={16} /> Atlantic Salmon Fillet sắp hết hàng.</p></div>}
@@ -622,6 +753,8 @@ function AdminApp() {
 
       {menuOpen && <button className="admin-menu-overlay" type="button" onClick={() => setMenuOpen(false)} aria-label="Close menu" />}
       <main className={`admin-main ${page === 'dashboard' ? 'is-dashboard' : ''}`}>
+        {authStatus === 'demo' && <div className="admin-mode-banner">Chế độ demo local: thêm <code>VITE_SUPABASE_URL</code> và <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> để dùng database.</div>}
+        {adminError && <div className="admin-error-banner">{adminError}</div>}
         {page !== 'dashboard' && <div className="admin-breadcrumb"><button type="button" onClick={() => navigate('dashboard')}>LyLy</button><ChevronRight size={13} /><span>{pageMeta[page]?.[0] || 'Trang chủ'}</span></div>}
         {renderPage()}
       </main>

@@ -1,0 +1,7 @@
+project_id = "lyly-storefront"
+
+[functions.create-order]
+verify_jwt = false
+
+[functions.newsletter-subscribe]
+verify_jwt = false

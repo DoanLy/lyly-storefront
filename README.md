@@ -35,3 +35,12 @@ npm run preview
 npm run lint
 npm run build
 ```
+
+## Supabase and Vercel
+
+The storefront can run with local demo data, but production uses Supabase for catalog data,
+admin authentication, orders, newsletter subscriptions, and product image storage.
+
+Follow [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md) to create the free Supabase project,
+apply migrations, deploy Edge Functions, configure an admin account, and deploy the Vite SPA
+to Vercel.

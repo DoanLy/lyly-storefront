@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   ArrowRight,
   ChevronDown,
@@ -23,6 +23,7 @@ import {
   X,
 } from 'lucide-react'
 import './App.css'
+import { createStorefrontOrder, loadPublicProducts, subscribeToNewsletter } from './lib/storeApi'
 
 const categories = [
   { name: 'Bread & Bakery', image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=700&q=85' },
@@ -35,7 +36,7 @@ const categories = [
   { name: 'Sauces & Marinades', image: 'https://images.unsplash.com/photo-1472476443507-c7a5948772fc?auto=format&fit=crop&w=700&q=85' },
 ]
 
-const products = [
+const fallbackProducts = [
   {
     id: 1,
     name: 'Artisan Sourdough Loaf',
@@ -186,13 +187,76 @@ function ProductCard({ product, onAdd }) {
   )
 }
 
+function CheckoutModal({ items, onClose, onComplete }) {
+  const [form, setForm] = useState({ name: '', email: '', phone: '' })
+  const [status, setStatus] = useState('idle')
+  const [message, setMessage] = useState('')
+  const [order, setOrder] = useState(null)
+  const change = (event) => setForm({ ...form, [event.target.name]: event.target.value })
+
+  const submit = async (event) => {
+    event.preventDefault()
+    setStatus('submitting')
+    setMessage('')
+
+    try {
+      const createdOrder = await createStorefrontOrder(form, items)
+      setOrder(createdOrder)
+      setStatus('success')
+      onComplete()
+    } catch (error) {
+      console.error(error)
+      setMessage(error.message || 'Unable to place your order. Please try again.')
+      setStatus('error')
+    }
+  }
+
+  return (
+    <div className="checkout-overlay" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+      <section className="checkout-modal">
+        <div className="checkout-header">
+          <div><p>Secure checkout</p><h2>{order ? 'Order received' : 'Complete your order'}</h2></div>
+          <button type="button" onClick={onClose} aria-label="Close checkout"><X size={20} /></button>
+        </div>
+        {order ? (
+          <div className="checkout-success">
+            <ShieldCheck size={42} />
+            <p>Your order <b>{order.order_number}</b> has been created.</p>
+            <span>We will contact you to confirm delivery and payment.</span>
+            <button type="button" onClick={onClose}>Continue shopping</button>
+          </div>
+        ) : (
+          <form className="checkout-form" onSubmit={submit}>
+            <label><span>Full name</span><input required name="name" value={form.name} onChange={change} /></label>
+            <label><span>Email</span><input required type="email" name="email" value={form.email} onChange={change} /></label>
+            <label><span>Phone</span><input name="phone" value={form.phone} onChange={change} /></label>
+            {message && <p className="checkout-error">{message}</p>}
+            <button type="submit" disabled={status === 'submitting'}>
+              {status === 'submitting' ? 'Placing order...' : 'Place order'} <ArrowRight size={17} />
+            </button>
+          </form>
+        )}
+      </section>
+    </div>
+  )
+}
+
 function App() {
+  const [products, setProducts] = useState(fallbackProducts)
   const [cart, setCart] = useState([])
   const [cartOpen, setCartOpen] = useState(false)
+  const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
-  const [newsletterSent, setNewsletterSent] = useState(false)
+  const [newsletterEmail, setNewsletterEmail] = useState('')
+  const [newsletterStatus, setNewsletterStatus] = useState('idle')
+
+  useEffect(() => {
+    loadPublicProducts()
+      .then((data) => data && setProducts(data))
+      .catch((error) => console.error('Unable to load products from Supabase.', error))
+  }, [])
 
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0)
   const subtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0)
@@ -202,7 +266,7 @@ function App() {
     return products.filter((product) =>
       `${product.name} ${product.category}`.toLowerCase().includes(query),
     )
-  }, [search])
+  }, [products, search])
 
   const addToCart = (product) => {
     setCart((current) => {
@@ -225,6 +289,20 @@ function App() {
         )
         .filter((item) => item.quantity > 0),
     )
+  }
+
+  const submitNewsletter = async (event) => {
+    event.preventDefault()
+    setNewsletterStatus('submitting')
+
+    try {
+      await subscribeToNewsletter(newsletterEmail)
+      setNewsletterStatus('success')
+      setNewsletterEmail('')
+    } catch (error) {
+      console.error(error)
+      setNewsletterStatus('error')
+    }
   }
 
   return (
@@ -423,12 +501,13 @@ function App() {
             <h2>Fresh ideas, straight to your inbox.</h2>
             <p>Recipes, market notes and a little something for your next order.</p>
           </div>
-          <form onSubmit={(event) => { event.preventDefault(); setNewsletterSent(true) }}>
+          <form onSubmit={submitNewsletter}>
             <label>
               <span className="sr-only">Email address</span>
-              <input type="email" required placeholder="Your email address" />
+              <input type="email" required value={newsletterEmail} onChange={(event) => setNewsletterEmail(event.target.value)} placeholder="Your email address" />
             </label>
-            <button type="submit">{newsletterSent ? 'Thank you!' : 'Sign me up'} <ArrowRight size={17} /></button>
+            <button type="submit" disabled={newsletterStatus === 'submitting'}>{newsletterStatus === 'success' ? 'Thank you!' : newsletterStatus === 'submitting' ? 'Sending...' : 'Sign me up'} <ArrowRight size={17} /></button>
+            {newsletterStatus === 'error' && <p className="newsletter-error">Please try again.</p>}
           </form>
         </section>
       </main>
@@ -490,10 +569,11 @@ function App() {
         <div className="cart-summary">
           <div><span>Subtotal</span><b>{formatPrice(subtotal)}</b></div>
           <p>Taxes and delivery calculated at checkout.</p>
-          <button type="button" disabled={!cart.length}>Checkout <ArrowRight size={17} /></button>
+          <button type="button" disabled={!cart.length} onClick={() => { setCartOpen(false); setCheckoutOpen(true) }}>Checkout <ArrowRight size={17} /></button>
         </div>
       </aside>
 
+      {checkoutOpen && <CheckoutModal items={cart} onClose={() => setCheckoutOpen(false)} onComplete={() => setCart([])} />}
       {searchOpen && <button className="search-closer" aria-label="Close search" type="button" onClick={() => setSearchOpen(false)} />}
     </div>
   )

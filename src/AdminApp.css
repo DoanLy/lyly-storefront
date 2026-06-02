@@ -17,6 +17,17 @@
 .admin-app * { box-sizing: border-box; }
 .admin-app button, .admin-app input, .admin-app select { font: inherit; }
 .admin-app button { cursor: pointer; }
+.admin-auth-loading { min-height: 100vh; display: grid; place-items: center; color: #587067; background: var(--admin-bg); font-family: 'DM Sans', Arial, sans-serif; font-size: 13px; }
+.admin-login-page { min-height: 100vh; display: grid; place-items: center; padding: 20px; background: #edf2ec; font-family: 'DM Sans', Arial, sans-serif; }
+.admin-login-card { width: min(100%, 410px); display: grid; gap: 14px; padding: 28px; border: 1px solid var(--admin-line); border-radius: 10px; background: white; box-shadow: 0 20px 45px #17342b18; }
+.admin-login-card .admin-logo { margin-bottom: 10px; color: var(--admin-green); }
+.admin-login-card .admin-logo small { color: #789186; }
+.admin-login-card h1 { margin: 0; color: var(--admin-ink); font-family: 'Lora', Georgia, serif; font-size: 30px; font-weight: 400; letter-spacing: -.07em; }
+.admin-login-card p { margin: 0; color: var(--admin-muted); font-size: 12px; line-height: 1.55; }
+.admin-login-card label { display: grid; gap: 6px; color: #587067; font-size: 11px; font-weight: 700; }
+.admin-login-card input { height: 42px; padding: 0 11px; border: 1px solid var(--admin-line); border-radius: 5px; color: var(--admin-ink); background: white; }
+.admin-login-card a { color: #527264; font-size: 12px; font-weight: 700; text-align: center; }
+.admin-auth-error, .admin-error-banner { padding: 10px 12px; border: 1px solid #eac8c0; border-radius: 5px; color: #9c4034; background: #fff7f5; font-size: 12px; }
 .admin-topbar { height: 64px; position: fixed; z-index: 40; top: 0; right: 0; left: 0; display: grid; grid-template-columns: 250px minmax(330px, 720px) 1fr; align-items: center; gap: 20px; padding: 0 18px; color: white; background: #17342b; box-shadow: 0 2px 8px #10261d20; }
 .admin-logo { display: flex; align-items: center; gap: 4px; width: max-content; color: white; text-decoration: none; }
 .admin-logo span { font-family: 'Lora', Georgia, serif; font-size: 26px; font-style: italic; letter-spacing: -4px; }
@@ -56,6 +67,8 @@
 
 .admin-main { min-height: 100vh; margin-left: 250px; padding: 93px 38px 50px; }
 .admin-main.is-dashboard { padding-top: 90px; }
+.admin-mode-banner, .admin-error-banner { max-width: 1280px; margin: 0 auto 14px; padding: 10px 12px; border-radius: 6px; font-size: 11px; }
+.admin-mode-banner { border: 1px solid #d2dfc5; color: #587047; background: #f8fbea; }
 .admin-breadcrumb { max-width: 1280px; display: flex; align-items: center; gap: 4px; margin: 0 auto 14px; color: #78867f; font-size: 11px; }
 .admin-breadcrumb button { border: 0; color: #527264; background: transparent; font-weight: 700; }
 .admin-main > :not(.admin-breadcrumb), .dashboard-page { max-width: 1280px; margin-inline: auto; }
