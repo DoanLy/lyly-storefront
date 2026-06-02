@@ -33,9 +33,24 @@ const fallbackCategories = [
   { name: 'Flour & Baking', image: 'https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?auto=format&fit=crop&w=700&q=85', showOnHome: true },
   { name: 'Fruits & Vegetables', image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=700&q=85', showOnHome: true },
   { name: 'Beverages', image: 'https://images.unsplash.com/photo-1544145945-f90425340c7e?auto=format&fit=crop&w=700&q=85', showOnHome: true },
-  { name: 'Dairy & Eggs', image: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?auto=format&fit=crop&w=700&q=85', showOnHome: true },
+  { name: 'Eggs & Butter', image: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?auto=format&fit=crop&w=700&q=85', showOnHome: true },
   { name: 'Sauces & Marinades', image: 'https://images.unsplash.com/photo-1472476443507-c7a5948772fc?auto=format&fit=crop&w=700&q=85', showOnHome: true },
+  { name: 'Coffee', image: 'https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=700&q=85', showOnHome: true },
+  { name: 'Pasta & Noodles', image: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=700&q=85', showOnHome: true },
 ]
+
+const categoryImageFallbacks = [
+  'https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&fit=crop&w=900&q=88',
+  'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=88',
+  'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=900&q=88',
+  'https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=900&q=88',
+  'https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?auto=format&fit=crop&w=900&q=88',
+  'https://images.unsplash.com/photo-1506976785307-8732e854ad03?auto=format&fit=crop&w=900&q=88',
+  'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?auto=format&fit=crop&w=900&q=88',
+  'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?auto=format&fit=crop&w=900&q=88',
+]
+
+const categoryShuffleSeed = Math.floor(Math.random() * 0x7fffffff)
 
 const fallbackProducts = [
   {
@@ -180,6 +195,47 @@ function formatPrice(value) {
 
 function catalogHref(category = '') {
   return category ? `/products?category=${encodeURIComponent(category)}` : '/products'
+}
+
+function getChildCategories(categories) {
+  const childCategories = categories.filter((category) => category.parentId)
+  return childCategories.length ? childCategories : categories
+}
+
+function getCategoryImage(category, index = 0) {
+  return category.image || categoryImageFallbacks[index % categoryImageFallbacks.length]
+}
+
+function getCategoryShuffleRank(category) {
+  return [...category.name].reduce(
+    (hash, character) => Math.imul(hash ^ character.charCodeAt(0), 16777619),
+    categoryShuffleSeed,
+  ) >>> 0
+}
+
+function getHomepageCategories(categories) {
+  return [...getChildCategories(categories)]
+    .sort((a, b) => getCategoryShuffleRank(a) - getCategoryShuffleRank(b) || a.name.localeCompare(b.name))
+    .slice(0, 8)
+}
+
+function buildCollectionGroups(categories) {
+  const childCategories = getChildCategories(categories)
+  if (!categories.some((category) => category.parentId)) {
+    return [{ id: 'all-categories', name: 'All categories', children: childCategories }]
+  }
+
+  const managedGroups = categories
+    .filter((category) => !category.parentId)
+    .map((category) => ({
+      ...category,
+      children: childCategories.filter((child) => child.parentId === category.id),
+    }))
+    .filter((category) => category.children.length)
+
+  return managedGroups.length
+    ? managedGroups
+    : [{ id: 'all-categories', name: 'All categories', children: childCategories }]
 }
 
 function buildMegaMenuGroups(categories) {
@@ -420,7 +476,7 @@ function ProductsPage({ categories, products, onAdd }) {
   return (
     <main className="catalog-page">
       <section className="catalog-head container">
-        <div className="breadcrumbs"><a href="/">Home</a><span>/</span><a href="/products">Collections</a><span>/</span><b>{pageTitle}</b></div>
+        <div className="breadcrumbs"><a href="/">Home</a><span>/</span><a href="/collections">Collections</a><span>/</span><b>{pageTitle}</b></div>
         <h1>{pageTitle}</h1>
         <p>Explore groceries selected for freshness, flavor and everyday ease.</p>
       </section>
@@ -490,6 +546,63 @@ function ProductsPage({ categories, products, onAdd }) {
   )
 }
 
+function CollectionsPage({ categories }) {
+  const groups = useMemo(() => buildCollectionGroups(categories), [categories])
+  const collectionCount = groups.reduce((total, group) => total + group.children.length, 0)
+
+  useEffect(() => {
+    document.title = 'Collections | LyLy Fresh Market'
+  }, [])
+
+  return (
+    <main className="collections-page">
+      <section className="collections-head container">
+        <div className="breadcrumbs"><a href="/">Home</a><span>/</span><b>Collections</b></div>
+        <div className="collections-intro">
+          <div>
+            <p className="eyebrow">Explore the market</p>
+            <h1>Collections</h1>
+            <p>Discover fresh groceries organized for an easier everyday shop.</p>
+          </div>
+          <span>{collectionCount} curated collections</span>
+        </div>
+      </section>
+
+      <div className="collections-layout container">
+        {groups.map((group) => (
+          <section className="collection-group" key={group.id || group.name}>
+            <div className="collection-group-heading">
+              <h2>{group.name}</h2>
+              <span>{group.children.length} collections</span>
+            </div>
+            <div className="collections-grid">
+              {group.children.map((category, index) => (
+                <a className="collection-card" href={catalogHref(category.name)} key={category.id || category.name}>
+                  <div className="collection-card-image">
+                    <img src={getCategoryImage(category, index)} alt={category.name} />
+                    <span>Explore collection</span>
+                  </div>
+                  <div className="collection-card-body">
+                    <h3>{category.name}</h3>
+                    <ArrowRight size={18} />
+                  </div>
+                </a>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+
+      <section className="catalog-benefits">
+        <div><ShoppingBag size={28} /><span><b>Local pickup</b><small>Collect orders when it suits you</small></span></div>
+        <div><Package size={28} /><span><b>Local delivery</b><small>Packed with care at every step</small></span></div>
+        <div><Leaf size={28} /><span><b>Conscious choices</b><small>Sourced from growers we trust</small></span></div>
+        <div><ShieldCheck size={28} /><span><b>Quality checked</b><small>Fresh food for your table</small></span></div>
+      </section>
+    </main>
+  )
+}
+
 function CheckoutModal({ items, onClose, onComplete }) {
   const [form, setForm] = useState({ name: '', email: '', phone: '' })
   const [status, setStatus] = useState('idle')
@@ -546,6 +659,7 @@ function CheckoutModal({ items, onClose, onComplete }) {
 
 function App() {
   const isProductsPage = window.location.pathname.startsWith('/products')
+  const isCollectionsPage = window.location.pathname.startsWith('/collections')
   const [products, setProducts] = useState(fallbackProducts)
   const [categories, setCategories] = useState(fallbackCategories)
   const [cart, setCart] = useState([])
@@ -580,6 +694,7 @@ function App() {
     )
   }, [products, search])
   const megaMenuGroups = useMemo(() => buildMegaMenuGroups(categories), [categories])
+  const homepageCategories = useMemo(() => getHomepageCategories(categories), [categories])
   const menuItems = useMemo(() => {
     const managedItems = categories
       .filter((category) => category.includeInMenu && !category.parentId)
@@ -745,7 +860,7 @@ function App() {
         </div>
       </header>
 
-      {isProductsPage ? <ProductsPage categories={categories} products={products} onAdd={addToCart} /> : (
+      {isProductsPage ? <ProductsPage categories={categories} products={products} onAdd={addToCart} /> : isCollectionsPage ? <CollectionsPage categories={categories} /> : (
       <main>
         <section className="hero-section">
           <img className="hero-image" src="/images/lyly-hero.png" alt="Fresh grocery basket filled with fruit and vegetables" />
@@ -771,12 +886,12 @@ function App() {
               <p className="eyebrow">Find your favorites</p>
               <h2>Shop by Category</h2>
             </div>
-            <a href="/products">View all categories <ArrowRight size={17} /></a>
+            <a href="/collections">View all categories <ArrowRight size={17} /></a>
           </div>
           <div className="category-grid">
-            {[...categories].filter((category) => category.showOnHome).sort((a, b) => (a.homeDisplayOrder ?? a.displayOrder ?? 0) - (b.homeDisplayOrder ?? b.displayOrder ?? 0)).map((category) => (
+            {homepageCategories.map((category, index) => (
               <a className="category-card" href={catalogHref(category.name)} key={category.name}>
-                <img src={category.image} alt="" />
+                <img src={getCategoryImage(category, index)} alt="" />
                 <span>{category.name}</span>
                 <ArrowRight size={15} />
               </a>
@@ -880,7 +995,7 @@ function App() {
             <p>Everyday groceries, chosen with care and delivered fresh to your door.</p>
             <div><a href="#footer"><b className="social-mark">ig</b></a><a href="#footer"><b className="social-mark">f</b></a><a href="#footer"><Mail size={18} /></a></div>
           </div>
-          <div><h4>Shop</h4><a href="/products">Categories</a><a href="/products">Best sellers</a><a href="/products">New arrivals</a><a href="/products">Special offers</a></div>
+          <div><h4>Shop</h4><a href="/collections">Categories</a><a href="/products">Best sellers</a><a href="/products">New arrivals</a><a href="/products">Special offers</a></div>
           <div><h4>About</h4><a href="/#promise">Our story</a><a href="/#articles">Journal</a><a href="/#footer">Careers</a><a href="/#footer">Contact</a></div>
           <div><h4>Need help?</h4><a href="#footer">Delivery & pickup</a><a href="#footer">FAQs</a><a href="#footer">Returns</a><a href="#footer">Track an order</a></div>
           <div className="store-card">
