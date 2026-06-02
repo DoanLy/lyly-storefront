@@ -744,7 +744,6 @@ function App() {
             <a href="/#promise">About us <ChevronDown size={15} /></a>
             <a href="/#recipes">Recipes</a>
             <a href="/#articles">Blog</a>
-            <a href="/#promise">Theme Features</a>
           </nav>
           <div className="service-links">
             <a href="/#footer"><Store size={28} /><span><small>Picking up?</small>Select store <ChevronDown size={14} /></span></a>
