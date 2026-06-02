@@ -46,13 +46,17 @@ import {
 import './AdminApp.css'
 import {
   checkAdminAccess,
+  createAdminCategory,
   createAdminProduct,
   getAdminSession,
   isSupabaseConfigured,
+  loadAdminCategories,
   loadAdminProducts,
+  removeAdminCategories,
   removeAdminProducts,
   signInAdmin,
   signOutAdmin,
+  updateAdminCategory,
 } from './lib/storeApi'
 
 const initialProducts = [
@@ -64,6 +68,14 @@ const initialProducts = [
   { id: 6, name: 'Free Range Brown Eggs', category: 'Dairy & Eggs', sku: 'DRY-1011', price: 5.5, stock: 21, status: 'active', unit: '12 eggs', image: 'https://images.unsplash.com/photo-1506976785307-8732e854ad03?auto=format&fit=crop&w=160&q=85' },
   { id: 7, name: 'Fresh Rigatoni Pasta', category: 'Fresh Meals', sku: 'MEA-1015', price: 4.9, stock: 11, status: 'active', unit: '400g', image: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=160&q=85' },
   { id: 8, name: 'Atlantic Salmon Fillet', category: 'Fresh Meat', sku: 'MEA-1021', price: 14.5, stock: 8, status: 'active', unit: '350g', image: 'https://images.unsplash.com/photo-1599084993091-1cb5c0721cc6?auto=format&fit=crop&w=160&q=85' },
+]
+
+const initialCategories = [
+  { id: 1, name: 'Bread & Bakery', slug: 'bread-bakery', active: true, showOnHome: true, includeInMenu: false, displayOrder: 31 },
+  { id: 2, name: 'Fruits & Vegetables', slug: 'fruits-vegetables', active: true, showOnHome: true, includeInMenu: false, displayOrder: 21 },
+  { id: 3, name: 'Dairy & Eggs', slug: 'dairy-eggs', active: true, showOnHome: true, includeInMenu: true, displayOrder: 40 },
+  { id: 4, name: 'Fresh Meals & Pizzas', slug: 'fresh-meals-pizzas', active: true, showOnHome: true, includeInMenu: false, displayOrder: 50 },
+  { id: 5, name: 'Fresh Meat', slug: 'fresh-meat', active: true, showOnHome: true, includeInMenu: false, displayOrder: 60 },
 ]
 
 const orders = [
@@ -108,6 +120,7 @@ const navGroups = [
       { id: 'dashboard', label: 'Trang chủ', icon: Home },
       { id: 'orders', label: 'Đơn hàng', icon: ShoppingCart, count: 3 },
       { id: 'products', label: 'Sản phẩm', icon: Package },
+      { id: 'categories', label: 'Danh mục', icon: Tag },
       { id: 'customers', label: 'Khách hàng', icon: Users },
       { id: 'marketing', label: 'Tiếp thị', icon: Megaphone },
       { id: 'discounts', label: 'Giảm giá', icon: BadgePercent },
@@ -126,6 +139,7 @@ const navGroups = [
 
 const pageMeta = {
   products: ['Sản phẩm', 'Quản lý danh mục sản phẩm, tồn kho và trạng thái bán hàng.'],
+  categories: ['Danh mục', 'Quản lý cấu trúc danh mục, menu và danh mục hiển thị trên storefront.'],
   orders: ['Đơn hàng', 'Theo dõi thanh toán, đóng gói và giao hàng của cửa hàng.'],
   customers: ['Khách hàng', 'Xem lịch sử mua sắm và chăm sóc khách hàng LyLy.'],
   marketing: ['Tiếp thị', 'Tạo chiến dịch để khách hàng quay lại với LyLy.'],
@@ -317,6 +331,48 @@ function ProductsPage({ products, onCreate, onRemove }) {
   )
 }
 
+function CategoriesPage({ categories, products, onCreate, onEdit, onRemove, onToggle }) {
+  const [query, setQuery] = useState('')
+  const visible = categories.filter((category) =>
+    `${category.name} ${category.slug}`.toLowerCase().includes(query.toLowerCase()),
+  )
+  const categoryName = (id) => categories.find((category) => category.id === id)?.name || 'Danh mục gốc'
+  const productCount = (name) => products.filter((product) => product.category === name).length
+
+  return (
+    <>
+      <SectionTitle title="Danh mục" description={pageMeta.categories[1]} action="Thêm danh mục" onAction={onCreate} />
+      <section className="admin-panel data-panel">
+        <div className="table-toolbar">
+          <label><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm kiếm danh mục" /></label>
+          <button type="button"><Filter size={15} /> Bộ lọc</button>
+        </div>
+        <div className="admin-table-wrap">
+          <table className="admin-table category-table">
+            <thead><tr><th>Danh mục</th><th>Danh mục cha</th><th>Trạng thái</th><th>Homepage</th><th>Mega menu</th><th>Sản phẩm</th><th>Menu</th><th>Home</th><th></th></tr></thead>
+            <tbody>
+              {visible.map((category) => (
+                <tr key={category.id}>
+                  <td><div className="category-cell"><b>{category.name}</b><small>/{category.slug}</small></div></td>
+                  <td>{categoryName(category.parentId)}</td>
+                  <td><StatusPill>{category.active ? 'Active' : 'Draft'}</StatusPill></td>
+                  <td>{category.showOnHome ? 'Có' : '-'}</td>
+                  <td>{category.includeInMenu ? 'Có' : '-'}</td>
+                  <td>{productCount(category.name)}</td>
+                  <td>{category.displayOrder}</td>
+                  <td>{category.homeDisplayOrder}</td>
+                  <td><div className="row-actions"><button className="row-icon" type="button" onClick={() => onToggle(category)} title={category.active ? 'Ẩn danh mục' : 'Hiện danh mục'}><Eye size={15} /></button><button className="row-icon" type="button" onClick={() => onEdit(category)} title="Sửa danh mục"><Pencil size={15} /></button><button className="row-icon" type="button" onClick={() => onRemove(category.id)} title="Xóa danh mục"><Trash2 size={15} /></button></div></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {!visible.length && <EmptyHint icon={Tag} title="Không tìm thấy danh mục" copy="Thử thay đổi từ khóa hoặc thêm danh mục mới." />}
+        </div>
+      </section>
+    </>
+  )
+}
+
 function OrdersPage() {
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState('all')
@@ -484,8 +540,68 @@ function MetricCard({ label, value, note }) {
   return <article className="admin-panel metric-card"><p>{label}</p><strong>{value}</strong><span><ArrowUpRight size={14} />{note}</span></article>
 }
 
-function ProductModal({ onClose, onSubmit }) {
-  const [form, setForm] = useState({ name: '', category: 'Fruits & Vegetables', sku: '', price: '', stock: '', unit: '' })
+function slugify(value) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+}
+
+function CategoryModal({ categories, category, onClose, onSubmit }) {
+  const [form, setForm] = useState(category || {
+    name: '',
+    slug: '',
+    parentId: '',
+    description: '',
+    image: '',
+    active: true,
+    showOnHome: false,
+    includeInMenu: false,
+    displayOrder: 100,
+    homeDisplayOrder: 100,
+  })
+  const change = (event) => {
+    const { checked, name, type, value } = event.target
+    setForm((current) => ({
+      ...current,
+      [name]: type === 'checkbox' ? checked : value,
+      ...(name === 'name' && (!current.slug || current.slug === slugify(current.name)) ? { slug: slugify(value) } : {}),
+    }))
+  }
+  const submit = (event) => {
+    event.preventDefault()
+    onSubmit({
+      ...form,
+      parentId: form.parentId ? Number(form.parentId) : null,
+      displayOrder: Number(form.displayOrder),
+    })
+  }
+
+  return (
+    <Modal title={category ? 'Sửa danh mục' : 'Thêm danh mục mới'} onClose={onClose}>
+      <form className="modal-form" onSubmit={submit}>
+        <label><span>Tên danh mục</span><input required name="name" value={form.name} onChange={change} placeholder="Ví dụ: Fresh Produce" /></label>
+        <div><label><span>Slug</span><input required name="slug" value={form.slug} onChange={change} placeholder="fresh-produce" /></label><label><span>Danh mục cha</span><select name="parentId" value={form.parentId || ''} onChange={change}><option value="">Danh mục gốc</option>{categories.filter((item) => item.id !== category?.id).map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label></div>
+        <label><span>Mô tả</span><input name="description" value={form.description || ''} onChange={change} placeholder="Mô tả ngắn cho danh mục" /></label>
+        <label><span>URL ảnh</span><input name="image" value={form.image || ''} onChange={change} placeholder="https://..." /></label>
+        <label><span>Thứ tự hiển thị</span><input required min="0" type="number" name="displayOrder" value={form.displayOrder} onChange={change} /></label>
+        <label><span>Thứ tự homepage</span><input required min="0" type="number" name="homeDisplayOrder" value={form.homeDisplayOrder ?? form.displayOrder} onChange={change} /></label>
+        <div className="modal-check-grid">
+          <label><input type="checkbox" name="active" checked={form.active} onChange={change} /><span>Đang hoạt động</span></label>
+          <label><input type="checkbox" name="showOnHome" checked={form.showOnHome} onChange={change} /><span>Hiện homepage</span></label>
+          <label><input type="checkbox" name="includeInMenu" checked={form.includeInMenu} onChange={change} /><span>Hiện mega menu</span></label>
+        </div>
+        <div className="modal-actions"><button className="admin-secondary" type="button" onClick={onClose}>Hủy</button><button className="admin-primary" type="submit">{category ? 'Lưu thay đổi' : 'Thêm danh mục'}</button></div>
+      </form>
+    </Modal>
+  )
+}
+
+function ProductModal({ categories, onClose, onSubmit }) {
+  const activeCategories = categories.filter((category) => category.active)
+  const [form, setForm] = useState({ name: '', category: activeCategories[0]?.name || '', sku: '', price: '', stock: '', unit: '' })
   const change = (event) => setForm({ ...form, [event.target.name]: event.target.value })
   const submit = (event) => {
     event.preventDefault()
@@ -495,7 +611,7 @@ function ProductModal({ onClose, onSubmit }) {
     <Modal title="Thêm sản phẩm mới" onClose={onClose}>
       <form className="modal-form" onSubmit={submit}>
         <label><span>Tên sản phẩm</span><input required name="name" value={form.name} onChange={change} placeholder="Ví dụ: Organic Baby Spinach" /></label>
-        <div><label><span>Danh mục</span><select name="category" value={form.category} onChange={change}><option>Fruits & Vegetables</option><option>Bread & Bakery</option><option>Dairy & Eggs</option><option>Fresh Meals</option></select></label><label><span>SKU</span><input required name="sku" value={form.sku} onChange={change} placeholder="FRT-1030" /></label></div>
+        <div><label><span>Danh mục</span><select required name="category" value={form.category} onChange={change}>{activeCategories.map((category) => <option key={category.id}>{category.name}</option>)}</select></label><label><span>SKU</span><input required name="sku" value={form.sku} onChange={change} placeholder="FRT-1030" /></label></div>
         <div><label><span>Giá bán</span><input required min="0" step=".01" type="number" name="price" value={form.price} onChange={change} placeholder="0.00" /></label><label><span>Tồn kho</span><input required min="0" type="number" name="stock" value={form.stock} onChange={change} placeholder="0" /></label></div>
         <label><span>Quy cách</span><input required name="unit" value={form.unit} onChange={change} placeholder="Ví dụ: 250g" /></label>
         <div className="upload-box"><Upload size={19} /><span>Ảnh sản phẩm sẽ được thêm sau khi tạo sản phẩm.</span></div>
@@ -568,8 +684,11 @@ function AdminApp() {
   const getPage = () => window.location.pathname.replace(/^\/admin\/?/, '') || 'dashboard'
   const [page, setPage] = useState(getPage)
   const [products, setProducts] = useState(initialProducts)
+  const [categories, setCategories] = useState(initialCategories)
   const [discounts, setDiscounts] = useState(initialDiscounts)
   const [productModal, setProductModal] = useState(false)
+  const [categoryModal, setCategoryModal] = useState(false)
+  const [categoryEditing, setCategoryEditing] = useState(null)
   const [discountModal, setDiscountModal] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
@@ -611,9 +730,10 @@ function AdminApp() {
           return
         }
 
-        const remoteProducts = await loadAdminProducts()
+        const [remoteProducts, remoteCategories] = await Promise.all([loadAdminProducts(), loadAdminCategories()])
         if (!ignore) {
           setProducts(remoteProducts)
+          setCategories(remoteCategories)
           setAuthStatus('ready')
         }
       } catch (error) {
@@ -648,8 +768,9 @@ function AdminApp() {
         setAuthStatus('unauthorized')
         return
       }
-      const remoteProducts = await loadAdminProducts()
+      const [remoteProducts, remoteCategories] = await Promise.all([loadAdminProducts(), loadAdminCategories()])
       setProducts(remoteProducts)
+      setCategories(remoteCategories)
       setAuthStatus('ready')
     } catch (error) {
       console.error(error)
@@ -691,6 +812,50 @@ function AdminApp() {
     }
   }
 
+  const saveCategory = async (category) => {
+    setAdminError('')
+    try {
+      if (category.id) {
+        const previous = categories.find((item) => item.id === category.id)
+        const updatedCategory = await updateAdminCategory(category)
+        setCategories((current) => current.map((item) => item.id === updatedCategory.id ? updatedCategory : item))
+        if (previous?.name !== updatedCategory.name) {
+          setProducts((current) => current.map((product) => product.category === previous.name ? { ...product, category: updatedCategory.name } : product))
+        }
+      } else {
+        const createdCategory = await createAdminCategory(category)
+        setCategories((current) => [...current, createdCategory].sort((a, b) => a.displayOrder - b.displayOrder || a.name.localeCompare(b.name)))
+      }
+      setCategoryEditing(null)
+      setCategoryModal(false)
+    } catch (error) {
+      console.error(error)
+      setAdminError(error.message)
+    }
+  }
+
+  const toggleCategory = async (category) => {
+    setAdminError('')
+    try {
+      const updatedCategory = await updateAdminCategory({ ...category, active: !category.active })
+      setCategories((current) => current.map((item) => item.id === updatedCategory.id ? updatedCategory : item))
+    } catch (error) {
+      console.error(error)
+      setAdminError(error.message)
+    }
+  }
+
+  const removeCategory = async (id) => {
+    setAdminError('')
+    try {
+      await removeAdminCategories([id])
+      setCategories((current) => current.filter((category) => category.id !== id))
+    } catch (error) {
+      console.error(error)
+      setAdminError('Không thể xóa danh mục đang chứa sản phẩm. Hãy chuyển sản phẩm sang danh mục khác trước.')
+    }
+  }
+
   const addDiscount = (discount) => {
     setDiscounts((current) => [discount, ...current])
     setDiscountModal(false)
@@ -699,6 +864,7 @@ function AdminApp() {
   const renderPage = () => {
     if (page === 'dashboard') return <Dashboard tasks={tasks} setTasks={setTasks} />
     if (page === 'products') return <ProductsPage products={products} onCreate={() => setProductModal(true)} onRemove={removeProducts} />
+    if (page === 'categories') return <CategoriesPage categories={categories} products={products} onCreate={() => { setCategoryEditing(null); setCategoryModal(true) }} onEdit={(category) => { setCategoryEditing(category); setCategoryModal(true) }} onRemove={removeCategory} onToggle={toggleCategory} />
     if (page === 'orders') return <OrdersPage />
     if (page === 'customers') return <CustomersPage />
     if (page === 'marketing') return <MarketingPage />
@@ -758,7 +924,8 @@ function AdminApp() {
         {page !== 'dashboard' && <div className="admin-breadcrumb"><button type="button" onClick={() => navigate('dashboard')}>LyLy</button><ChevronRight size={13} /><span>{pageMeta[page]?.[0] || 'Trang chủ'}</span></div>}
         {renderPage()}
       </main>
-      {productModal && <ProductModal onClose={() => setProductModal(false)} onSubmit={addProduct} />}
+      {productModal && <ProductModal categories={categories} onClose={() => setProductModal(false)} onSubmit={addProduct} />}
+      {categoryModal && <CategoryModal categories={categories} category={categoryEditing} onClose={() => { setCategoryEditing(null); setCategoryModal(false) }} onSubmit={saveCategory} />}
       {discountModal && <DiscountModal onClose={() => setDiscountModal(false)} onSubmit={addDiscount} />}
     </div>
   )

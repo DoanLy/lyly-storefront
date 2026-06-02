@@ -153,6 +153,9 @@
 .admin-table tbody tr:hover { background: #fbfdfb; }
 .admin-table input { accent-color: #4b765e; }
 .product-cell, .customer-cell { display: flex; align-items: center; gap: 9px; }
+.category-cell { display: flex; flex-direction: column; gap: 4px; }
+.category-cell b { color: #40554c; font-size: 11px; }
+.category-cell small { color: #8a9791; font-size: 9px; }
 .product-cell img { width: 39px; height: 39px; object-fit: cover; border: 1px solid #e0e7e2; border-radius: 5px; }
 .product-cell span, .customer-cell div { display: flex; flex-direction: column; gap: 4px; }
 .product-cell b, .customer-cell b { color: #40554c; font-size: 11px; }
@@ -160,6 +163,7 @@
 .customer-cell > span { width: 31px; height: 31px; display: grid; place-items: center; border-radius: 50%; color: #385646; background: #e1eedf; font-size: 10px; font-weight: 700; }
 .row-icon { width: 28px; height: 28px; display: grid; place-items: center; border: 0; border-radius: 5px; color: #7d8b84; background: transparent; }
 .row-icon:hover { color: #395c4c; background: #eef4ee; }
+.row-actions { display: flex; gap: 2px; }
 .low-stock { color: #ba6543; font-weight: 700; }
 .admin-status { display: inline-flex; align-items: center; padding: 4px 7px; border-radius: 11px; color: #3e7156; background: #e1f0df; font-size: 9px; font-weight: 700; letter-spacing: .03em; }
 .admin-status.draft, .admin-status.pending, .admin-status.scheduled, .admin-status.packing { color: #8d6a2f; background: #f8edcf; }
@@ -232,6 +236,10 @@
 .modal-form label { display: flex; flex-direction: column; gap: 5px; }
 .modal-form label span { color: #586b62; font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
 .modal-form input, .modal-form select { height: 37px; padding: 0 9px; border: 1px solid #d6e0d9; border-radius: 5px; outline-color: #6c927d; color: #42584f; background: white; font-size: 12px; }
+.modal-form .modal-check-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+.modal-check-grid label { display: flex; flex-direction: row; align-items: center; gap: 6px; color: #586b62; font-size: 10px; font-weight: 700; }
+.modal-check-grid input { width: 15px; height: 15px; accent-color: var(--admin-green); }
+.modal-check-grid span { letter-spacing: 0; text-transform: none; }
 .upload-box { display: flex; align-items: center; gap: 8px; padding: 13px; border: 1px dashed #c2d1c8; border-radius: 6px; color: #7b9086; background: #fafcf9; font-size: 10px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 7px; margin-top: 2px; }
 

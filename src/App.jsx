@@ -26,17 +26,17 @@ import {
   X,
 } from 'lucide-react'
 import './App.css'
-import { createStorefrontOrder, loadPublicProducts, subscribeToNewsletter } from './lib/storeApi'
+import { createStorefrontOrder, loadPublicCategories, loadPublicProducts, subscribeToNewsletter } from './lib/storeApi'
 
-const categories = [
-  { name: 'Bread & Bakery', image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=700&q=85' },
-  { name: 'Flour & Baking', image: 'https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?auto=format&fit=crop&w=700&q=85' },
-  { name: 'Fruits & Vegetables', image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=700&q=85' },
-  { name: 'Fresh Meals & Pizzas', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=700&q=85' },
-  { name: 'Beverages', image: 'https://images.unsplash.com/photo-1544145945-f90425340c7e?auto=format&fit=crop&w=700&q=85' },
-  { name: 'Fresh Meat', image: 'https://images.unsplash.com/photo-1603048297172-c92544798d5a?auto=format&fit=crop&w=700&q=85' },
-  { name: 'Dairy & Eggs', image: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?auto=format&fit=crop&w=700&q=85' },
-  { name: 'Sauces & Marinades', image: 'https://images.unsplash.com/photo-1472476443507-c7a5948772fc?auto=format&fit=crop&w=700&q=85' },
+const fallbackCategories = [
+  { name: 'Bread & Bakery', image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=700&q=85', showOnHome: true },
+  { name: 'Flour & Baking', image: 'https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?auto=format&fit=crop&w=700&q=85', showOnHome: true },
+  { name: 'Fruits & Vegetables', image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=700&q=85', showOnHome: true },
+  { name: 'Fresh Meals & Pizzas', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=700&q=85', showOnHome: true },
+  { name: 'Beverages', image: 'https://images.unsplash.com/photo-1544145945-f90425340c7e?auto=format&fit=crop&w=700&q=85', showOnHome: true },
+  { name: 'Fresh Meat', image: 'https://images.unsplash.com/photo-1603048297172-c92544798d5a?auto=format&fit=crop&w=700&q=85', showOnHome: true },
+  { name: 'Dairy & Eggs', image: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?auto=format&fit=crop&w=700&q=85', showOnHome: true },
+  { name: 'Sauces & Marinades', image: 'https://images.unsplash.com/photo-1472476443507-c7a5948772fc?auto=format&fit=crop&w=700&q=85', showOnHome: true },
 ]
 
 const fallbackProducts = [
@@ -147,7 +147,7 @@ const articles = [
   },
 ]
 
-const menuItems = [
+const fallbackMenuItems = [
   { label: 'Shop all', href: '/products' },
   { label: 'Fruits & vegetables', href: '/products?category=Fruits%20%26%20Vegetables' },
   { label: 'Bread & bakery', href: '/products?category=Bread%20%26%20Bakery' },
@@ -156,7 +156,7 @@ const menuItems = [
   { label: 'Pantry', href: '/products?category=Pantry' },
 ]
 
-const megaMenuGroups = [
+const fallbackMegaMenuGroups = [
   {
     title: 'Pantry',
     category: 'Pantry',
@@ -190,6 +190,38 @@ function formatPrice(value) {
 
 function catalogHref(category = '') {
   return category ? `/products?category=${encodeURIComponent(category)}` : '/products'
+}
+
+function buildMegaMenuGroups(categories) {
+  const roots = categories.filter((category) => category.includeInMenu && !category.parentId)
+  if (!roots.length) return fallbackMegaMenuGroups
+
+  return roots.map((root) => {
+    const children = categories.filter((category) => category.parentId === root.id)
+    const secondary = children.find((category) => category.includeInMenu)
+    return {
+      title: root.name,
+      category: root.name,
+      items: [{ label: 'All', category: root.name }, ...children.filter((category) => category !== secondary).map((category) => ({ label: category.name, category: category.name }))],
+      secondary: secondary ? {
+        title: secondary.name,
+        category: secondary.name,
+        items: [{ label: 'All', category: secondary.name }, ...categories.filter((category) => category.parentId === secondary.id).map((category) => ({ label: category.name, category: category.name }))],
+      } : undefined,
+    }
+  })
+}
+
+function categoryIncludesProduct(categoryName, productCategory, categories) {
+  if (categoryName === productCategory) return true
+
+  const categoriesById = new Map(categories.map((category) => [category.id, category]))
+  let current = categories.find((category) => category.name === productCategory)
+  while (current?.parentId) {
+    current = categoriesById.get(current.parentId)
+    if (current?.name === categoryName) return true
+  }
+  return false
 }
 
 function Logo() {
@@ -314,7 +346,7 @@ function CatalogProductCard({ product, onAdd }) {
   )
 }
 
-function ProductsPage({ products, onAdd }) {
+function ProductsPage({ categories, products, onAdd }) {
   const initialCategory = new URLSearchParams(window.location.search).get('category') || ''
   const [sort, setSort] = useState('featured')
   const [query, setQuery] = useState('')
@@ -360,7 +392,7 @@ function ProductsPage({ products, onAdd }) {
     const result = products.filter((product) => {
       const meta = getCatalogMeta(product)
       return (!normalizedQuery || `${product.name} ${product.category}`.toLowerCase().includes(normalizedQuery))
-        && (!selectedCategories.length || selectedCategories.includes(product.category))
+        && (!selectedCategories.length || selectedCategories.some((category) => categoryIncludesProduct(category, product.category, categories)))
         && (!availability.length || availability.includes(product.stock === 0 ? 'out' : 'in'))
         && product.price >= priceMin
         && product.price <= upperPrice
@@ -374,12 +406,12 @@ function ProductsPage({ products, onAdd }) {
       if (sort === 'name-desc') return b.name.localeCompare(a.name)
       return Number(a.stock === 0) - Number(b.stock === 0) || a.id - b.id
     })
-  }, [allergens, availability, catalogPriceMax, priceMax, priceMin, products, query, selectedCategories, sort])
+  }, [allergens, availability, catalogPriceMax, categories, priceMax, priceMin, products, query, selectedCategories, sort])
 
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize))
   const currentPage = Math.min(page, totalPages)
   const visibleProducts = filteredProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-  const categoryCount = (category) => products.filter((product) => product.category === category).length
+  const categoryCount = (category) => products.filter((product) => categoryIncludesProduct(category, product.category, categories)).length
   const allergenCount = (allergen) => products.filter((product) => getCatalogMeta(product).allergens.includes(allergen)).length
   const resetFilters = () => {
     setQuery('')
@@ -522,6 +554,7 @@ function CheckoutModal({ items, onClose, onComplete }) {
 function App() {
   const isProductsPage = window.location.pathname.startsWith('/products')
   const [products, setProducts] = useState(fallbackProducts)
+  const [categories, setCategories] = useState(fallbackCategories)
   const [cart, setCart] = useState([])
   const [cartOpen, setCartOpen] = useState(false)
   const [categoriesOpen, setCategoriesOpen] = useState(false)
@@ -537,6 +570,9 @@ function App() {
     loadPublicProducts()
       .then((data) => data && setProducts(data))
       .catch((error) => console.error('Unable to load products from Supabase.', error))
+    loadPublicCategories()
+      .then((data) => data?.length && setCategories(data))
+      .catch((error) => console.error('Unable to load categories from Supabase.', error))
   }, [])
 
   useEffect(() => () => clearTimeout(categoriesCloseTimer.current), [])
@@ -550,6 +586,13 @@ function App() {
       `${product.name} ${product.category}`.toLowerCase().includes(query),
     )
   }, [products, search])
+  const megaMenuGroups = useMemo(() => buildMegaMenuGroups(categories), [categories])
+  const menuItems = useMemo(() => {
+    const managedItems = categories
+      .filter((category) => category.includeInMenu && !category.parentId)
+      .map((category) => ({ label: category.name, href: catalogHref(category.name) }))
+    return managedItems.length ? [{ label: 'Shop all', href: '/products' }, ...managedItems] : fallbackMenuItems
+  }, [categories])
 
   const addToCart = (product) => {
     if (product.stock === 0) return
@@ -678,11 +721,11 @@ function App() {
                   {megaMenuGroups.map((group) => (
                     <div className="mega-menu-column" key={group.title}>
                       <h3>{group.title}</h3>
-                      {group.items.map((item) => <a href={catalogHref(group.category)} onClick={closeCategories} key={`${group.title}-${item}`}>{item}</a>)}
+                      {group.items.map((item) => <a href={catalogHref(item.category || group.category)} onClick={closeCategories} key={`${group.title}-${item.label || item}`}>{item.label || item}</a>)}
                       {group.secondary && (
                         <div className="mega-menu-secondary">
                           <h3>{group.secondary.title}</h3>
-                          {group.secondary.items.map((item) => <a href={catalogHref(group.secondary.category)} onClick={closeCategories} key={`${group.secondary.title}-${item}`}>{item}</a>)}
+                          {group.secondary.items.map((item) => <a href={catalogHref(item.category || group.secondary.category)} onClick={closeCategories} key={`${group.secondary.title}-${item.label || item}`}>{item.label || item}</a>)}
                         </div>
                       )}
                     </div>
@@ -710,7 +753,7 @@ function App() {
         </div>
       </header>
 
-      {isProductsPage ? <ProductsPage products={products} onAdd={addToCart} /> : (
+      {isProductsPage ? <ProductsPage categories={categories} products={products} onAdd={addToCart} /> : (
       <main>
         <section className="hero-section">
           <img className="hero-image" src="/images/lyly-hero.png" alt="Fresh grocery basket filled with fruit and vegetables" />
@@ -739,7 +782,7 @@ function App() {
             <a href="/products">View all categories <ArrowRight size={17} /></a>
           </div>
           <div className="category-grid">
-            {categories.map((category) => (
+            {[...categories].filter((category) => category.showOnHome).sort((a, b) => (a.homeDisplayOrder ?? a.displayOrder ?? 0) - (b.homeDisplayOrder ?? b.displayOrder ?? 0)).map((category) => (
               <a className="category-card" href={catalogHref(category.name)} key={category.name}>
                 <img src={category.image} alt="" />
                 <span>{category.name}</span>
