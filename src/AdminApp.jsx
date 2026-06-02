@@ -358,20 +358,41 @@ function ProductsPage({ products, onCreate, onRemove }) {
 
 function CategoriesPage({ categories, products, onCreate, onEdit, onRemove, onToggle }) {
   const [query, setQuery] = useState('')
-  const visible = categories.filter((category) =>
-    `${category.name} ${category.slug}`.toLowerCase().includes(query.toLowerCase()),
-  )
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [filters, setFilters] = useState({ root: 'all', status: 'all', homepage: 'all', menu: 'all' })
+  const rootCategories = categories.filter((category) => !category.parentId)
+  const activeFilterCount = Object.values(filters).filter((value) => value !== 'all').length
+  const visible = categories.filter((category) => {
+    const matchesQuery = `${category.name} ${category.slug}`.toLowerCase().includes(query.toLowerCase())
+    const rootId = Number(filters.root)
+    const matchesRoot = filters.root === 'all' || category.id === rootId || category.parentId === rootId
+    const matchesStatus = filters.status === 'all' || category.active === (filters.status === 'active')
+    const matchesHomepage = filters.homepage === 'all' || category.showOnHome === (filters.homepage === 'yes')
+    const matchesMenu = filters.menu === 'all' || category.includeInMenu === (filters.menu === 'yes')
+    return matchesQuery && matchesRoot && matchesStatus && matchesHomepage && matchesMenu
+  })
   const categoryName = (id) => categories.find((category) => category.id === id)?.name || 'Danh mục gốc'
   const productCount = (name) => products.filter((product) => product.category === name).length
+  const setFilter = (name, value) => setFilters((current) => ({ ...current, [name]: value }))
+  const resetFilters = () => setFilters({ root: 'all', status: 'all', homepage: 'all', menu: 'all' })
 
   return (
     <>
       <SectionTitle title="Danh mục" description={pageMeta.categories[1]} action="Thêm danh mục" onAction={onCreate} />
       <section className="admin-panel data-panel">
-        <div className="table-toolbar">
+        <div className="table-toolbar category-toolbar">
           <label><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm kiếm danh mục" /></label>
-          <button type="button"><Filter size={15} /> Bộ lọc</button>
+          <button className={activeFilterCount ? 'filter-active' : ''} type="button" aria-expanded={filtersOpen} onClick={() => setFiltersOpen(!filtersOpen)}><Filter size={15} /> Bộ lọc {activeFilterCount > 0 && <em>{activeFilterCount}</em>}</button>
         </div>
+        {filtersOpen && (
+          <div className="category-filter-panel">
+            <label><span>Danh mục gốc</span><select value={filters.root} onChange={(event) => setFilter('root', event.target.value)}><option value="all">Tất cả danh mục</option>{rootCategories.map((category) => <option value={category.id} key={category.id}>{category.name}</option>)}</select></label>
+            <label><span>Trạng thái</span><select value={filters.status} onChange={(event) => setFilter('status', event.target.value)}><option value="all">Tất cả trạng thái</option><option value="active">Đang hoạt động</option><option value="draft">Tạm ẩn</option></select></label>
+            <label><span>Homepage</span><select value={filters.homepage} onChange={(event) => setFilter('homepage', event.target.value)}><option value="all">Tất cả</option><option value="yes">Có hiển thị</option><option value="no">Không hiển thị</option></select></label>
+            <label><span>Mega menu</span><select value={filters.menu} onChange={(event) => setFilter('menu', event.target.value)}><option value="all">Tất cả</option><option value="yes">Có hiển thị</option><option value="no">Không hiển thị</option></select></label>
+            <div className="category-filter-actions"><button className="admin-secondary" type="button" onClick={resetFilters}>Xóa lọc</button><button className="admin-primary" type="button" onClick={() => setFiltersOpen(false)}>Áp dụng</button></div>
+          </div>
+        )}
         <div className="admin-table-wrap">
           <table className="admin-table category-table">
             <thead><tr><th>Danh mục</th><th>Danh mục cha</th><th>Trạng thái</th><th>Homepage</th><th>Mega menu</th><th>Sản phẩm</th><th>Menu</th><th>Home</th><th></th></tr></thead>
