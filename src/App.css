@@ -48,9 +48,9 @@ header { background: #fff; position: relative; z-index: 10; border-bottom: 1px s
 .account-button, .cart-button { height: 50px; display: flex; align-items: center; gap: 11px; padding: 0 22px; border: 1px solid #1e2a25; border-radius: 28px; color: var(--ink); background: white; font-weight: 600; }
 .cart-button { min-width: 154px; justify-content: center; color: white; border-color: #1e211f; background: #1e211f; }
 .header-nav { min-height: 67px; padding: 0 4.1%; display: flex; align-items: center; justify-content: space-between; }
-.header-nav nav { display: flex; align-items: center; gap: 38px; font-size: 14px; font-weight: 600; }
+.header-nav nav { display: flex; align-self: stretch; align-items: center; gap: 38px; font-size: 14px; font-weight: 600; }
 .header-nav nav a, .service-links a, .service-links span { display: flex; align-items: center; gap: 6px; }
-.categories-menu { display: flex; align-items: center; }
+.categories-menu { display: flex; align-self: stretch; align-items: center; }
 .categories-trigger { display: flex; align-items: center; gap: 6px; padding: 0; border: 0; color: #568a61; background: transparent; font-size: 14px; font-weight: 700; }
 .categories-trigger svg { transition: transform .2s ease; }
 .categories-menu.open .categories-trigger svg { transform: rotate(180deg); }

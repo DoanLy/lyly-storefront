@@ -2,7 +2,8 @@
 
 This project uses:
 
-- Supabase Postgres for catalog, customers, orders, discounts, articles, and newsletter data.
+- Supabase Postgres for products, customers, orders, discounts, articles, and newsletter data.
+- Storefront category labels are hardcoded in React and do not use a database table.
 - Supabase Auth plus the `admin_users` allowlist for `/admin`.
 - Supabase Storage bucket `product-images` for future catalog uploads.
 - Supabase Edge Functions for public newsletter signup and server-side order creation.

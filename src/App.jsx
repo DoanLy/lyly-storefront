@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowRight,
   ChevronDown,
@@ -275,12 +275,15 @@ function App() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [newsletterEmail, setNewsletterEmail] = useState('')
   const [newsletterStatus, setNewsletterStatus] = useState('idle')
+  const categoriesCloseTimer = useRef(null)
 
   useEffect(() => {
     loadPublicProducts()
       .then((data) => data && setProducts(data))
       .catch((error) => console.error('Unable to load products from Supabase.', error))
   }, [])
+
+  useEffect(() => () => clearTimeout(categoriesCloseTimer.current), [])
 
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0)
   const subtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0)
@@ -327,6 +330,21 @@ function App() {
       console.error(error)
       setNewsletterStatus('error')
     }
+  }
+
+  const openCategories = () => {
+    clearTimeout(categoriesCloseTimer.current)
+    setCategoriesOpen(true)
+  }
+
+  const closeCategories = () => {
+    clearTimeout(categoriesCloseTimer.current)
+    setCategoriesOpen(false)
+  }
+
+  const closeCategoriesSoon = () => {
+    clearTimeout(categoriesCloseTimer.current)
+    categoriesCloseTimer.current = setTimeout(() => setCategoriesOpen(false), 180)
   }
 
   return (
@@ -382,10 +400,10 @@ function App() {
           <nav>
             <div
               className={`categories-menu ${categoriesOpen ? 'open' : ''}`}
-              onMouseEnter={() => setCategoriesOpen(true)}
-              onMouseLeave={() => setCategoriesOpen(false)}
+              onMouseEnter={openCategories}
+              onMouseLeave={closeCategoriesSoon}
               onBlur={(event) => {
-                if (!event.currentTarget.contains(event.relatedTarget)) setCategoriesOpen(false)
+                if (!event.currentTarget.contains(event.relatedTarget)) closeCategories()
               }}
             >
               <button
@@ -393,7 +411,7 @@ function App() {
                 type="button"
                 aria-expanded={categoriesOpen}
                 aria-controls="categories-mega-menu"
-                onClick={() => setCategoriesOpen((current) => !current)}
+                onClick={() => categoriesOpen ? closeCategories() : openCategories()}
               >
                 Categories <ChevronDown size={15} />
               </button>
@@ -402,16 +420,16 @@ function App() {
                   {megaMenuGroups.map((group) => (
                     <div className="mega-menu-column" key={group.title}>
                       <h3>{group.title}</h3>
-                      {group.items.map((item) => <a href="#categories" onClick={() => setCategoriesOpen(false)} key={`${group.title}-${item}`}>{item}</a>)}
+                      {group.items.map((item) => <a href="#categories" onClick={closeCategories} key={`${group.title}-${item}`}>{item}</a>)}
                       {group.secondary && (
                         <div className="mega-menu-secondary">
                           <h3>{group.secondary.title}</h3>
-                          {group.secondary.items.map((item) => <a href="#categories" onClick={() => setCategoriesOpen(false)} key={`${group.secondary.title}-${item}`}>{item}</a>)}
+                          {group.secondary.items.map((item) => <a href="#categories" onClick={closeCategories} key={`${group.secondary.title}-${item}`}>{item}</a>)}
                         </div>
                       )}
                     </div>
                   ))}
-                  <a className="mega-menu-promo" href="#promise" onClick={() => setCategoriesOpen(false)}>
+                  <a className="mega-menu-promo" href="#promise" onClick={closeCategories}>
                     <img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=900&q=88" alt="" />
                     <div>
                       <p>Healthy & Organic</p>
