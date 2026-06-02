@@ -218,13 +218,6 @@ h1, h2 { font-family: 'Libre Baskerville', Georgia, serif; font-weight: 400; }
 .promise-points span { display: flex; align-items: center; gap: 8px; color: #edf5ef; font-size: 12px; font-weight: 700; }
 .light-button, .cream-button { color: var(--deep-green); background: white; }
 .light-button:hover, .cream-button:hover { transform: translateY(-2px); background: var(--sage); }
-.lifestyle-section { background: #fff; }
-.lifestyle-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
-.lifestyle-card { aspect-ratio: .8; position: relative; overflow: hidden; border-radius: 50% 50% 8px 8px; }
-.lifestyle-card:after { content: ''; position: absolute; inset: 45% 0 0; background: linear-gradient(#0000, #10271fb5); }
-.lifestyle-card img { width: 100%; height: 100%; object-fit: cover; transition: .5s; }
-.lifestyle-card:hover img { transform: scale(1.07); }
-.lifestyle-card span { position: absolute; z-index: 1; right: 0; bottom: 27px; left: 0; color: white; font-family: 'Libre Baskerville'; font-size: 24px; text-align: center; }
 .recipe-banner { min-height: 570px; position: relative; display: flex; align-items: center; overflow: hidden; }
 .recipe-banner:after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, #183b2ece 0%, #183b2e85 45%, #183b2e00 80%); }
 .recipe-banner img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -429,9 +422,6 @@ footer { color: #dfe9e2; background: #1e392e; }
   .promise-copy { padding: 51px 23px 57px; }
   .promise-copy h2 { font-size: 44px; }
   .promise-points { flex-direction: column; gap: 11px; }
-  .lifestyle-grid { display: flex; gap: 11px; overflow-x: auto; padding-bottom: 6px; }
-  .lifestyle-card { min-width: 165px; }
-  .lifestyle-card span { font-size: 20px; }
   .recipe-banner { min-height: 460px; }
   .recipe-banner div { width: calc(100% - 38px); }
   .recipe-banner h2 { font-size: 49px; }

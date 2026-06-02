@@ -121,14 +121,6 @@ const fallbackProducts = [
   },
 ]
 
-const lifestyle = [
-  { label: 'Vegan', image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=700&q=85' },
-  { label: 'Gluten-Free', image: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=700&q=85' },
-  { label: 'Paleo', image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=700&q=85' },
-  { label: 'Keto', image: 'https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=700&q=85' },
-  { label: 'Plant-Based', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=700&q=85' },
-]
-
 const articles = [
   {
     category: 'Kitchen tips',
@@ -829,23 +821,6 @@ function App() {
               <span><ShieldCheck size={20} />Quality checked</span>
             </div>
             <a className="light-button" href="#footer">Our story</a>
-          </div>
-        </section>
-
-        <section className="section lifestyle-section">
-          <div className="container section-heading">
-            <div>
-              <p className="eyebrow">Food for your way of life</p>
-              <h2>Shop By Lifestyle</h2>
-            </div>
-          </div>
-          <div className="container lifestyle-grid">
-            {lifestyle.map((item) => (
-              <a href="/products" className="lifestyle-card" key={item.label}>
-                <img src={item.image} alt="" />
-                <span>{item.label}</span>
-              </a>
-            ))}
           </div>
         </section>
 
