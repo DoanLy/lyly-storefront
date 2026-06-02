@@ -138,6 +138,29 @@ const articles = [
 
 const menuItems = ['Shop all', 'Fruits & vegetables', 'Bread & bakery', 'Dairy & eggs', 'Fresh meals', 'Pantry']
 
+const megaMenuGroups = [
+  {
+    title: 'Pantry',
+    items: ['All', 'Pasta & Noodles', 'Grains & Beans', 'Snacks', 'Oil, Vinegar & Spices', 'Sauces', 'Dressings'],
+  },
+  {
+    title: 'Produce',
+    items: ['All', 'Vegetables', 'Fruit', 'Herbs & Aromatics'],
+    secondary: {
+      title: 'Drinks',
+      items: ['All', 'Coffee', 'Tea & Elixirs', 'Juices'],
+    },
+  },
+  {
+    title: 'Bakery',
+    items: ['All', 'Bread', 'Buns & Rolls', 'Bagels & Breakfast', 'Gluten-Free'],
+  },
+  {
+    title: 'Dairy & Eggs',
+    items: ['All', 'Milk & Cream', 'Eggs & Butter', 'Cheese', 'Yogurt & Cultured Dairy', 'Plant-Based'],
+  },
+]
+
 function formatPrice(value) {
   return `$${value.toFixed(2)}`
 }
@@ -245,6 +268,7 @@ function App() {
   const [products, setProducts] = useState(fallbackProducts)
   const [cart, setCart] = useState([])
   const [cartOpen, setCartOpen] = useState(false)
+  const [categoriesOpen, setCategoriesOpen] = useState(false)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -356,11 +380,52 @@ function App() {
         </div>
         <div className="header-nav">
           <nav>
-            <a href="#categories">Categories <ChevronDown size={15} /></a>
+            <div
+              className={`categories-menu ${categoriesOpen ? 'open' : ''}`}
+              onMouseEnter={() => setCategoriesOpen(true)}
+              onMouseLeave={() => setCategoriesOpen(false)}
+              onBlur={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget)) setCategoriesOpen(false)
+              }}
+            >
+              <button
+                className="categories-trigger"
+                type="button"
+                aria-expanded={categoriesOpen}
+                aria-controls="categories-mega-menu"
+                onClick={() => setCategoriesOpen((current) => !current)}
+              >
+                Categories <ChevronDown size={15} />
+              </button>
+              <div className="categories-mega" id="categories-mega-menu">
+                <div className="mega-menu-inner">
+                  {megaMenuGroups.map((group) => (
+                    <div className="mega-menu-column" key={group.title}>
+                      <h3>{group.title}</h3>
+                      {group.items.map((item) => <a href="#categories" onClick={() => setCategoriesOpen(false)} key={`${group.title}-${item}`}>{item}</a>)}
+                      {group.secondary && (
+                        <div className="mega-menu-secondary">
+                          <h3>{group.secondary.title}</h3>
+                          {group.secondary.items.map((item) => <a href="#categories" onClick={() => setCategoriesOpen(false)} key={`${group.secondary.title}-${item}`}>{item}</a>)}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  <a className="mega-menu-promo" href="#promise" onClick={() => setCategoriesOpen(false)}>
+                    <img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=900&q=88" alt="" />
+                    <div>
+                      <p>Healthy & Organic</p>
+                      <h3>Fresh & Energetic</h3>
+                      <span>Learn more</span>
+                    </div>
+                  </a>
+                </div>
+              </div>
+            </div>
             <a href="#promise">About us <ChevronDown size={15} /></a>
             <a href="#recipes">Recipes</a>
             <a href="#articles">Blog</a>
-            <a href="#footer">Contact</a>
+            <a href="#promise">Theme Features</a>
           </nav>
           <div className="service-links">
             <a href="#footer"><Store size={28} /><span><small>Picking up?</small>Select store <ChevronDown size={14} /></span></a>
