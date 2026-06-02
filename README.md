@@ -10,6 +10,8 @@ Single-vendor e-commerce storefront for the LyLy D2C grocery brand. The first im
 - Product quick-add actions
 - Cart drawer with quantity updates and free-delivery progress
 - Mobile navigation drawer
+- Shopify-inspired LyLy admin workspace at `/admin`
+- Admin dashboard, catalog, orders, customers, marketing, discounts, content, analytics, locations, and settings
 
 ## Local development
 
