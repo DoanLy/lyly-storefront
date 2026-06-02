@@ -902,7 +902,7 @@ function App() {
         <section className="promo-grid container">
           <a className="promo-card large" href="/products">
             <img src="https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1200&q=88" alt="" />
-            <div><h2>Roasted Salmon<br />& Grain Bowl</h2><span>Buy ingredients <ArrowRight size={16} /></span></div>
+            <div><p>Save up to 25%</p><h2>Roasted Salmon<br />& Grain Bowl</h2><span>Buy ingredients <ArrowRight size={16} /></span></div>
           </a>
           <a className="promo-card" href={catalogHref('Fruits & Vegetables')}>
             <img src="https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&fit=crop&w=1000&q=88" alt="" />
