@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock3,
+  Filter,
   Heart,
   Leaf,
   Mail,
@@ -13,10 +14,12 @@ import {
   Minus,
   Package,
   Plus,
+  RotateCcw,
   Search,
   ShieldCheck,
   ShoppingBag,
   ShoppingCart,
+  Star,
   Store,
   Truck,
   User,
@@ -44,6 +47,7 @@ const fallbackProducts = [
     price: 6.5,
     oldPrice: 8,
     badge: 'Sale',
+    stock: 18,
     unit: '500g',
     image: 'https://images.unsplash.com/photo-1549931319-a545dcf3bc73?auto=format&fit=crop&w=700&q=90',
   },
@@ -54,6 +58,7 @@ const fallbackProducts = [
     price: 5.9,
     unit: 'Pack of 3',
     badge: 'Organic',
+    stock: 24,
     image: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?auto=format&fit=crop&w=700&q=90',
   },
   {
@@ -63,6 +68,7 @@ const fallbackProducts = [
     price: 4.75,
     unit: '250g',
     badge: 'Fresh',
+    stock: 15,
     image: 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?auto=format&fit=crop&w=700&q=90',
   },
   {
@@ -72,6 +78,7 @@ const fallbackProducts = [
     price: 3.25,
     unit: '1 litre',
     badge: 'Local',
+    stock: 12,
     image: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=700&q=90',
   },
   {
@@ -81,6 +88,7 @@ const fallbackProducts = [
     price: 4.2,
     unit: '1kg',
     badge: 'Popular',
+    stock: 0,
     image: 'https://images.unsplash.com/photo-1547514701-42782101795e?auto=format&fit=crop&w=700&q=90',
   },
   {
@@ -89,6 +97,7 @@ const fallbackProducts = [
     category: 'Dairy & Eggs',
     price: 5.5,
     unit: '12 eggs',
+    stock: 10,
     image: 'https://images.unsplash.com/photo-1506976785307-8732e854ad03?auto=format&fit=crop&w=700&q=90',
   },
   {
@@ -97,6 +106,7 @@ const fallbackProducts = [
     category: 'Fresh Meals & Pizzas',
     price: 4.9,
     unit: '400g',
+    stock: 8,
     image: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=700&q=90',
   },
   {
@@ -106,6 +116,7 @@ const fallbackProducts = [
     price: 14.5,
     unit: '350g',
     badge: 'Premium',
+    stock: 6,
     image: 'https://images.unsplash.com/photo-1599084993091-1cb5c0721cc6?auto=format&fit=crop&w=700&q=90',
   },
 ]
@@ -136,27 +147,39 @@ const articles = [
   },
 ]
 
-const menuItems = ['Shop all', 'Fruits & vegetables', 'Bread & bakery', 'Dairy & eggs', 'Fresh meals', 'Pantry']
+const menuItems = [
+  { label: 'Shop all', href: '/products' },
+  { label: 'Fruits & vegetables', href: '/products?category=Fruits%20%26%20Vegetables' },
+  { label: 'Bread & bakery', href: '/products?category=Bread%20%26%20Bakery' },
+  { label: 'Dairy & eggs', href: '/products?category=Dairy%20%26%20Eggs' },
+  { label: 'Fresh meals', href: '/products?category=Fresh%20Meals%20%26%20Pizzas' },
+  { label: 'Pantry', href: '/products?category=Pantry' },
+]
 
 const megaMenuGroups = [
   {
     title: 'Pantry',
+    category: 'Pantry',
     items: ['All', 'Pasta & Noodles', 'Grains & Beans', 'Snacks', 'Oil, Vinegar & Spices', 'Sauces', 'Dressings'],
   },
   {
     title: 'Produce',
+    category: 'Fruits & Vegetables',
     items: ['All', 'Vegetables', 'Fruit', 'Herbs & Aromatics'],
     secondary: {
       title: 'Drinks',
+      category: 'Beverages',
       items: ['All', 'Coffee', 'Tea & Elixirs', 'Juices'],
     },
   },
   {
     title: 'Bakery',
+    category: 'Bread & Bakery',
     items: ['All', 'Bread', 'Buns & Rolls', 'Bagels & Breakfast', 'Gluten-Free'],
   },
   {
     title: 'Dairy & Eggs',
+    category: 'Dairy & Eggs',
     items: ['All', 'Milk & Cream', 'Eggs & Butter', 'Cheese', 'Yogurt & Cultured Dairy', 'Plant-Based'],
   },
 ]
@@ -165,9 +188,13 @@ function formatPrice(value) {
   return `$${value.toFixed(2)}`
 }
 
+function catalogHref(category = '') {
+  return category ? `/products?category=${encodeURIComponent(category)}` : '/products'
+}
+
 function Logo() {
   return (
-    <a className="logo" href="#top" aria-label="LyLy home">
+    <a className="logo" href="/" aria-label="LyLy home">
       <span>LyLy</span>
       <small>FRESH MARKET</small>
     </a>
@@ -176,6 +203,7 @@ function Logo() {
 
 function ProductCard({ product, onAdd }) {
   const [liked, setLiked] = useState(false)
+  const soldOut = product.stock === 0
 
   return (
     <article className="product-card">
@@ -190,9 +218,9 @@ function ProductCard({ product, onAdd }) {
           <Heart size={17} fill={liked ? 'currentColor' : 'none'} />
         </button>
         <img src={product.image} alt={product.name} />
-        <button className="quick-add" type="button" onClick={() => onAdd(product)}>
-          <Plus size={16} />
-          <span>Add to cart</span>
+        <button className="quick-add" type="button" disabled={soldOut} onClick={() => onAdd(product)}>
+          {!soldOut && <Plus size={16} />}
+          <span>{soldOut ? 'Sold out' : 'Add to cart'}</span>
         </button>
       </div>
       <div className="product-detail">
@@ -207,6 +235,224 @@ function ProductCard({ product, onAdd }) {
         </div>
       </div>
     </article>
+  )
+}
+
+const allergenOptions = ['Eggs free', 'Gluten free', 'Milk free', 'Nuts free', 'Plant based']
+
+function getCatalogMeta(product) {
+  const category = product.category.toLowerCase()
+  const name = product.name.toLowerCase()
+  const allergens = []
+
+  if (!category.includes('dairy') && !name.includes('egg')) allergens.push('Eggs free')
+  if (!category.includes('bread') && !category.includes('bakery') && !name.includes('pasta')) allergens.push('Gluten free')
+  if (!category.includes('dairy') && !name.includes('milk')) allergens.push('Milk free')
+  if (!name.includes('almond') && !name.includes('nut')) allergens.push('Nuts free')
+  if (category.includes('fruit') || category.includes('vegetable') || category.includes('beverage')) allergens.push('Plant based')
+
+  const descriptions = {
+    'Bread & Bakery': 'Baked fresh with simple ingredients',
+    'Fruits & Vegetables': 'Bright flavor, picked for freshness',
+    'Dairy & Eggs': 'Farm sourced and quality checked',
+    'Fresh Meals & Pizzas': 'A simple choice for busy days',
+    'Fresh Meat': 'Carefully selected for your table',
+    Beverages: 'Refreshingly good, any time of day',
+  }
+
+  return {
+    allergens,
+    description: descriptions[product.category] || 'Chosen with care for your kitchen',
+    rating: product.id % 3 === 0 ? 4 : 5,
+    reviews: product.id % 4 === 0 ? 12 : product.id % 5 + 3,
+  }
+}
+
+function FilterCheckbox({ checked, count, label, onChange }) {
+  return (
+    <label className="catalog-check">
+      <input type="checkbox" checked={checked} onChange={onChange} />
+      <span>{label}</span>
+      <small>{count}</small>
+    </label>
+  )
+}
+
+function CatalogProductCard({ product, onAdd }) {
+  const meta = getCatalogMeta(product)
+  const soldOut = product.stock === 0
+  const sale = Boolean(product.oldPrice)
+
+  return (
+    <article className="catalog-product-card">
+      <div className="catalog-product-image">
+        {(soldOut || sale || product.badge) && (
+          <span className={`catalog-product-badge ${soldOut ? 'sold-out' : ''}`}>
+            {soldOut ? 'Sold out' : sale ? 'On sale' : product.badge}
+          </span>
+        )}
+        <img src={product.image} alt={product.name} />
+      </div>
+      <div className="catalog-product-detail">
+        <p className="catalog-price">
+          {sale && <del>{formatPrice(product.oldPrice)}</del>}
+          <strong>{formatPrice(product.price)}</strong>
+          <span>/ {product.unit}</span>
+        </p>
+        <h3>{product.name}</h3>
+        <p className="catalog-description">{meta.description}</p>
+        <div className="catalog-rating" aria-label={`${meta.rating} out of 5 stars, ${meta.reviews} reviews`}>
+          <span>{Array.from({ length: 5 }, (_, index) => <Star key={index} size={13} fill={index < meta.rating ? 'currentColor' : 'none'} />)}</span>
+          <small>({meta.reviews})</small>
+        </div>
+        <button type="button" disabled={soldOut} onClick={() => onAdd(product)}>
+          {soldOut ? 'Sold out' : 'Add to cart'}
+        </button>
+        <p className="catalog-availability"><i /> {soldOut ? 'Currently unavailable' : 'Available for local delivery'}</p>
+      </div>
+    </article>
+  )
+}
+
+function ProductsPage({ products, onAdd }) {
+  const initialCategory = new URLSearchParams(window.location.search).get('category') || ''
+  const [sort, setSort] = useState('featured')
+  const [query, setQuery] = useState('')
+  const [selectedCategories, setSelectedCategories] = useState(initialCategory ? [initialCategory] : [])
+  const [availability, setAvailability] = useState([])
+  const [allergens, setAllergens] = useState([])
+  const [priceMin, setPriceMin] = useState(0)
+  const [priceMax, setPriceMax] = useState(null)
+  const [page, setPage] = useState(1)
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const pageSize = 6
+
+  const catalogPriceMax = useMemo(() => {
+    const highest = Math.max(...products.map((product) => product.price), 0)
+    return Math.max(20, Math.ceil(highest / 10) * 10)
+  }, [products])
+
+  const categoryOptions = useMemo(() => {
+    const names = new Set(products.map((product) => product.category))
+    selectedCategories.forEach((category) => names.add(category))
+    return [...names].sort()
+  }, [products, selectedCategories])
+
+  const toggle = (setter, value) => {
+    setter((current) =>
+      current.includes(value) ? current.filter((item) => item !== value) : [...current, value],
+    )
+    setPage(1)
+  }
+
+  const filteredProducts = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase()
+    const upperPrice = priceMax ?? catalogPriceMax
+    const result = products.filter((product) => {
+      const meta = getCatalogMeta(product)
+      return (!normalizedQuery || `${product.name} ${product.category}`.toLowerCase().includes(normalizedQuery))
+        && (!selectedCategories.length || selectedCategories.includes(product.category))
+        && (!availability.length || availability.includes(product.stock === 0 ? 'out' : 'in'))
+        && product.price >= priceMin
+        && product.price <= upperPrice
+        && allergens.every((allergen) => meta.allergens.includes(allergen))
+    })
+
+    return [...result].sort((a, b) => {
+      if (sort === 'price-low') return a.price - b.price
+      if (sort === 'price-high') return b.price - a.price
+      if (sort === 'name') return a.name.localeCompare(b.name)
+      if (sort === 'name-desc') return b.name.localeCompare(a.name)
+      return Number(a.stock === 0) - Number(b.stock === 0) || a.id - b.id
+    })
+  }, [allergens, availability, catalogPriceMax, priceMax, priceMin, products, query, selectedCategories, sort])
+
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize))
+  const currentPage = Math.min(page, totalPages)
+  const visibleProducts = filteredProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  const categoryCount = (category) => products.filter((product) => product.category === category).length
+  const allergenCount = (allergen) => products.filter((product) => getCatalogMeta(product).allergens.includes(allergen)).length
+  const resetFilters = () => {
+    setQuery('')
+    setSelectedCategories([])
+    setAvailability([])
+    setAllergens([])
+    setPriceMin(0)
+    setPriceMax(null)
+    setSort('featured')
+    setPage(1)
+  }
+
+  return (
+    <main className="catalog-page">
+      <section className="catalog-head container">
+        <div className="breadcrumbs"><a href="/">Home</a><span>/</span><a href="/products">Collections</a><span>/</span><b>All products</b></div>
+        <h1>All products</h1>
+        <p>Explore groceries selected for freshness, flavor and everyday ease.</p>
+      </section>
+
+      <section className="catalog-toolbar container">
+        <label className="catalog-search"><Search size={18} /><input value={query} onChange={(event) => { setQuery(event.target.value); setPage(1) }} placeholder="Search this collection" /></label>
+        <button className="catalog-filter-button" type="button" onClick={() => setFiltersOpen(true)}><Filter size={17} /> Filters</button>
+        <label className="catalog-sort"><span>Sort by:</span><select value={sort} onChange={(event) => { setSort(event.target.value); setPage(1) }}><option value="featured">Featured</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option><option value="name">Name: A-Z</option><option value="name-desc">Name: Z-A</option></select></label>
+      </section>
+
+      <section className="catalog-layout container">
+        {filtersOpen && <button className="catalog-filter-overlay" type="button" aria-label="Close filters" onClick={() => setFiltersOpen(false)} />}
+        <aside className={`catalog-sidebar ${filtersOpen ? 'open' : ''}`}>
+          <div className="catalog-sidebar-head"><b>Filter products</b><button type="button" onClick={() => setFiltersOpen(false)}><X size={18} /></button></div>
+          <button className="catalog-reset" type="button" onClick={resetFilters}><RotateCcw size={14} /> Reset all</button>
+          <details open>
+            <summary>Price</summary>
+            <div className="catalog-price-inputs">
+              <label><span>$</span><input type="number" min="0" max={catalogPriceMax} value={priceMin} onChange={(event) => { setPriceMin(Math.min(Number(event.target.value), priceMax ?? catalogPriceMax)); setPage(1) }} /></label>
+              <i>to</i>
+              <label><span>$</span><input type="number" min={priceMin} max={catalogPriceMax} value={priceMax ?? catalogPriceMax} onChange={(event) => { setPriceMax(Math.max(Number(event.target.value), priceMin)); setPage(1) }} /></label>
+            </div>
+            <div className="catalog-range">
+              <input aria-label="Minimum price" type="range" min="0" max={catalogPriceMax} value={priceMin} onChange={(event) => { setPriceMin(Math.min(Number(event.target.value), priceMax ?? catalogPriceMax)); setPage(1) }} />
+              <input aria-label="Maximum price" type="range" min="0" max={catalogPriceMax} value={priceMax ?? catalogPriceMax} onChange={(event) => { setPriceMax(Math.max(Number(event.target.value), priceMin)); setPage(1) }} />
+            </div>
+          </details>
+          <details open>
+            <summary>Product type</summary>
+            {categoryOptions.map((category) => <FilterCheckbox key={category} label={category} count={categoryCount(category)} checked={selectedCategories.includes(category)} onChange={() => toggle(setSelectedCategories, category)} />)}
+          </details>
+          <details open>
+            <summary>Availability</summary>
+            <FilterCheckbox label="In stock" count={products.filter((product) => product.stock !== 0).length} checked={availability.includes('in')} onChange={() => toggle(setAvailability, 'in')} />
+            <FilterCheckbox label="Out of stock" count={products.filter((product) => product.stock === 0).length} checked={availability.includes('out')} onChange={() => toggle(setAvailability, 'out')} />
+          </details>
+          <details open>
+            <summary>Allergens & dietary</summary>
+            {allergenOptions.map((allergen) => <FilterCheckbox key={allergen} label={allergen} count={allergenCount(allergen)} checked={allergens.includes(allergen)} onChange={() => toggle(setAllergens, allergen)} />)}
+          </details>
+        </aside>
+
+        <div className="catalog-results">
+          <div className="catalog-results-head"><b>{filteredProducts.length} products</b><span>Fresh picks from LyLy Market</span></div>
+          {visibleProducts.length ? (
+            <div className="catalog-grid">{visibleProducts.map((product) => <CatalogProductCard key={product.id} product={product} onAdd={onAdd} />)}</div>
+          ) : (
+            <div className="catalog-empty"><Search size={30} /><h2>No products found</h2><p>Try changing or clearing your filters.</p><button type="button" onClick={resetFilters}>Reset filters</button></div>
+          )}
+          {totalPages > 1 && (
+            <div className="catalog-pagination">
+              <button type="button" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}><ChevronLeft size={16} /> Previous</button>
+              {Array.from({ length: totalPages }, (_, index) => <button className={currentPage === index + 1 ? 'active' : ''} type="button" onClick={() => setPage(index + 1)} key={index + 1}>{index + 1}</button>)}
+              <button type="button" disabled={currentPage === totalPages} onClick={() => setPage(currentPage + 1)}>Next <ChevronRight size={16} /></button>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="catalog-benefits">
+        <div><ShoppingBag size={28} /><span><b>Local pickup</b><small>Collect orders when it suits you</small></span></div>
+        <div><Package size={28} /><span><b>Local delivery</b><small>Packed with care at every step</small></span></div>
+        <div><Leaf size={28} /><span><b>Conscious choices</b><small>Sourced from growers we trust</small></span></div>
+        <div><ShieldCheck size={28} /><span><b>Quality checked</b><small>Fresh food for your table</small></span></div>
+      </section>
+    </main>
   )
 }
 
@@ -265,6 +511,7 @@ function CheckoutModal({ items, onClose, onComplete }) {
 }
 
 function App() {
+  const isProductsPage = window.location.pathname.startsWith('/products')
   const [products, setProducts] = useState(fallbackProducts)
   const [cart, setCart] = useState([])
   const [cartOpen, setCartOpen] = useState(false)
@@ -296,6 +543,8 @@ function App() {
   }, [products, search])
 
   const addToCart = (product) => {
+    if (product.stock === 0) return
+
     setCart((current) => {
       const found = current.find((item) => item.id === product.id)
       if (found) {
@@ -378,10 +627,10 @@ function App() {
               <div className="search-results">
                 <div className="search-heading">Product suggestions</div>
                 {searchResults.length ? searchResults.slice(0, 5).map((product) => (
-                  <button type="button" key={product.id} onClick={() => addToCart(product)}>
+                  <button type="button" disabled={product.stock === 0} key={product.id} onClick={() => addToCart(product)}>
                     <img src={product.image} alt="" />
                     <span><b>{product.name}</b><small>{product.category}</small></span>
-                    <strong>{formatPrice(product.price)}</strong>
+                    <strong>{product.stock === 0 ? 'Sold out' : formatPrice(product.price)}</strong>
                   </button>
                 )) : <p>No products found.</p>}
               </div>
@@ -406,30 +655,30 @@ function App() {
                 if (!event.currentTarget.contains(event.relatedTarget)) closeCategories()
               }}
             >
-              <button
+              <a
                 className="categories-trigger"
-                type="button"
+                href="/products"
                 aria-expanded={categoriesOpen}
                 aria-controls="categories-mega-menu"
-                onClick={() => categoriesOpen ? closeCategories() : openCategories()}
+                onClick={closeCategories}
               >
                 Categories <ChevronDown size={15} />
-              </button>
+              </a>
               <div className="categories-mega" id="categories-mega-menu">
                 <div className="mega-menu-inner">
                   {megaMenuGroups.map((group) => (
                     <div className="mega-menu-column" key={group.title}>
                       <h3>{group.title}</h3>
-                      {group.items.map((item) => <a href="#categories" onClick={closeCategories} key={`${group.title}-${item}`}>{item}</a>)}
+                      {group.items.map((item) => <a href={catalogHref(group.category)} onClick={closeCategories} key={`${group.title}-${item}`}>{item}</a>)}
                       {group.secondary && (
                         <div className="mega-menu-secondary">
                           <h3>{group.secondary.title}</h3>
-                          {group.secondary.items.map((item) => <a href="#categories" onClick={closeCategories} key={`${group.secondary.title}-${item}`}>{item}</a>)}
+                          {group.secondary.items.map((item) => <a href={catalogHref(group.secondary.category)} onClick={closeCategories} key={`${group.secondary.title}-${item}`}>{item}</a>)}
                         </div>
                       )}
                     </div>
                   ))}
-                  <a className="mega-menu-promo" href="#promise" onClick={closeCategories}>
+                  <a className="mega-menu-promo" href="/products" onClick={closeCategories}>
                     <img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=900&q=88" alt="" />
                     <div>
                       <p>Healthy & Organic</p>
@@ -440,18 +689,19 @@ function App() {
                 </div>
               </div>
             </div>
-            <a href="#promise">About us <ChevronDown size={15} /></a>
-            <a href="#recipes">Recipes</a>
-            <a href="#articles">Blog</a>
-            <a href="#promise">Theme Features</a>
+            <a href="/#promise">About us <ChevronDown size={15} /></a>
+            <a href="/#recipes">Recipes</a>
+            <a href="/#articles">Blog</a>
+            <a href="/#promise">Theme Features</a>
           </nav>
           <div className="service-links">
-            <a href="#footer"><Store size={28} /><span><small>Picking up?</small>Select store <ChevronDown size={14} /></span></a>
-            <a href="#footer"><Package size={28} /><span><small>Need delivery?</small>See estimates</span></a>
+            <a href="/#footer"><Store size={28} /><span><small>Picking up?</small>Select store <ChevronDown size={14} /></span></a>
+            <a href="/#footer"><Package size={28} /><span><small>Need delivery?</small>See estimates</span></a>
           </div>
         </div>
       </header>
 
+      {isProductsPage ? <ProductsPage products={products} onAdd={addToCart} /> : (
       <main>
         <section className="hero-section">
           <img className="hero-image" src="/images/lyly-hero.png" alt="Fresh grocery basket filled with fruit and vegetables" />
@@ -459,7 +709,7 @@ function App() {
             <p className="rating"><span>★★★★★</span> 4.9 (589)</p>
             <h1>Fresh.<br />Organic.<br />Delivered.</h1>
             <p className="hero-copy">Thoughtfully sourced groceries for everyday living.</p>
-            <a className="dark-button" href="#bestsellers">Shop now</a>
+            <a className="dark-button" href="/products">Shop now</a>
           </div>
           <div className="hero-dots"><i></i><i className="active"></i><i></i></div>
         </section>
@@ -477,11 +727,11 @@ function App() {
               <p className="eyebrow">Find your favorites</p>
               <h2>Shop by Category</h2>
             </div>
-            <a href="#bestsellers">View all categories <ArrowRight size={17} /></a>
+            <a href="/products">View all categories <ArrowRight size={17} /></a>
           </div>
           <div className="category-grid">
             {categories.map((category) => (
-              <a className="category-card" href="#bestsellers" key={category.name}>
+              <a className="category-card" href={catalogHref(category.name)} key={category.name}>
                 <img src={category.image} alt="" />
                 <span>{category.name}</span>
                 <ArrowRight size={15} />
@@ -491,11 +741,11 @@ function App() {
         </section>
 
         <section className="promo-grid container">
-          <a className="promo-card large" href="#bestsellers">
+          <a className="promo-card large" href="/products">
             <img src="https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1200&q=88" alt="" />
             <div><p>Save up to 25%</p><h2>Kitchen & Dining<br />Sale</h2><span>Shop the edit <ArrowRight size={16} /></span></div>
           </a>
-          <a className="promo-card" href="#bestsellers">
+          <a className="promo-card" href={catalogHref('Fruits & Vegetables')}>
             <img src="https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&fit=crop&w=1000&q=88" alt="" />
             <div><p>Picked today</p><h2>Bright seasonal<br />produce</h2><span>Explore fresh <ArrowRight size={16} /></span></div>
           </a>
@@ -507,10 +757,10 @@ function App() {
               <p className="eyebrow">Loved by locals</p>
               <h2>Best Sellers</h2>
             </div>
-            <a href="#bestsellers">Shop all products <ArrowRight size={17} /></a>
+            <a href="/products">Shop all products <ArrowRight size={17} /></a>
           </div>
           <div className="container product-grid">
-            {products.map((product) => <ProductCard product={product} onAdd={addToCart} key={product.id} />)}
+            {products.filter((product) => product.stock !== 0).map((product) => <ProductCard product={product} onAdd={addToCart} key={product.id} />)}
           </div>
         </section>
 
@@ -540,7 +790,7 @@ function App() {
           </div>
           <div className="container lifestyle-grid">
             {lifestyle.map((item) => (
-              <a href="#bestsellers" className="lifestyle-card" key={item.label}>
+              <a href="/products" className="lifestyle-card" key={item.label}>
                 <img src={item.image} alt="" />
                 <span>{item.label}</span>
               </a>
@@ -594,6 +844,7 @@ function App() {
           </form>
         </section>
       </main>
+      )}
 
       <footer id="footer">
         <div className="footer-main container">
@@ -602,8 +853,8 @@ function App() {
             <p>Everyday groceries, chosen with care and delivered fresh to your door.</p>
             <div><a href="#footer"><b className="social-mark">ig</b></a><a href="#footer"><b className="social-mark">f</b></a><a href="#footer"><Mail size={18} /></a></div>
           </div>
-          <div><h4>Shop</h4><a href="#categories">Categories</a><a href="#bestsellers">Best sellers</a><a href="#bestsellers">New arrivals</a><a href="#bestsellers">Special offers</a></div>
-          <div><h4>About</h4><a href="#promise">Our story</a><a href="#articles">Journal</a><a href="#footer">Careers</a><a href="#footer">Contact</a></div>
+          <div><h4>Shop</h4><a href="/products">Categories</a><a href="/products">Best sellers</a><a href="/products">New arrivals</a><a href="/products">Special offers</a></div>
+          <div><h4>About</h4><a href="/#promise">Our story</a><a href="/#articles">Journal</a><a href="/#footer">Careers</a><a href="/#footer">Contact</a></div>
           <div><h4>Need help?</h4><a href="#footer">Delivery & pickup</a><a href="#footer">FAQs</a><a href="#footer">Returns</a><a href="#footer">Track an order</a></div>
           <div className="store-card">
             <MapPin size={22} />
@@ -618,7 +869,7 @@ function App() {
       <aside className={`side-drawer menu-drawer ${menuOpen ? 'open' : ''}`}>
         <div className="drawer-header"><Logo /><button type="button" onClick={() => setMenuOpen(false)} aria-label="Close menu"><X /></button></div>
         <nav>
-          {menuItems.map((item) => <a href="#categories" onClick={() => setMenuOpen(false)} key={item}>{item}<ChevronRight size={16} /></a>)}
+          {menuItems.map((item) => <a href={item.href} onClick={() => setMenuOpen(false)} key={item.label}>{item.label}<ChevronRight size={16} /></a>)}
         </nav>
         <div className="menu-footer"><a href="#footer"><User size={18} /> Account</a><a href="#footer"><Store size={18} /> Find a store</a></div>
       </aside>

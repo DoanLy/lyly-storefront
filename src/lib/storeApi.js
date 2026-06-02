@@ -25,7 +25,6 @@ export async function loadPublicProducts() {
     .from('products')
     .select(productColumns)
     .eq('status', 'active')
-    .gt('stock', 0)
     .order('id')
 
   if (error) throw error
