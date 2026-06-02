@@ -66,16 +66,41 @@ const initialProducts = [
   { id: 4, name: 'Farm Fresh Whole Milk', category: 'Dairy & Eggs', sku: 'DRY-1006', price: 3.25, stock: 34, status: 'active', unit: '1 litre', image: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=160&q=85' },
   { id: 5, name: 'Sun-Kissed Navel Oranges', category: 'Fruits & Vegetables', sku: 'FRT-1029', price: 4.2, stock: 0, status: 'draft', unit: '1kg', image: 'https://images.unsplash.com/photo-1547514701-42782101795e?auto=format&fit=crop&w=160&q=85' },
   { id: 6, name: 'Free Range Brown Eggs', category: 'Dairy & Eggs', sku: 'DRY-1011', price: 5.5, stock: 21, status: 'active', unit: '12 eggs', image: 'https://images.unsplash.com/photo-1506976785307-8732e854ad03?auto=format&fit=crop&w=160&q=85' },
-  { id: 7, name: 'Fresh Rigatoni Pasta', category: 'Fresh Meals', sku: 'MEA-1015', price: 4.9, stock: 11, status: 'active', unit: '400g', image: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=160&q=85' },
-  { id: 8, name: 'Atlantic Salmon Fillet', category: 'Fresh Meat', sku: 'MEA-1021', price: 14.5, stock: 8, status: 'active', unit: '350g', image: 'https://images.unsplash.com/photo-1599084993091-1cb5c0721cc6?auto=format&fit=crop&w=160&q=85' },
+  { id: 7, name: 'Fresh Rigatoni Pasta', category: 'Pasta & Noodles', sku: 'MEA-1015', price: 4.9, stock: 11, status: 'active', unit: '400g', image: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=160&q=85' },
+  { id: 8, name: 'Atlantic Salmon Fillet', category: 'Pantry', sku: 'MEA-1021', price: 14.5, stock: 8, status: 'active', unit: '350g', image: 'https://images.unsplash.com/photo-1599084993091-1cb5c0721cc6?auto=format&fit=crop&w=160&q=85' },
 ]
 
 const initialCategories = [
-  { id: 1, name: 'Bread & Bakery', slug: 'bread-bakery', active: true, showOnHome: true, includeInMenu: false, displayOrder: 31 },
-  { id: 2, name: 'Fruits & Vegetables', slug: 'fruits-vegetables', active: true, showOnHome: true, includeInMenu: false, displayOrder: 21 },
-  { id: 3, name: 'Dairy & Eggs', slug: 'dairy-eggs', active: true, showOnHome: true, includeInMenu: true, displayOrder: 40 },
-  { id: 4, name: 'Fresh Meals & Pizzas', slug: 'fresh-meals-pizzas', active: true, showOnHome: true, includeInMenu: false, displayOrder: 50 },
-  { id: 5, name: 'Fresh Meat', slug: 'fresh-meat', active: true, showOnHome: true, includeInMenu: false, displayOrder: 60 },
+  { id: 1, name: 'Pantry', slug: 'pantry', active: true, showOnHome: false, includeInMenu: true, displayOrder: 10 },
+  { id: 2, name: 'Produce', slug: 'produce', active: true, showOnHome: false, includeInMenu: true, displayOrder: 20 },
+  { id: 3, name: 'Drinks', slug: 'drinks', active: true, showOnHome: false, includeInMenu: true, displayOrder: 30 },
+  { id: 4, name: 'Bakery', slug: 'bakery', active: true, showOnHome: false, includeInMenu: true, displayOrder: 40 },
+  { id: 5, name: 'Dairy & Eggs', slug: 'dairy-eggs', active: true, showOnHome: true, includeInMenu: true, displayOrder: 50 },
+  { id: 6, parentId: 1, name: 'Pasta & Noodles', slug: 'pasta-noodles', active: true, showOnHome: false, includeInMenu: false, displayOrder: 11 },
+  { id: 7, parentId: 1, name: 'Grains & Beans', slug: 'grains-beans', active: true, showOnHome: false, includeInMenu: false, displayOrder: 12 },
+  { id: 8, parentId: 1, name: 'Snacks', slug: 'snacks', active: true, showOnHome: false, includeInMenu: false, displayOrder: 13 },
+  { id: 9, parentId: 1, name: 'Oil, Vinegar & Spices', slug: 'oil-vinegar-spices', active: true, showOnHome: false, includeInMenu: false, displayOrder: 14 },
+  { id: 10, parentId: 1, name: 'Sauces & Marinades', slug: 'sauces-marinades', active: true, showOnHome: true, includeInMenu: false, displayOrder: 15 },
+  { id: 11, parentId: 1, name: 'Dressings', slug: 'dressings', active: true, showOnHome: false, includeInMenu: false, displayOrder: 16 },
+  { id: 12, parentId: 2, name: 'Fruits & Vegetables', slug: 'fruits-vegetables', active: true, showOnHome: true, includeInMenu: false, displayOrder: 21 },
+  { id: 13, parentId: 2, name: 'Vegetables', slug: 'vegetables', active: true, showOnHome: false, includeInMenu: false, displayOrder: 22 },
+  { id: 14, parentId: 2, name: 'Fruit', slug: 'fruit', active: true, showOnHome: false, includeInMenu: false, displayOrder: 23 },
+  { id: 15, parentId: 2, name: 'Herbs & Aromatics', slug: 'herbs-aromatics', active: true, showOnHome: false, includeInMenu: false, displayOrder: 24 },
+  { id: 16, parentId: 3, name: 'Beverages', slug: 'beverages', active: true, showOnHome: true, includeInMenu: false, displayOrder: 31 },
+  { id: 17, parentId: 3, name: 'Coffee', slug: 'coffee', active: true, showOnHome: false, includeInMenu: false, displayOrder: 32 },
+  { id: 18, parentId: 3, name: 'Tea & Elixirs', slug: 'tea-elixirs', active: true, showOnHome: false, includeInMenu: false, displayOrder: 33 },
+  { id: 19, parentId: 3, name: 'Juices', slug: 'juices', active: true, showOnHome: false, includeInMenu: false, displayOrder: 34 },
+  { id: 20, parentId: 4, name: 'Bread & Bakery', slug: 'bread-bakery', active: true, showOnHome: true, includeInMenu: false, displayOrder: 41 },
+  { id: 21, parentId: 4, name: 'Flour & Baking', slug: 'flour-baking', active: true, showOnHome: true, includeInMenu: false, displayOrder: 42 },
+  { id: 22, parentId: 4, name: 'Bread', slug: 'bread', active: true, showOnHome: false, includeInMenu: false, displayOrder: 43 },
+  { id: 23, parentId: 4, name: 'Buns & Rolls', slug: 'buns-rolls', active: true, showOnHome: false, includeInMenu: false, displayOrder: 44 },
+  { id: 24, parentId: 4, name: 'Bagels & Breakfast', slug: 'bagels-breakfast', active: true, showOnHome: false, includeInMenu: false, displayOrder: 45 },
+  { id: 25, parentId: 4, name: 'Gluten-Free', slug: 'gluten-free', active: true, showOnHome: false, includeInMenu: false, displayOrder: 46 },
+  { id: 26, parentId: 5, name: 'Milk & Cream', slug: 'milk-cream', active: true, showOnHome: false, includeInMenu: false, displayOrder: 51 },
+  { id: 27, parentId: 5, name: 'Eggs & Butter', slug: 'eggs-butter', active: true, showOnHome: false, includeInMenu: false, displayOrder: 52 },
+  { id: 28, parentId: 5, name: 'Cheese', slug: 'cheese', active: true, showOnHome: false, includeInMenu: false, displayOrder: 53 },
+  { id: 29, parentId: 5, name: 'Yogurt & Cultured Dairy', slug: 'yogurt-cultured-dairy', active: true, showOnHome: false, includeInMenu: false, displayOrder: 54 },
+  { id: 30, parentId: 5, name: 'Plant-Based', slug: 'plant-based', active: true, showOnHome: false, includeInMenu: false, displayOrder: 55 },
 ]
 
 const orders = [
@@ -360,7 +385,7 @@ function CategoriesPage({ categories, products, onCreate, onEdit, onRemove, onTo
                   <td>{category.includeInMenu ? 'Có' : '-'}</td>
                   <td>{productCount(category.name)}</td>
                   <td>{category.displayOrder}</td>
-                  <td>{category.homeDisplayOrder}</td>
+                  <td>{category.homeDisplayOrder ?? category.displayOrder}</td>
                   <td><div className="row-actions"><button className="row-icon" type="button" onClick={() => onToggle(category)} title={category.active ? 'Ẩn danh mục' : 'Hiện danh mục'}><Eye size={15} /></button><button className="row-icon" type="button" onClick={() => onEdit(category)} title="Sửa danh mục"><Pencil size={15} /></button><button className="row-icon" type="button" onClick={() => onRemove(category.id)} title="Xóa danh mục"><Trash2 size={15} /></button></div></td>
                 </tr>
               ))}
@@ -550,6 +575,8 @@ function slugify(value) {
 }
 
 function CategoryModal({ categories, category, onClose, onSubmit }) {
+  const rootCategories = categories.filter((item) => !item.parentId)
+  const editingRoot = Boolean(category && !category.parentId)
   const [form, setForm] = useState(category || {
     name: '',
     slug: '',
@@ -583,7 +610,7 @@ function CategoryModal({ categories, category, onClose, onSubmit }) {
     <Modal title={category ? 'Sửa danh mục' : 'Thêm danh mục mới'} onClose={onClose}>
       <form className="modal-form" onSubmit={submit}>
         <label><span>Tên danh mục</span><input required name="name" value={form.name} onChange={change} placeholder="Ví dụ: Fresh Produce" /></label>
-        <div><label><span>Slug</span><input required name="slug" value={form.slug} onChange={change} placeholder="fresh-produce" /></label><label><span>Danh mục cha</span><select name="parentId" value={form.parentId || ''} onChange={change}><option value="">Danh mục gốc</option>{categories.filter((item) => item.id !== category?.id).map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label></div>
+        <div><label><span>Slug</span><input required name="slug" value={form.slug} onChange={change} placeholder="fresh-produce" /></label><label><span>Danh mục cha</span><select required={!editingRoot} name="parentId" value={form.parentId || ''} onChange={change}><option value="">{editingRoot ? 'Danh mục gốc' : 'Chọn danh mục gốc'}</option>{rootCategories.filter((item) => item.id !== category?.id).map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label></div>
         <label><span>Mô tả</span><input name="description" value={form.description || ''} onChange={change} placeholder="Mô tả ngắn cho danh mục" /></label>
         <label><span>URL ảnh</span><input name="image" value={form.image || ''} onChange={change} placeholder="https://..." /></label>
         <label><span>Thứ tự hiển thị</span><input required min="0" type="number" name="displayOrder" value={form.displayOrder} onChange={change} /></label>

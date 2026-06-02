@@ -32,9 +32,7 @@ const fallbackCategories = [
   { name: 'Bread & Bakery', image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=700&q=85', showOnHome: true },
   { name: 'Flour & Baking', image: 'https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?auto=format&fit=crop&w=700&q=85', showOnHome: true },
   { name: 'Fruits & Vegetables', image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=700&q=85', showOnHome: true },
-  { name: 'Fresh Meals & Pizzas', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=700&q=85', showOnHome: true },
   { name: 'Beverages', image: 'https://images.unsplash.com/photo-1544145945-f90425340c7e?auto=format&fit=crop&w=700&q=85', showOnHome: true },
-  { name: 'Fresh Meat', image: 'https://images.unsplash.com/photo-1603048297172-c92544798d5a?auto=format&fit=crop&w=700&q=85', showOnHome: true },
   { name: 'Dairy & Eggs', image: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?auto=format&fit=crop&w=700&q=85', showOnHome: true },
   { name: 'Sauces & Marinades', image: 'https://images.unsplash.com/photo-1472476443507-c7a5948772fc?auto=format&fit=crop&w=700&q=85', showOnHome: true },
 ]
@@ -103,7 +101,7 @@ const fallbackProducts = [
   {
     id: 7,
     name: 'Fresh Rigatoni Pasta',
-    category: 'Fresh Meals & Pizzas',
+    category: 'Pasta & Noodles',
     price: 4.9,
     unit: '400g',
     stock: 8,
@@ -112,7 +110,7 @@ const fallbackProducts = [
   {
     id: 8,
     name: 'Atlantic Salmon Fillet',
-    category: 'Fresh Meat',
+    category: 'Pantry',
     price: 14.5,
     unit: '350g',
     badge: 'Premium',
@@ -141,11 +139,11 @@ const articles = [
 
 const fallbackMenuItems = [
   { label: 'Shop all', href: '/products' },
-  { label: 'Fruits & vegetables', href: '/products?category=Fruits%20%26%20Vegetables' },
-  { label: 'Bread & bakery', href: '/products?category=Bread%20%26%20Bakery' },
-  { label: 'Dairy & eggs', href: '/products?category=Dairy%20%26%20Eggs' },
-  { label: 'Fresh meals', href: '/products?category=Fresh%20Meals%20%26%20Pizzas' },
   { label: 'Pantry', href: '/products?category=Pantry' },
+  { label: 'Produce', href: '/products?category=Produce' },
+  { label: 'Drinks', href: '/products?category=Drinks' },
+  { label: 'Bakery', href: '/products?category=Bakery' },
+  { label: 'Dairy & Eggs', href: '/products?category=Dairy%20%26%20Eggs' },
 ]
 
 const fallbackMegaMenuGroups = [
@@ -187,10 +185,13 @@ function catalogHref(category = '') {
 function buildMegaMenuGroups(categories) {
   const roots = categories.filter((category) => category.includeInMenu && !category.parentId)
   if (!roots.length) return fallbackMegaMenuGroups
+  const drinks = roots.find((category) => category.name === 'Drinks')
 
-  return roots.map((root) => {
+  return roots.filter((root) => root !== drinks).map((root) => {
     const children = categories.filter((category) => category.parentId === root.id)
-    const secondary = children.find((category) => category.includeInMenu)
+    const secondary = root.name === 'Produce' && drinks
+      ? drinks
+      : children.find((category) => category.includeInMenu)
     return {
       title: root.name,
       category: root.name,
