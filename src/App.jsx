@@ -326,6 +326,15 @@ function ProductsPage({ products, onAdd }) {
   const [page, setPage] = useState(1)
   const [filtersOpen, setFiltersOpen] = useState(false)
   const pageSize = 6
+  const pageTitle = selectedCategories.length === 1 ? selectedCategories[0] : 'All products'
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (selectedCategories.length === 1) params.set('category', selectedCategories[0])
+    else params.delete('category')
+    window.history.replaceState(null, '', `${window.location.pathname}${params.size ? `?${params}` : ''}`)
+    document.title = `${pageTitle} | LyLy Fresh Market`
+  }, [pageTitle, selectedCategories])
 
   const catalogPriceMax = useMemo(() => {
     const highest = Math.max(...products.map((product) => product.price), 0)
@@ -386,8 +395,8 @@ function ProductsPage({ products, onAdd }) {
   return (
     <main className="catalog-page">
       <section className="catalog-head container">
-        <div className="breadcrumbs"><a href="/">Home</a><span>/</span><a href="/products">Collections</a><span>/</span><b>All products</b></div>
-        <h1>All products</h1>
+        <div className="breadcrumbs"><a href="/">Home</a><span>/</span><a href="/products">Collections</a><span>/</span><b>{pageTitle}</b></div>
+        <h1>{pageTitle}</h1>
         <p>Explore groceries selected for freshness, flavor and everyday ease.</p>
       </section>
 
