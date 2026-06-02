@@ -1,6 +1,6 @@
 import { isSupabaseConfigured, supabase } from './supabase'
 
-const productColumns = 'id, name, category, sku, price, old_price, stock, status, unit, badge, image_url'
+const productColumns = 'id, name, category, sku, price, old_price, stock, status, unit, badge, image_url, manufacturer, vendor, warehouse, product_type'
 const categoryColumns = 'id, parent_id, name, slug, description, image_url, active, show_on_home, include_in_menu, display_order, home_display_order'
 
 function mapProduct(product) {
@@ -16,6 +16,30 @@ function mapProduct(product) {
     unit: product.unit,
     badge: product.badge || undefined,
     image: product.image_url,
+    manufacturer: product.manufacturer || 'LyLy Market',
+    vendor: product.vendor || 'LyLy Market',
+    warehouse: product.warehouse || 'Main Store',
+    productType: product.product_type || 'Grocery',
+  }
+}
+
+function productPayload(product) {
+  return {
+    ...(product.id ? { id: product.id } : {}),
+    name: product.name,
+    category: product.category,
+    sku: product.sku,
+    price: product.price,
+    old_price: product.oldPrice || null,
+    stock: product.stock,
+    status: product.status,
+    unit: product.unit,
+    badge: product.badge || null,
+    image_url: product.image,
+    manufacturer: product.manufacturer || 'LyLy Market',
+    vendor: product.vendor || 'LyLy Market',
+    warehouse: product.warehouse || 'Main Store',
+    product_type: product.productType || 'Grocery',
   }
 }
 
@@ -148,21 +172,52 @@ export async function createAdminProduct(product) {
 
   const { data, error } = await supabase
     .from('products')
-    .insert({
-      name: product.name,
-      category: product.category,
-      sku: product.sku,
-      price: product.price,
-      stock: product.stock,
-      status: product.status,
-      unit: product.unit,
-      image_url: product.image,
-    })
+    .insert(productPayload(product))
     .select(productColumns)
     .single()
 
   if (error) throw error
   return mapProduct(data)
+}
+
+export async function updateAdminProduct(product) {
+  if (!supabase) return product
+
+  const { data, error } = await supabase
+    .from('products')
+    .update(productPayload(product))
+    .eq('id', product.id)
+    .select(productColumns)
+    .single()
+
+  if (error) throw error
+  return mapProduct(data)
+}
+
+export async function updateAdminProducts(products) {
+  if (!supabase) return products
+  if (!products.length) return []
+
+  const { data, error } = await supabase
+    .from('products')
+    .upsert(products.map(productPayload))
+    .select(productColumns)
+
+  if (error) throw error
+  return data.map(mapProduct)
+}
+
+export async function importAdminProducts(products) {
+  if (!supabase) return products.map((product, index) => ({ ...product, id: product.id || Date.now() + index }))
+  if (!products.length) return []
+
+  const { data, error } = await supabase
+    .from('products')
+    .upsert(products.map(productPayload), { onConflict: 'sku' })
+    .select(productColumns)
+
+  if (error) throw error
+  return data.map(mapProduct)
 }
 
 export async function removeAdminProducts(ids) {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowRight,
   ArrowUpRight,
@@ -49,6 +49,7 @@ import {
   createAdminCategory,
   createAdminProduct,
   getAdminSession,
+  importAdminProducts,
   isSupabaseConfigured,
   loadAdminCategories,
   loadAdminProducts,
@@ -57,6 +58,8 @@ import {
   signInAdmin,
   signOutAdmin,
   updateAdminCategory,
+  updateAdminProduct,
+  updateAdminProducts,
 } from './lib/storeApi'
 
 const initialProducts = [
@@ -68,7 +71,7 @@ const initialProducts = [
   { id: 6, name: 'Free Range Brown Eggs', category: 'Dairy & Eggs', sku: 'DRY-1011', price: 5.5, stock: 21, status: 'active', unit: '12 eggs', image: 'https://images.unsplash.com/photo-1506976785307-8732e854ad03?auto=format&fit=crop&w=160&q=85' },
   { id: 7, name: 'Fresh Rigatoni Pasta', category: 'Pasta & Noodles', sku: 'MEA-1015', price: 4.9, stock: 11, status: 'active', unit: '400g', image: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=160&q=85' },
   { id: 8, name: 'Atlantic Salmon Fillet', category: 'Pantry', sku: 'MEA-1021', price: 14.5, stock: 8, status: 'active', unit: '350g', image: 'https://images.unsplash.com/photo-1599084993091-1cb5c0721cc6?auto=format&fit=crop&w=160&q=85' },
-]
+].map((product) => ({ manufacturer: 'LyLy Market', vendor: 'LyLy Market', warehouse: 'Main Store', productType: 'Grocery', ...product }))
 
 const initialCategories = [
   { id: 1, name: 'Pantry', slug: 'pantry', active: true, showOnHome: false, includeInMenu: true, displayOrder: 10 },
@@ -177,6 +180,183 @@ const pageMeta = {
 
 function money(value) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)
+}
+
+const defaultProductImage = 'https://images.unsplash.com/photo-1610348725531-843dff563e2c?auto=format&fit=crop&w=700&q=85'
+const productCsvColumns = ['sku', 'name', 'category', 'price', 'old_price', 'stock', 'status', 'unit', 'badge', 'image_url', 'manufacturer', 'vendor', 'warehouse', 'product_type']
+
+function downloadBlob(blob, fileName) {
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = fileName
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+function csvCell(value) {
+  const text = value == null ? '' : String(value)
+  return `"${text.replaceAll('"', '""')}"`
+}
+
+function downloadProductsCsv(products) {
+  const rows = products.map((product) => [
+    product.sku,
+    product.name,
+    product.category,
+    product.price,
+    product.oldPrice || '',
+    product.stock,
+    product.status,
+    product.unit,
+    product.badge || '',
+    product.image,
+    product.manufacturer,
+    product.vendor,
+    product.warehouse,
+    product.productType,
+  ])
+  const csv = [productCsvColumns, ...rows].map((row) => row.map(csvCell).join(',')).join('\r\n')
+  downloadBlob(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }), 'lyly-products.csv')
+}
+
+function parseCsv(text) {
+  const rows = []
+  let cell = ''
+  let row = []
+  let quoted = false
+
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text[index]
+    if (character === '"' && quoted && text[index + 1] === '"') {
+      cell += '"'
+      index += 1
+    } else if (character === '"') {
+      quoted = !quoted
+    } else if (character === ',' && !quoted) {
+      row.push(cell)
+      cell = ''
+    } else if ((character === '\n' || character === '\r') && !quoted) {
+      if (character === '\r' && text[index + 1] === '\n') index += 1
+      row.push(cell)
+      if (row.some((value) => value.trim())) rows.push(row)
+      row = []
+      cell = ''
+    } else {
+      cell += character
+    }
+  }
+
+  row.push(cell)
+  if (row.some((value) => value.trim())) rows.push(row)
+  return rows
+}
+
+function productsFromCsv(text, categories, products) {
+  const [headerRow, ...dataRows] = parseCsv(text.replace(/^\uFEFF/, ''))
+  if (!headerRow) throw new Error('File CSV không có dữ liệu.')
+
+  const headers = headerRow.map((header) => header.trim().toLowerCase())
+  const required = ['sku', 'name', 'category', 'price', 'stock', 'unit']
+  if (required.some((column) => !headers.includes(column))) {
+    throw new Error(`CSV cần có các cột: ${required.join(', ')}.`)
+  }
+
+  const categoryNames = new Set(categories.map((category) => category.name))
+  const field = (row, name) => row[headers.indexOf(name)]?.trim() || ''
+  return dataRows.map((row, index) => {
+    const sku = field(row, 'sku')
+    const existing = products.find((product) => product.sku === sku)
+    const category = field(row, 'category')
+    const price = Number(field(row, 'price'))
+    const stock = Number(field(row, 'stock'))
+    const status = field(row, 'status') || existing?.status || 'draft'
+    const oldPriceValue = field(row, 'old_price')
+
+    if (!sku) throw new Error(`Dòng ${index + 2}: SKU không được để trống.`)
+    if (!field(row, 'name')) throw new Error(`Dòng ${index + 2}: tên sản phẩm không được để trống.`)
+    if (!categoryNames.has(category)) throw new Error(`Dòng ${index + 2}: danh mục "${category}" không tồn tại.`)
+    if (!Number.isFinite(price) || price < 0) throw new Error(`Dòng ${index + 2}: giá bán không hợp lệ.`)
+    if (!Number.isInteger(stock) || stock < 0) throw new Error(`Dòng ${index + 2}: tồn kho không hợp lệ.`)
+    if (!['active', 'draft'].includes(status)) throw new Error(`Dòng ${index + 2}: trạng thái phải là active hoặc draft.`)
+    if (!field(row, 'unit')) throw new Error(`Dòng ${index + 2}: quy cách không được để trống.`)
+    if (oldPriceValue && (!Number.isFinite(Number(oldPriceValue)) || Number(oldPriceValue) < price)) throw new Error(`Dòng ${index + 2}: giá trước giảm phải lớn hơn hoặc bằng giá bán.`)
+
+    return {
+      ...existing,
+      sku,
+      name: field(row, 'name'),
+      category,
+      price,
+      oldPrice: oldPriceValue ? Number(oldPriceValue) : undefined,
+      stock,
+      status,
+      unit: field(row, 'unit'),
+      badge: field(row, 'badge') || undefined,
+      image: field(row, 'image_url') || existing?.image || defaultProductImage,
+      manufacturer: field(row, 'manufacturer') || existing?.manufacturer || 'LyLy Market',
+      vendor: field(row, 'vendor') || existing?.vendor || 'LyLy Market',
+      warehouse: field(row, 'warehouse') || existing?.warehouse || 'Main Store',
+      productType: field(row, 'product_type') || existing?.productType || 'Grocery',
+    }
+  })
+}
+
+function pdfText(value) {
+  return String(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\x20-\x7E]/g, '?')
+    .replace(/[\\()]/g, '\\$&')
+}
+
+function buildCatalogPdf(products) {
+  const lines = products.map((product) => `${product.name} | ${product.sku} | ${product.category} | ${money(product.price)} | Stock: ${product.stock}`)
+  const chunks = Array.from({ length: Math.max(1, Math.ceil(lines.length / 40)) }, (_, index) => lines.slice(index * 40, index * 40 + 40))
+  const fontObjectId = 3 + chunks.length * 2
+  const objects = []
+  const pageIds = chunks.map((_, index) => 3 + index * 2)
+
+  objects[1] = '<< /Type /Catalog /Pages 2 0 R >>'
+  objects[2] = `<< /Type /Pages /Kids [${pageIds.map((id) => `${id} 0 R`).join(' ')}] /Count ${pageIds.length} >>`
+  chunks.forEach((chunk, index) => {
+    const pageObjectId = pageIds[index]
+    const contentObjectId = pageObjectId + 1
+    const content = [
+      'BT',
+      '/F1 17 Tf',
+      '50 790 Td',
+      '(LyLy Product Catalog) Tj',
+      '/F1 9 Tf',
+      '0 -20 Td',
+      `(Page ${index + 1} of ${chunks.length}) Tj`,
+      ...chunk.flatMap((line) => ['0 -16 Td', `(${pdfText(line)}) Tj`]),
+      'ET',
+    ].join('\n')
+    objects[pageObjectId] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 842] /Resources << /Font << /F1 ${fontObjectId} 0 R >> >> /Contents ${contentObjectId} 0 R >>`
+    objects[contentObjectId] = `<< /Length ${content.length} >>\nstream\n${content}\nendstream`
+  })
+  objects[fontObjectId] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>'
+
+  let pdf = '%PDF-1.4\n'
+  const offsets = [0]
+  for (let index = 1; index < objects.length; index += 1) {
+    offsets[index] = pdf.length
+    pdf += `${index} 0 obj\n${objects[index]}\nendobj\n`
+  }
+  const xref = pdf.length
+  pdf += `xref\n0 ${objects.length}\n0000000000 65535 f \n`
+  for (let index = 1; index < objects.length; index += 1) {
+    pdf += `${String(offsets[index]).padStart(10, '0')} 00000 n \n`
+  }
+  pdf += `trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`
+  return pdf
+}
+
+function downloadCatalogPdf(products) {
+  downloadBlob(new Blob([buildCatalogPdf(products)], { type: 'application/pdf' }), 'lyly-product-catalog.pdf')
 }
 
 function StatusPill({ children }) {
@@ -305,36 +485,136 @@ function SetupCard({ id, title, copy, button, children, wide, tasks, onToggle })
   )
 }
 
-function ProductsPage({ products, onCreate, onRemove }) {
+function ProductsPage({ categories, products, onBulkEdit, onCreate, onEdit, onImport, onRemove }) {
   const [query, setQuery] = useState('')
-  const [filter, setFilter] = useState('all')
+  const [statusTab, setStatusTab] = useState('all')
   const [selected, setSelected] = useState([])
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [bulkOpen, setBulkOpen] = useState(false)
+  const [sku, setSku] = useState('')
+  const [notice, setNotice] = useState('')
+  const [filters, setFilters] = useState({
+    category: 'all',
+    includeSubcategories: true,
+    manufacturer: 'all',
+    vendor: 'all',
+    warehouse: 'all',
+    productType: 'all',
+    published: 'all',
+    stock: 'all',
+  })
+  const importInput = useRef(null)
+  const filterOptions = (name) => [...new Set(products.map((product) => product[name]).filter(Boolean))].sort()
+  const activeFilterCount = Object.entries(filters).filter(([name, value]) => name !== 'includeSubcategories' && value !== 'all').length
+  const categoryMatches = (product) => {
+    if (filters.category === 'all' || product.category === filters.category) return true
+    if (!filters.includeSubcategories) return false
+
+    const selectedCategory = categories.find((category) => category.name === filters.category)
+    let productCategory = categories.find((category) => category.name === product.category)
+    while (selectedCategory && productCategory?.parentId) {
+      productCategory = categories.find((category) => category.id === productCategory.parentId)
+      if (productCategory?.id === selectedCategory.id) return true
+    }
+    return false
+  }
   const visible = products.filter((product) => {
     const matchesQuery = `${product.name} ${product.sku} ${product.category}`.toLowerCase().includes(query.toLowerCase())
-    return matchesQuery && (filter === 'all' || product.status === filter)
+    const matchesStatus = statusTab === 'all' || product.status === statusTab
+    const matchesPublished = filters.published === 'all' || product.status === filters.published
+    const matchesStock = filters.stock === 'all'
+      || (filters.stock === 'in' && product.stock > 0)
+      || (filters.stock === 'out' && product.stock === 0)
+      || (filters.stock === 'low' && product.stock > 0 && product.stock < 10)
+    return matchesQuery
+      && matchesStatus
+      && matchesPublished
+      && matchesStock
+      && categoryMatches(product)
+      && (filters.manufacturer === 'all' || product.manufacturer === filters.manufacturer)
+      && (filters.vendor === 'all' || product.vendor === filters.vendor)
+      && (filters.warehouse === 'all' || product.warehouse === filters.warehouse)
+      && (filters.productType === 'all' || product.productType === filters.productType)
   })
   const removeProduct = (id) => onRemove([id])
-  const toggleAll = () => setSelected(selected.length === visible.length ? [] : visible.map((product) => product.id))
+  const visibleIds = visible.map((product) => product.id)
+  const allVisibleSelected = visible.length > 0 && visibleIds.every((id) => selected.includes(id))
+  const toggleAll = () => setSelected((current) => allVisibleSelected ? current.filter((id) => !visibleIds.includes(id)) : [...new Set([...current, ...visibleIds])])
   const toggle = (id) => setSelected((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])
   const removeSelected = async () => {
     await onRemove(selected)
     setSelected([])
   }
+  const setFilter = (name, value) => setFilters((current) => ({ ...current, [name]: value }))
+  const resetFilters = () => setFilters({
+    category: 'all',
+    includeSubcategories: true,
+    manufacturer: 'all',
+    vendor: 'all',
+    warehouse: 'all',
+    productType: 'all',
+    published: 'all',
+    stock: 'all',
+  })
+  const goToSku = () => {
+    const product = products.find((item) => item.sku.toLowerCase() === sku.trim().toLowerCase())
+    if (!product) {
+      setNotice('Không tìm thấy sản phẩm có SKU này.')
+      return
+    }
+    setNotice('')
+    onEdit(product)
+  }
+  const importCsv = async (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    try {
+      const imported = productsFromCsv(await file.text(), categories, products)
+      await onImport(imported)
+      setNotice(`Đã nhập ${imported.length} sản phẩm từ CSV.`)
+    } catch (error) {
+      setNotice(error.message)
+    } finally {
+      event.target.value = ''
+    }
+  }
 
   return (
     <>
-      <SectionTitle title="Sản phẩm" description={pageMeta.products[1]} action="Thêm sản phẩm" onAction={onCreate} />
+      <SectionTitle title="Sản phẩm" description={pageMeta.products[1]} />
+      <div className="product-action-bar">
+        <button className="admin-primary" type="button" onClick={onCreate}><Plus size={15} /> Thêm mới</button>
+        <button className="admin-secondary" type="button" disabled={!selected.length} onClick={() => setBulkOpen(true)}><Pencil size={15} /> Sửa hàng loạt</button>
+        <button className="admin-secondary" type="button" onClick={() => downloadCatalogPdf(visible)}><FileText size={15} /> Tải catalog PDF</button>
+        <button className="admin-secondary" type="button" onClick={() => downloadProductsCsv(visible)}><Download size={15} /> Xuất CSV</button>
+        <button className="admin-secondary" type="button" onClick={() => importInput.current?.click()}><Upload size={15} /> Nhập CSV</button>
+        <button className="product-danger" type="button" disabled={!selected.length} onClick={removeSelected}><Trash2 size={15} /> Xóa đã chọn{selected.length ? ` (${selected.length})` : ''}</button>
+        <input ref={importInput} type="file" accept=".csv,text/csv" hidden onChange={importCsv} />
+      </div>
+      {notice && <div className="product-notice"><span>{notice}</span><button type="button" onClick={() => setNotice('')}><X size={14} /></button></div>}
       <section className="admin-panel data-panel">
-        <div className="data-tabs"><button className="active" type="button">Tất cả</button><button type="button">Đang bán</button><button type="button">Bản nháp</button><button className="add-view" type="button"><Plus size={14} /> Tạo chế độ xem</button></div>
+        <div className="data-tabs"><button className={statusTab === 'all' ? 'active' : ''} type="button" onClick={() => setStatusTab('all')}>Tất cả ({products.length})</button><button className={statusTab === 'active' ? 'active' : ''} type="button" onClick={() => setStatusTab('active')}>Đang bán ({products.filter((product) => product.status === 'active').length})</button><button className={statusTab === 'draft' ? 'active' : ''} type="button" onClick={() => setStatusTab('draft')}>Bản nháp ({products.filter((product) => product.status === 'draft').length})</button></div>
         <div className="table-toolbar">
           <label><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm kiếm sản phẩm" /></label>
-          <select value={filter} onChange={(event) => setFilter(event.target.value)}><option value="all">Tất cả trạng thái</option><option value="active">Đang bán</option><option value="draft">Bản nháp</option></select>
-          <button type="button"><Filter size={15} /> Bộ lọc</button>
-          {selected.length > 0 && <button className="danger-button" type="button" onClick={removeSelected}><Trash2 size={15} /> Xóa {selected.length} mục</button>}
+          <button className={activeFilterCount ? 'filter-active' : ''} type="button" aria-expanded={filtersOpen} onClick={() => setFiltersOpen(!filtersOpen)}><Filter size={15} /> Bộ lọc {activeFilterCount > 0 && <em>{activeFilterCount}</em>}</button>
         </div>
+        {filtersOpen && (
+          <div className="product-filter-panel">
+            <label><span>Danh mục</span><select value={filters.category} onChange={(event) => setFilter('category', event.target.value)}><option value="all">Tất cả danh mục</option>{categories.filter((category) => category.active).map((category) => <option key={category.id}>{category.name}</option>)}</select></label>
+            <label><span>Nhà sản xuất</span><select value={filters.manufacturer} onChange={(event) => setFilter('manufacturer', event.target.value)}><option value="all">Tất cả</option>{filterOptions('manufacturer').map((value) => <option key={value}>{value}</option>)}</select></label>
+            <label><span>Nhà cung cấp</span><select value={filters.vendor} onChange={(event) => setFilter('vendor', event.target.value)}><option value="all">Tất cả</option>{filterOptions('vendor').map((value) => <option key={value}>{value}</option>)}</select></label>
+            <label><span>Kho hàng</span><select value={filters.warehouse} onChange={(event) => setFilter('warehouse', event.target.value)}><option value="all">Tất cả</option>{filterOptions('warehouse').map((value) => <option key={value}>{value}</option>)}</select></label>
+            <label><span>Loại sản phẩm</span><select value={filters.productType} onChange={(event) => setFilter('productType', event.target.value)}><option value="all">Tất cả</option>{filterOptions('productType').map((value) => <option key={value}>{value}</option>)}</select></label>
+            <label><span>Hiển thị storefront</span><select value={filters.published} onChange={(event) => setFilter('published', event.target.value)}><option value="all">Tất cả</option><option value="active">Đang hiển thị</option><option value="draft">Đang ẩn</option></select></label>
+            <label><span>Tồn kho</span><select value={filters.stock} onChange={(event) => setFilter('stock', event.target.value)}><option value="all">Tất cả</option><option value="in">Còn hàng</option><option value="low">Sắp hết hàng</option><option value="out">Hết hàng</option></select></label>
+            <label className="product-filter-checkbox"><input type="checkbox" checked={filters.includeSubcategories} onChange={(event) => setFilter('includeSubcategories', event.target.checked)} /><span>Tìm trong danh mục con</span></label>
+            <label className="product-sku-jump"><span>Đi thẳng tới SKU</span><div><input value={sku} onChange={(event) => setSku(event.target.value)} placeholder="Ví dụ: FRT-1024" /><button type="button" onClick={goToSku}>Mở</button></div></label>
+            <div className="product-filter-actions"><button className="admin-secondary" type="button" onClick={resetFilters}>Xóa lọc</button><button className="admin-primary" type="button" onClick={() => setFiltersOpen(false)}>Áp dụng</button></div>
+          </div>
+        )}
         <div className="admin-table-wrap">
           <table className="admin-table product-table">
-            <thead><tr><th><input type="checkbox" checked={visible.length > 0 && selected.length === visible.length} onChange={toggleAll} /></th><th>Sản phẩm</th><th>Trạng thái</th><th>Tồn kho</th><th>Danh mục</th><th>Giá</th><th></th></tr></thead>
+            <thead><tr><th><input type="checkbox" checked={allVisibleSelected} onChange={toggleAll} /></th><th>Sản phẩm</th><th>Trạng thái</th><th>Tồn kho</th><th>Danh mục</th><th>Giá</th><th></th></tr></thead>
             <tbody>
               {visible.map((product) => (
                 <tr key={product.id}>
@@ -344,7 +624,7 @@ function ProductsPage({ products, onCreate, onRemove }) {
                   <td><span className={product.stock < 10 ? 'low-stock' : ''}>{product.stock} in stock</span></td>
                   <td>{product.category}</td>
                   <td><b>{money(product.price)}</b></td>
-                  <td><button className="row-icon" type="button" onClick={() => removeProduct(product.id)} aria-label={`Delete ${product.name}`}><Trash2 size={15} /></button></td>
+                  <td><div className="row-actions"><button className="row-icon" type="button" onClick={() => onEdit(product)} title="Sửa sản phẩm"><Pencil size={15} /></button><button className="row-icon" type="button" onClick={() => removeProduct(product.id)} aria-label={`Delete ${product.name}`}><Trash2 size={15} /></button></div></td>
                 </tr>
               ))}
             </tbody>
@@ -352,6 +632,7 @@ function ProductsPage({ products, onCreate, onRemove }) {
           {!visible.length && <EmptyHint icon={ShoppingBag} title="Không tìm thấy sản phẩm" copy="Thử thay đổi từ khóa hoặc thêm sản phẩm mới." />}
         </div>
       </section>
+      {bulkOpen && <BulkProductModal categories={categories} count={selected.length} onClose={() => setBulkOpen(false)} onSubmit={async (changes) => { await onBulkEdit(selected, changes); setSelected([]); setBulkOpen(false) }} />}
     </>
   )
 }
@@ -647,23 +928,73 @@ function CategoryModal({ categories, category, onClose, onSubmit }) {
   )
 }
 
-function ProductModal({ categories, onClose, onSubmit }) {
+function ProductModal({ categories, product, onClose, onSubmit }) {
   const activeCategories = categories.filter((category) => category.active)
-  const [form, setForm] = useState({ name: '', category: activeCategories[0]?.name || '', sku: '', price: '', stock: '', unit: '' })
+  const [form, setForm] = useState(product || {
+    name: '',
+    category: activeCategories[0]?.name || '',
+    sku: '',
+    price: '',
+    oldPrice: '',
+    stock: '',
+    status: 'active',
+    unit: '',
+    badge: '',
+    image: defaultProductImage,
+    manufacturer: 'LyLy Market',
+    vendor: 'LyLy Market',
+    warehouse: 'Main Store',
+    productType: 'Grocery',
+  })
   const change = (event) => setForm({ ...form, [event.target.name]: event.target.value })
   const submit = (event) => {
     event.preventDefault()
-    onSubmit({ ...form, price: Number(form.price), stock: Number(form.stock), status: 'active', image: 'https://images.unsplash.com/photo-1610348725531-843dff563e2c?auto=format&fit=crop&w=160&q=85' })
+    onSubmit({
+      ...form,
+      price: Number(form.price),
+      oldPrice: form.oldPrice ? Number(form.oldPrice) : undefined,
+      stock: Number(form.stock),
+      image: form.image || defaultProductImage,
+    })
   }
   return (
-    <Modal title="Thêm sản phẩm mới" onClose={onClose}>
+    <Modal wide title={product ? 'Sửa sản phẩm' : 'Thêm sản phẩm mới'} onClose={onClose}>
       <form className="modal-form" onSubmit={submit}>
         <label><span>Tên sản phẩm</span><input required name="name" value={form.name} onChange={change} placeholder="Ví dụ: Organic Baby Spinach" /></label>
         <div><label><span>Danh mục</span><select required name="category" value={form.category} onChange={change}>{activeCategories.map((category) => <option key={category.id}>{category.name}</option>)}</select></label><label><span>SKU</span><input required name="sku" value={form.sku} onChange={change} placeholder="FRT-1030" /></label></div>
-        <div><label><span>Giá bán</span><input required min="0" step=".01" type="number" name="price" value={form.price} onChange={change} placeholder="0.00" /></label><label><span>Tồn kho</span><input required min="0" type="number" name="stock" value={form.stock} onChange={change} placeholder="0" /></label></div>
-        <label><span>Quy cách</span><input required name="unit" value={form.unit} onChange={change} placeholder="Ví dụ: 250g" /></label>
-        <div className="upload-box"><Upload size={19} /><span>Ảnh sản phẩm sẽ được thêm sau khi tạo sản phẩm.</span></div>
-        <div className="modal-actions"><button className="admin-secondary" type="button" onClick={onClose}>Hủy</button><button className="admin-primary" type="submit">Thêm sản phẩm</button></div>
+        <div><label><span>Giá bán</span><input required min="0" step=".01" type="number" name="price" value={form.price} onChange={change} placeholder="0.00" /></label><label><span>Giá trước giảm</span><input min={form.price || 0} step=".01" type="number" name="oldPrice" value={form.oldPrice || ''} onChange={change} placeholder="Để trống nếu không sale" /></label></div>
+        <div><label><span>Tồn kho</span><input required min="0" type="number" name="stock" value={form.stock} onChange={change} placeholder="0" /></label><label><span>Trạng thái</span><select name="status" value={form.status} onChange={change}><option value="active">Đang hiển thị</option><option value="draft">Bản nháp</option></select></label></div>
+        <div><label><span>Quy cách</span><input required name="unit" value={form.unit} onChange={change} placeholder="Ví dụ: 250g" /></label><label><span>Nhãn sản phẩm</span><input name="badge" value={form.badge || ''} onChange={change} placeholder="Ví dụ: Organic" /></label></div>
+        <label><span>URL ảnh sản phẩm</span><input required name="image" value={form.image} onChange={change} placeholder="https://..." /></label>
+        <div><label><span>Nhà sản xuất</span><input required name="manufacturer" value={form.manufacturer} onChange={change} /></label><label><span>Nhà cung cấp</span><input required name="vendor" value={form.vendor} onChange={change} /></label></div>
+        <div><label><span>Kho hàng</span><input required name="warehouse" value={form.warehouse} onChange={change} /></label><label><span>Loại sản phẩm</span><input required name="productType" value={form.productType} onChange={change} /></label></div>
+        <div className="upload-box"><Upload size={19} /><span>Ảnh từ URL sẽ được hiển thị trực tiếp trên storefront sau khi lưu.</span></div>
+        <div className="modal-actions"><button className="admin-secondary" type="button" onClick={onClose}>Hủy</button><button className="admin-primary" type="submit">{product ? 'Lưu thay đổi' : 'Thêm sản phẩm'}</button></div>
+      </form>
+    </Modal>
+  )
+}
+
+function BulkProductModal({ categories, count, onClose, onSubmit }) {
+  const [form, setForm] = useState({ category: '', status: '', stockAdjustment: '', manufacturer: '', vendor: '', warehouse: '', productType: '' })
+  const change = (event) => setForm({ ...form, [event.target.name]: event.target.value })
+  const submit = (event) => {
+    event.preventDefault()
+    onSubmit({
+      ...form,
+      stockAdjustment: form.stockAdjustment ? Number(form.stockAdjustment) : 0,
+    })
+  }
+
+  return (
+    <Modal title={`Sửa hàng loạt ${count} sản phẩm`} onClose={onClose}>
+      <form className="modal-form" onSubmit={submit}>
+        <p className="modal-note">Chỉ các trường có nhập giá trị mới được áp dụng cho sản phẩm đã chọn.</p>
+        <div><label><span>Danh mục</span><select name="category" value={form.category} onChange={change}><option value="">Giữ nguyên</option>{categories.filter((category) => category.active).map((category) => <option key={category.id}>{category.name}</option>)}</select></label><label><span>Trạng thái</span><select name="status" value={form.status} onChange={change}><option value="">Giữ nguyên</option><option value="active">Đang hiển thị</option><option value="draft">Bản nháp</option></select></label></div>
+        <label><span>Điều chỉnh tồn kho</span><input type="number" name="stockAdjustment" value={form.stockAdjustment} onChange={change} placeholder="Ví dụ: 10 hoặc -5" /></label>
+        <div><label><span>Nhà sản xuất</span><input name="manufacturer" value={form.manufacturer} onChange={change} placeholder="Giữ nguyên" /></label><label><span>Nhà cung cấp</span><input name="vendor" value={form.vendor} onChange={change} placeholder="Giữ nguyên" /></label></div>
+        <div><label><span>Kho hàng</span><input name="warehouse" value={form.warehouse} onChange={change} placeholder="Giữ nguyên" /></label><label><span>Loại sản phẩm</span><input name="productType" value={form.productType} onChange={change} placeholder="Giữ nguyên" /></label></div>
+        <div className="modal-actions"><button className="admin-secondary" type="button" onClick={onClose}>Hủy</button><button className="admin-primary" type="submit">Áp dụng thay đổi</button></div>
       </form>
     </Modal>
   )
@@ -688,10 +1019,10 @@ function DiscountModal({ onClose, onSubmit }) {
   )
 }
 
-function Modal({ title, children, onClose }) {
+function Modal({ title, children, onClose, wide = false }) {
   return (
     <div className="modal-overlay" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <section className="admin-modal">
+      <section className={`admin-modal ${wide ? 'wide' : ''}`}>
         <div className="modal-header"><h2>{title}</h2><button type="button" onClick={onClose}><X size={19} /></button></div>
         {children}
       </section>
@@ -735,6 +1066,7 @@ function AdminApp() {
   const [categories, setCategories] = useState(initialCategories)
   const [discounts, setDiscounts] = useState(initialDiscounts)
   const [productModal, setProductModal] = useState(false)
+  const [productEditing, setProductEditing] = useState(null)
   const [categoryModal, setCategoryModal] = useState(false)
   const [categoryEditing, setCategoryEditing] = useState(null)
   const [discountModal, setDiscountModal] = useState(false)
@@ -837,15 +1169,57 @@ function AdminApp() {
     }
   }
 
-  const addProduct = async (product) => {
+  const saveProduct = async (product) => {
     setAdminError('')
     try {
-      const createdProduct = await createAdminProduct(product)
-      setProducts((current) => [createdProduct, ...current])
+      if (product.id) {
+        const updatedProduct = await updateAdminProduct(product)
+        setProducts((current) => current.map((item) => item.id === updatedProduct.id ? updatedProduct : item))
+      } else {
+        const createdProduct = await createAdminProduct(product)
+        setProducts((current) => [createdProduct, ...current])
+      }
+      setProductEditing(null)
       setProductModal(false)
     } catch (error) {
       console.error(error)
       setAdminError(error.message)
+    }
+  }
+
+  const bulkEditProducts = async (ids, changes) => {
+    setAdminError('')
+    try {
+      const updates = products
+        .filter((product) => ids.includes(product.id))
+        .map((product) => ({
+          ...product,
+          ...Object.fromEntries(Object.entries(changes).filter(([name, value]) => name !== 'stockAdjustment' && value !== '')),
+          stock: Math.max(0, product.stock + changes.stockAdjustment),
+        }))
+      const updatedProducts = await updateAdminProducts(updates)
+      const updatedById = new Map(updatedProducts.map((product) => [product.id, product]))
+      setProducts((current) => current.map((product) => updatedById.get(product.id) || product))
+    } catch (error) {
+      console.error(error)
+      setAdminError(error.message)
+      throw error
+    }
+  }
+
+  const importProducts = async (importedProducts) => {
+    setAdminError('')
+    try {
+      const savedProducts = await importAdminProducts(importedProducts)
+      setProducts((current) => {
+        const savedBySku = new Map(savedProducts.map((product) => [product.sku, product]))
+        const unchanged = current.filter((product) => !savedBySku.has(product.sku))
+        return [...savedProducts, ...unchanged]
+      })
+    } catch (error) {
+      console.error(error)
+      setAdminError(error.message)
+      throw error
     }
   }
 
@@ -911,7 +1285,7 @@ function AdminApp() {
 
   const renderPage = () => {
     if (page === 'dashboard') return <Dashboard tasks={tasks} setTasks={setTasks} />
-    if (page === 'products') return <ProductsPage products={products} onCreate={() => setProductModal(true)} onRemove={removeProducts} />
+    if (page === 'products') return <ProductsPage categories={categories} products={products} onBulkEdit={bulkEditProducts} onCreate={() => { setProductEditing(null); setProductModal(true) }} onEdit={(product) => { setProductEditing(product); setProductModal(true) }} onImport={importProducts} onRemove={removeProducts} />
     if (page === 'categories') return <CategoriesPage categories={categories} products={products} onCreate={() => { setCategoryEditing(null); setCategoryModal(true) }} onEdit={(category) => { setCategoryEditing(category); setCategoryModal(true) }} onRemove={removeCategory} onToggle={toggleCategory} />
     if (page === 'orders') return <OrdersPage />
     if (page === 'customers') return <CustomersPage />
@@ -972,7 +1346,7 @@ function AdminApp() {
         {page !== 'dashboard' && <div className="admin-breadcrumb"><button type="button" onClick={() => navigate('dashboard')}>LyLy</button><ChevronRight size={13} /><span>{pageMeta[page]?.[0] || 'Trang chủ'}</span></div>}
         {renderPage()}
       </main>
-      {productModal && <ProductModal categories={categories} onClose={() => setProductModal(false)} onSubmit={addProduct} />}
+      {productModal && <ProductModal categories={categories} product={productEditing} onClose={() => { setProductEditing(null); setProductModal(false) }} onSubmit={saveProduct} />}
       {categoryModal && <CategoryModal categories={categories} category={categoryEditing} onClose={() => { setCategoryEditing(null); setCategoryModal(false) }} onSubmit={saveCategory} />}
       {discountModal && <DiscountModal onClose={() => setDiscountModal(false)} onSubmit={addDiscount} />}
     </div>
