@@ -53,11 +53,6 @@
 .nav-group button:hover, .nav-group button.active, .sidebar-settings:hover, .sidebar-settings.active { color: #24483a; background: white; box-shadow: 0 1px 1px #18342808; }
 .nav-group button em { min-width: 18px; margin-left: auto; padding: 2px 5px; border-radius: 9px; color: #345242; background: #d9e9d6; font-size: 9px; font-style: normal; text-align: center; }
 .sidebar-settings { margin-top: auto; }
-.trial-card { margin-top: 13px; padding: 13px; border-radius: 9px; color: #e8f3ed; background: #1e4135; }
-.trial-card span { color: #b9d1c4; font-size: 10px; }
-.trial-card b { display: block; margin: 3px 0 4px; color: white; font-size: 12px; }
-.trial-card p { margin: 0 0 11px; color: #b9d1c4; font-size: 10px; line-height: 1.45; }
-.trial-card button { width: 100%; height: 31px; border: 0; border-radius: 5px; color: #28473b; background: #fff; font-size: 11px; font-weight: 700; }
 
 .admin-main { min-height: 100vh; margin-left: 250px; padding: 93px 38px 50px; }
 .admin-main.is-dashboard { padding-top: 90px; }

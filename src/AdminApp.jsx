@@ -618,7 +618,6 @@ function AdminApp() {
           ))}
         </nav>
         <button className={`sidebar-settings ${page === 'settings' ? 'active' : ''}`} type="button" onClick={() => navigate('settings')}><Settings size={17} /> Cài đặt</button>
-        <div className="trial-card"><span>LyLy Starter</span><b>14 ngày dùng thử</b><p>Khám phá toàn bộ công cụ vận hành cửa hàng.</p><button type="button">Chọn gói</button></div>
       </aside>
 
       {menuOpen && <button className="admin-menu-overlay" type="button" onClick={() => setMenuOpen(false)} aria-label="Close menu" />}
