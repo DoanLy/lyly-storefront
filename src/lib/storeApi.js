@@ -4,6 +4,8 @@ const productColumns = 'id, name, category, sku, price, old_price, stock, status
 const categoryColumns = 'id, parent_id, name, slug, description, image_url, active, show_on_home, include_in_menu, display_order, home_display_order'
 const orderColumns = 'id, order_number, total, payment_status, delivery_status, created_at, customers(full_name, email, phone, location), order_items(product_name, unit_price, quantity, line_total, variant_label)'
 const discountColumns = 'id, code, percent_off, active, ends_at, title, method, discount_type, value_type, value_amount, applies_to, minimum_type, minimum_value, usage_limit, once_per_customer, combines, starts_at'
+const customerColumns = 'id, email, full_name, phone, location, created_at, updated_at'
+const articleColumns = 'id, title, slug, category, excerpt, image_url, status, published_at, author, content, tags, type, created_at, updated_at'
 
 function mapProduct(product) {
   return {
@@ -183,6 +185,78 @@ function discountPayload(discount) {
     combines: discount.combines || {},
     starts_at: discount.startsAt || new Date().toISOString(),
     ends_at: discount.endsAt || null,
+  }
+}
+
+function initials(name) {
+  return String(name || 'Guest')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('') || 'G'
+}
+
+function mapCustomer(customer) {
+  return {
+    id: customer.id,
+    name: customer.full_name,
+    email: customer.email,
+    phone: customer.phone || '',
+    location: customer.location || '',
+    orders: Number(customer.orders || 0),
+    spent: Number(customer.spent || 0),
+    initials: initials(customer.full_name),
+    createdAt: customer.created_at,
+    notes: customer.notes || '',
+    tags: Array.isArray(customer.tags) ? customer.tags : [],
+  }
+}
+
+function customerPayload(customer) {
+  return {
+    ...(customer.id ? { id: customer.id } : {}),
+    email: String(customer.email || '').trim().toLowerCase(),
+    full_name: customer.name || `${customer.firstName || ''} ${customer.lastName || ''}`.trim(),
+    phone: customer.phone || null,
+    location: customer.location || null,
+  }
+}
+
+function mapArticle(article) {
+  const publishedAt = article.published_at || article.created_at
+  return {
+    id: article.id,
+    title: article.title,
+    slug: article.slug,
+    category: article.category,
+    type: article.type || (article.category === 'Recipes' ? 'recipe' : 'news'),
+    excerpt: article.excerpt || '',
+    content: article.content || '',
+    image: article.image_url,
+    status: article.status === 'published' ? 'Published' : 'Draft',
+    author: article.author || 'LyLy Editorial',
+    date: publishedAt ? new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(new Date(publishedAt)) : '',
+    publishedAt,
+    tags: Array.isArray(article.tags) ? article.tags : [],
+    ingredients: [],
+  }
+}
+
+function articlePayload(article) {
+  return {
+    ...(article.id ? { id: article.id } : {}),
+    title: article.title,
+    slug: article.slug,
+    category: article.category || 'News',
+    excerpt: article.excerpt || null,
+    content: article.content || null,
+    image_url: article.image || article.imageUrl,
+    status: article.status === 'Published' || article.status === 'published' ? 'published' : 'draft',
+    published_at: article.status === 'Published' || article.status === 'published' ? (article.publishedAt || new Date().toISOString()) : null,
+    author: article.author || 'LyLy Editorial',
+    tags: Array.isArray(article.tags) ? article.tags : String(article.tags || '').split(',').map((tag) => tag.trim()).filter(Boolean),
+    type: article.type || (article.category === 'Recipes' ? 'recipe' : 'news'),
   }
 }
 
@@ -428,6 +502,146 @@ export async function removeAdminDiscounts(ids) {
 
   const { error } = await supabase.from('discounts').delete().in('id', ids)
   if (error) throw error
+}
+
+export async function loadAdminCustomers() {
+  if (!supabase) return null
+
+  const { data, error } = await supabase
+    .from('customers')
+    .select(customerColumns)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  const customers = data.map(mapCustomer)
+  const { data: orders } = await supabase
+    .from('orders')
+    .select('customer_id,total')
+
+  if (!orders) return customers
+  const totals = orders.reduce((acc, order) => {
+    const current = acc.get(order.customer_id) || { orders: 0, spent: 0 }
+    acc.set(order.customer_id, { orders: current.orders + 1, spent: current.spent + Number(order.total || 0) })
+    return acc
+  }, new Map())
+
+  return customers.map((customer) => ({ ...customer, ...(totals.get(customer.id) || {}) }))
+}
+
+export async function createAdminCustomer(customer) {
+  if (!supabase) return { ...customer, id: Date.now(), initials: initials(customer.name), orders: 0, spent: 0 }
+
+  const { data, error } = await supabase
+    .from('customers')
+    .insert(customerPayload(customer))
+    .select(customerColumns)
+    .single()
+
+  if (error) throw error
+  return mapCustomer(data)
+}
+
+export async function updateAdminCustomer(customer) {
+  if (!supabase) return { ...customer, initials: initials(customer.name) }
+
+  const { data, error } = await supabase
+    .from('customers')
+    .update(customerPayload(customer))
+    .eq('id', customer.id)
+    .select(customerColumns)
+    .single()
+
+  if (error) throw error
+  return { ...mapCustomer(data), orders: customer.orders || 0, spent: customer.spent || 0 }
+}
+
+export async function removeAdminCustomers(ids) {
+  if (!supabase || !ids.length) return
+
+  const { error } = await supabase.from('customers').delete().in('id', ids)
+  if (error) throw error
+}
+
+export async function loadPublicArticles() {
+  if (!supabase) return null
+
+  const { data, error } = await supabase
+    .from('articles')
+    .select(articleColumns)
+    .eq('status', 'published')
+    .order('published_at', { ascending: false, nullsFirst: false })
+
+  if (error) throw error
+  return data.map(mapArticle)
+}
+
+export async function loadAdminArticles() {
+  if (!supabase) return null
+
+  const { data, error } = await supabase
+    .from('articles')
+    .select(articleColumns)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return data.map(mapArticle)
+}
+
+export async function createAdminArticle(article) {
+  if (!supabase) return { ...article, id: Date.now(), date: new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(new Date()) }
+
+  const { data, error } = await supabase
+    .from('articles')
+    .insert(articlePayload(article))
+    .select(articleColumns)
+    .single()
+
+  if (error) throw error
+  return mapArticle(data)
+}
+
+export async function updateAdminArticle(article) {
+  if (!supabase) return article
+
+  const { data, error } = await supabase
+    .from('articles')
+    .update(articlePayload(article))
+    .eq('id', article.id)
+    .select(articleColumns)
+    .single()
+
+  if (error) throw error
+  return mapArticle(data)
+}
+
+export async function removeAdminArticles(ids) {
+  if (!supabase || !ids.length) return
+
+  const { error } = await supabase.from('articles').delete().in('id', ids)
+  if (error) throw error
+}
+
+export async function loadStoreSettings() {
+  if (!supabase) return null
+
+  const { data, error } = await supabase
+    .from('store_settings')
+    .select('key,value')
+
+  if (error) throw error
+  return Object.fromEntries(data.map((item) => [item.key, item.value]))
+}
+
+export async function saveStoreSettings(settings) {
+  if (!supabase) return settings
+
+  const rows = Object.entries(settings).map(([key, value]) => ({ key, value }))
+  const { error } = await supabase
+    .from('store_settings')
+    .upsert(rows, { onConflict: 'key' })
+
+  if (error) throw error
+  return settings
 }
 
 function fileToDataUrl(file) {

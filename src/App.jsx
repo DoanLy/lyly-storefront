@@ -28,7 +28,7 @@ import {
   X,
 } from 'lucide-react'
 import './App.css'
-import { createStorefrontOrder, loadPublicCategories, loadPublicDiscounts, loadPublicProducts, subscribeToNewsletter } from './lib/storeApi'
+import { createStorefrontOrder, loadPublicArticles, loadPublicCategories, loadPublicDiscounts, loadPublicProducts, loadStoreSettings, subscribeToNewsletter } from './lib/storeApi'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 
 const fallbackCategories = [
@@ -140,24 +140,6 @@ const fallbackProducts = [
 const fallbackDiscounts = [
   { code: 'FRESH20', title: 'Fresh 20', method: 'code', discountType: 'order', valueType: 'percentage', valueAmount: 20, minimumType: 'none', minimumValue: 0, status: 'Active', active: true },
   { code: 'WELCOME10', title: 'Welcome 10', method: 'code', discountType: 'order', valueType: 'percentage', valueAmount: 10, minimumType: 'none', minimumValue: 0, status: 'Active', active: true },
-]
-
-const articles = [
-  {
-    category: 'Kitchen tips',
-    title: 'A simpler way to plan your weekly groceries',
-    image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=85',
-  },
-  {
-    category: 'Recipes',
-    title: 'Three bright salads for warmer days',
-    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=900&q=85',
-  },
-  {
-    category: 'Local stories',
-    title: 'Meet the growers behind our organic greens',
-    image: 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=900&q=85',
-  },
 ]
 
 const storeLocations = [
@@ -1226,9 +1208,9 @@ function FaqPage() {
   )
 }
 
-function BlogIndexPage({ type }) {
+function BlogIndexPage({ type, articles }) {
   const isRecipes = type === 'recipe'
-  const list = editorialArticles.filter((article) => article.type === type)
+  const list = articles.filter((article) => article.type === type)
   return (
     <main className="info-page container">
       <div className="breadcrumbs"><a href="/">Home</a><ChevronRight size={13} /><b>{isRecipes ? 'Recipes' : 'News'}</b></div>
@@ -1247,7 +1229,7 @@ function BlogIndexPage({ type }) {
   )
 }
 
-function ArticlePage({ article }) {
+function ArticlePage({ article, articles }) {
   if (!article) {
     return (
       <main className="info-page container">
@@ -1258,7 +1240,7 @@ function ArticlePage({ article }) {
     )
   }
 
-  const related = editorialArticles.filter((item) => item.slug !== article.slug && item.type === article.type).slice(0, 2)
+  const related = articles.filter((item) => item.slug !== article.slug && item.type === article.type).slice(0, 2)
   return (
     <main className="article-page container">
       <div className="breadcrumbs"><a href="/">Home</a><ChevronRight size={13} /><a href={article.type === 'recipe' ? '/recipes' : '/blog'}>{article.type === 'recipe' ? 'Recipes' : 'News'}</a><ChevronRight size={13} /><b>{article.title}</b></div>
@@ -1872,12 +1854,11 @@ function App() {
   const isBlogPage = currentPath === '/blog' || currentPath === '/blogs/news'
   const recipeMatch = currentPath.match(/^\/blogs\/recipes\/([^/]+)/)
   const newsMatch = currentPath.match(/^\/blogs\/news\/([^/]+)/)
-  const activeArticle = recipeMatch || newsMatch
-    ? editorialArticles.find((article) => article.slug === (recipeMatch?.[1] || newsMatch?.[1]))
-    : null
   const [products, setProducts] = useState(fallbackProducts)
   const [categories, setCategories] = useState(fallbackCategories)
   const [discounts, setDiscounts] = useState(fallbackDiscounts)
+  const [storeArticles, setStoreArticles] = useState(editorialArticles)
+  const [storeSettings, setStoreSettings] = useState({})
   const [cart, setCart] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('lyly-cart') || '[]')
@@ -1918,6 +1899,9 @@ function App() {
   const [newsletterEmail, setNewsletterEmail] = useState('')
   const [newsletterStatus, setNewsletterStatus] = useState('idle')
   const categoriesCloseTimer = useRef(null)
+  const activeArticle = recipeMatch || newsMatch
+    ? storeArticles.find((article) => article.slug === (recipeMatch?.[1] || newsMatch?.[1]))
+    : null
 
   useEffect(() => {
     loadPublicProducts()
@@ -1929,6 +1913,12 @@ function App() {
     loadPublicDiscounts()
       .then((data) => data?.length && setDiscounts(data))
       .catch((error) => console.error('Unable to load discounts from Supabase.', error))
+    loadPublicArticles()
+      .then((data) => data?.length && setStoreArticles(data))
+      .catch((error) => console.error('Unable to load articles from Supabase.', error))
+    loadStoreSettings()
+      .then((data) => data && setStoreSettings(data))
+      .catch((error) => console.error('Unable to load store settings from Supabase.', error))
   }, [])
 
   useEffect(() => {
@@ -1961,6 +1951,7 @@ function App() {
   const discountHint = discounts.find((discount) => discount.method !== 'automatic' && isDiscountActive(discount))?.code
     ? `Use code ${discounts.find((discount) => discount.method !== 'automatic' && isDiscountActive(discount)).code} for a fresh discount`
     : ''
+  const publicGeneralSettings = storeSettings.general || {}
   const searchResults = useMemo(() => {
     const query = search.trim().toLowerCase()
     if (!query) return []
@@ -2221,11 +2212,11 @@ function App() {
       ) : isFaqPage ? (
       <FaqPage />
       ) : isRecipesPage ? (
-      <BlogIndexPage type="recipe" />
+      <BlogIndexPage type="recipe" articles={storeArticles} />
       ) : isBlogPage ? (
-      <BlogIndexPage type="news" />
+      <BlogIndexPage type="news" articles={storeArticles} />
       ) : activeArticle ? (
-      <ArticlePage article={activeArticle} />
+      <ArticlePage article={activeArticle} articles={storeArticles} />
       ) : isAccountPage ? (
       <AccountPage
         user={storefrontUser}
@@ -2357,10 +2348,10 @@ function App() {
             <a href="/blog">Read the journal <ArrowRight size={17} /></a>
           </div>
           <div className="article-grid">
-            {articles.map((article) => (
-              <a className="article-card" href="/blog" key={article.title}>
+            {storeArticles.slice(0, 3).map((article) => (
+              <a className="article-card" href={article.type === 'recipe' ? `/blogs/recipes/${article.slug}` : `/blogs/news/${article.slug}`} key={article.slug || article.title}>
                 <img src={article.image} alt="" />
-                <p>{article.category}</p>
+                <p>{article.category || article.type}</p>
                 <h3>{article.title}</h3>
                 <span>Read article <ArrowRight size={14} /></span>
               </a>
@@ -2390,7 +2381,7 @@ function App() {
         <div className="footer-main container">
           <div className="footer-brand">
             <Logo />
-            <p>Everyday groceries, chosen with care and delivered fresh to your door.</p>
+            <p>{publicGeneralSettings.storeName || 'LyLy Fresh Market'} brings carefully selected groceries to your door.</p>
             <div><a href="#footer"><b className="social-mark">ig</b></a><a href="#footer"><b className="social-mark">f</b></a><a href="#footer"><Mail size={18} /></a></div>
           </div>
           <div><h4>Shop</h4><a href="/collections">Categories</a><a href="/products">Best sellers</a><a href="/products">New arrivals</a><a href="/products">Special offers</a></div>
@@ -2398,7 +2389,7 @@ function App() {
           <div><h4>Need help?</h4><a href="/delivery">Delivery & pickup</a><a href="/faq">FAQs</a><a href="/delivery">Returns</a><a href="/account?tab=orders">Track an order</a></div>
           <div className="store-card">
             <MapPin size={22} />
-            <span><small>Your neighborhood market</small><b>Find your closest LyLy</b></span>
+            <span><small>{publicGeneralSettings.country || 'Vietnam'}</small><b>{publicGeneralSettings.contactEmail || 'Find your closest LyLy'}</b></span>
             <ArrowRight size={17} />
           </div>
         </div>

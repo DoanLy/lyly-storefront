@@ -48,21 +48,31 @@ import './AdminApp.css'
 import {
   checkAdminAccess,
   createAdminCategory,
+  createAdminArticle,
+  createAdminCustomer,
   createAdminDiscount,
   createAdminProduct,
   getAdminSession,
   importAdminProducts,
   isSupabaseConfigured,
   loadAdminCategories,
+  loadAdminArticles,
+  loadAdminCustomers,
   loadAdminDiscounts,
   loadAdminOrders,
   loadAdminProducts,
+  loadStoreSettings,
+  removeAdminArticles,
   removeAdminCategories,
+  removeAdminCustomers,
   removeAdminDiscounts,
   removeAdminProducts,
+  saveStoreSettings,
   signInAdmin,
   signOutAdmin,
+  updateAdminArticle,
   updateAdminCategory,
+  updateAdminCustomer,
   updateAdminDiscount,
   updateAdminOrder,
   updateAdminOrders,
@@ -140,10 +150,16 @@ const initialDiscounts = [
 ]
 
 const articles = [
-  { title: 'A simpler way to plan your weekly groceries', status: 'Published', author: 'LyLy Editorial', date: '01 Jun 2026', image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=260&q=85' },
-  { title: 'Three bright salads for warmer days', status: 'Published', author: 'LyLy Kitchen', date: '29 May 2026', image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=260&q=85' },
-  { title: 'Meet the growers behind our organic greens', status: 'Draft', author: 'LyLy Editorial', date: '28 May 2026', image: 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=260&q=85' },
+  { id: 1, title: 'A simpler way to plan your weekly groceries', slug: 'weekly-grocery-planning', type: 'news', category: 'News', status: 'Published', author: 'LyLy Editorial', date: '01 Jun 2026', excerpt: 'Plan a fresh basket for the week with fewer decisions and better staples.', content: 'Plan a fresh basket for the week with fewer decisions and better staples.', tags: ['Planning'], image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=260&q=85' },
+  { id: 2, title: 'Three bright salads for warmer days', slug: 'three-bright-salads', type: 'recipe', category: 'Recipes', status: 'Published', author: 'LyLy Kitchen', date: '29 May 2026', excerpt: 'A quick recipe set for seasonal vegetables, herbs and pantry dressings.', content: 'A quick recipe set for seasonal vegetables, herbs and pantry dressings.', tags: ['Recipe'], image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=260&q=85' },
+  { id: 3, title: 'Meet the growers behind our organic greens', slug: 'organic-greens-growers', type: 'news', category: 'News', status: 'Draft', author: 'LyLy Editorial', date: '28 May 2026', excerpt: 'Local sourcing notes from the growers behind our organic greens.', content: 'Local sourcing notes from the growers behind our organic greens.', tags: ['Local'], image: 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=260&q=85' },
 ]
+
+const initialStoreSettings = {
+  general: { storeName: 'LyLy Fresh Market', contactEmail: 'lydoan.king@gmail.com', phone: '', country: 'Vietnam', currency: 'VND', timezone: 'Asia/Bangkok', orderPrefix: 'LY' },
+  shipping: { pickupEnabled: true, deliveryEnabled: true, freeShippingThreshold: 75, localDeliveryFee: 0, domesticShippingFee: 8, expressShippingFee: 18, promise: 'Usually ready in 2 hrs' },
+  notifications: { senderEmail: 'lydoan.king@gmail.com', customerNotifications: true, staffNotifications: true, webhooks: false },
+}
 
 const campaigns = [
   { name: 'Summer market essentials', channel: 'Email campaign', audience: '1,482 customers', status: 'Scheduled', date: '05 Jun, 09:00' },
@@ -1027,6 +1043,7 @@ function OrderDetailModal({ order, onClose, onUpdate }) {
   )
 }
 
+// eslint-disable-next-line no-unused-vars
 function CustomersPage({ meta }) {
   const [query, setQuery] = useState('')
   const visible = customers.filter((customer) => `${customer.name} ${customer.email} ${customer.location}`.toLowerCase().includes(query.toLowerCase()))
@@ -1044,6 +1061,64 @@ function CustomersPage({ meta }) {
         </div>
       </section>
     </>
+  )
+}
+
+function CustomersManagePage({ meta, customers, onCreate, onEdit, onView, onRemove }) {
+  const [query, setQuery] = useState('')
+  const [tab, setTab] = useState('all')
+  const visible = customers.filter((customer) => {
+    const matchesQuery = `${customer.name} ${customer.email} ${customer.location} ${customer.phone}`.toLowerCase().includes(query.toLowerCase())
+    const matchesTab = tab === 'all' || (tab === 'returning' && customer.orders > 1) || (tab === 'email' && customer.email)
+    return matchesQuery && matchesTab
+  })
+  return (
+    <>
+      <SectionTitle title={meta.customers[0]} description={meta.customers[1]} action="Thêm khách hàng" onAction={onCreate} />
+      <section className="admin-panel data-panel">
+        <div className="data-tabs"><button className={tab === 'all' ? 'active' : ''} type="button" onClick={() => setTab('all')}>Tất cả</button><button className={tab === 'returning' ? 'active' : ''} type="button" onClick={() => setTab('returning')}>Khách quay lại</button><button className={tab === 'email' ? 'active' : ''} type="button" onClick={() => setTab('email')}>Có email</button></div>
+        <div className="table-toolbar"><label><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm tên, email, điện thoại hoặc địa điểm" /></label><button type="button"><Filter size={15} /> Phân khúc</button></div>
+        <div className="admin-table-wrap">
+          <table className="admin-table">
+            <thead><tr><th><input type="checkbox" /></th><th>Khách hàng</th><th>Địa điểm</th><th>Đơn hàng</th><th>Đã chi tiêu</th><th></th></tr></thead>
+            <tbody>{visible.map((customer) => <tr key={customer.id}><td><input type="checkbox" /></td><td><div className="customer-cell"><span>{customer.initials}</span><div><b>{customer.name}</b><small>{customer.email}</small></div></div></td><td>{customer.location || 'Chưa có'}</td><td>{customer.orders}</td><td><b>{money(customer.spent)}</b></td><td><div className="row-actions"><button className="row-icon" type="button" onClick={() => onView(customer)} title="Xem"><Eye size={15} /></button><button className="row-icon" type="button" onClick={() => onEdit(customer)} title="Sửa"><Pencil size={15} /></button><button className="row-icon" type="button" onClick={() => onRemove(customer.id)} title="Xóa"><Trash2 size={15} /></button></div></td></tr>)}</tbody>
+          </table>
+          {!visible.length && <EmptyHint icon={Users} title="Không tìm thấy khách hàng" copy="Thử đổi từ khóa hoặc tạo khách hàng mới." />}
+        </div>
+      </section>
+    </>
+  )
+}
+
+function CustomerModal({ customer, onClose, onSubmit }) {
+  const [form, setForm] = useState({ name: customer?.name || '', email: customer?.email || '', phone: customer?.phone || '', location: customer?.location || '' })
+  const change = (event) => setForm((current) => ({ ...current, [event.target.name]: event.target.value }))
+  return (
+    <Modal title={customer ? 'Sửa khách hàng' : 'Thêm khách hàng'} onClose={onClose}>
+      <form className="admin-form compact-form" onSubmit={(event) => { event.preventDefault(); onSubmit({ ...customer, ...form }) }}>
+        <label><span>Tên khách hàng</span><input required name="name" value={form.name} onChange={change} /></label>
+        <label><span>Email</span><input required type="email" name="email" value={form.email} onChange={change} /></label>
+        <label><span>Số điện thoại</span><input name="phone" value={form.phone} onChange={change} /></label>
+        <label><span>Địa điểm</span><input name="location" value={form.location} onChange={change} placeholder="Vietnam, Ho Chi Minh" /></label>
+        <div className="modal-actions"><button className="admin-secondary" type="button" onClick={onClose}>Hủy</button><button className="admin-primary" type="submit">Lưu</button></div>
+      </form>
+    </Modal>
+  )
+}
+
+function CustomerDetailModal({ customer, onClose, onEdit, onRemove }) {
+  return (
+    <Modal title="Chi tiết khách hàng" onClose={onClose}>
+      <div className="discount-detail">
+        <p><span>Tên</span><b>{customer.name}</b></p>
+        <p><span>Email</span><b>{customer.email}</b></p>
+        <p><span>Điện thoại</span><b>{customer.phone || 'Chưa có'}</b></p>
+        <p><span>Địa điểm</span><b>{customer.location || 'Chưa có'}</b></p>
+        <p><span>Đơn hàng</span><b>{customer.orders}</b></p>
+        <p><span>Đã chi tiêu</span><b>{money(customer.spent)}</b></p>
+      </div>
+      <div className="modal-actions discount-type-actions"><button className="admin-secondary" type="button" onClick={onClose}>Đóng</button><button className="admin-secondary" type="button" onClick={() => onEdit(customer)}><Pencil size={14} /> Sửa</button><button className="product-danger" type="button" onClick={() => onRemove(customer.id)}><Trash2 size={14} /> Xóa</button></div>
+    </Modal>
   )
 }
 
@@ -1131,6 +1206,7 @@ function DiscountsManagePage({ meta, discounts, onCreate, onEdit, onView, onRemo
   )
 }
 
+// eslint-disable-next-line no-unused-vars
 function ContentPage({ meta }) {
   return (
     <>
@@ -1148,8 +1224,87 @@ function ContentPage({ meta }) {
   )
 }
 
-function AnalyticsPage({ meta }) {
-  const chart = [34, 48, 43, 55, 58, 72, 67, 81, 76, 88, 92, 98]
+function ContentManagePage({ meta, articles, onCreate, onEdit, onView, onRemove }) {
+  const [query, setQuery] = useState('')
+  const [tab, setTab] = useState('all')
+  const visible = articles.filter((article) => {
+    const matchesQuery = `${article.title} ${article.author} ${article.category} ${article.tags?.join(' ')}`.toLowerCase().includes(query.toLowerCase())
+    const matchesTab = tab === 'all' || article.status.toLowerCase() === tab
+    return matchesQuery && matchesTab
+  })
+  return (
+    <>
+      <SectionTitle title={meta.content[0]} description={meta.content[1]} action="Viết bài mới" onAction={onCreate} />
+      <section className="admin-panel data-panel">
+        <div className="data-tabs"><button className={tab === 'all' ? 'active' : ''} type="button" onClick={() => setTab('all')}>Tất cả</button><button className={tab === 'published' ? 'active' : ''} type="button" onClick={() => setTab('published')}>Hiển thị</button><button className={tab === 'draft' ? 'active' : ''} type="button" onClick={() => setTab('draft')}>Đã ẩn</button></div>
+        <div className="table-toolbar"><label><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm bài viết, tác giả, thẻ" /></label></div>
+        <div className="content-grid managed-content-grid">
+          {visible.map((article) => (
+            <article className="admin-panel article-admin-card" key={article.id || article.slug}>
+              <img src={article.image} alt="" />
+              <div><StatusPill>{article.status}</StatusPill><h3>{article.title}</h3><p>{article.author} · {article.date}</p><div><button className="admin-secondary" type="button" onClick={() => onEdit(article)}><Pencil size={14} /> Sửa</button><button className="row-icon" type="button" onClick={() => onView(article)}><Eye size={16} /></button><button className="row-icon" type="button" onClick={() => onRemove(article.id)}><Trash2 size={16} /></button></div></div>
+            </article>
+          ))}
+          <button className="new-content-card" type="button" onClick={onCreate}><Plus size={24} /><span>Tạo bài viết mới</span></button>
+        </div>
+      </section>
+    </>
+  )
+}
+
+function ArticleModal({ article, onClose, onSubmit }) {
+  const [form, setForm] = useState({
+    title: article?.title || '',
+    slug: article?.slug || '',
+    type: article?.type || 'news',
+    category: article?.category || 'News',
+    excerpt: article?.excerpt || '',
+    content: article?.content || '',
+    image: article?.image || '',
+    status: article?.status || 'Draft',
+    author: article?.author || 'LyLy Editorial',
+    tags: article?.tags?.join(', ') || '',
+  })
+  const change = (event) => {
+    const { name, value } = event.target
+    setForm((current) => ({ ...current, [name]: value, ...(name === 'title' && !article ? { slug: slugify(value) } : {}) }))
+  }
+  const submit = (event) => {
+    event.preventDefault()
+    onSubmit({ ...article, ...form, tags: form.tags.split(',').map((tag) => tag.trim()).filter(Boolean), category: form.type === 'recipe' ? 'Recipes' : form.category })
+  }
+  return (
+    <Modal title={article ? 'Sửa bài viết' : 'Thêm bài viết'} onClose={onClose} wide>
+      <form className="admin-form article-form" onSubmit={submit}>
+        <section><h3>Nội dung</h3><label><span>Tiêu đề</span><input required name="title" value={form.title} onChange={change} /></label><label><span>Slug</span><input required name="slug" value={form.slug} onChange={change} /></label><label><span>Đoạn trích</span><textarea name="excerpt" value={form.excerpt} onChange={change} /></label><label><span>Nội dung bài viết</span><textarea name="content" value={form.content} onChange={change} rows={7} /></label></section>
+        <section><h3>Hiển thị</h3><label><span>Loại</span><select name="type" value={form.type} onChange={change}><option value="news">Blog/news</option><option value="recipe">Recipe</option></select></label><label><span>Trạng thái</span><select name="status" value={form.status} onChange={change}><option>Published</option><option>Draft</option></select></label><label><span>Tác giả</span><input name="author" value={form.author} onChange={change} /></label><label><span>Ảnh</span><input required name="image" value={form.image} onChange={change} placeholder="https://..." /></label><label><span>Thẻ</span><input name="tags" value={form.tags} onChange={change} placeholder="Fresh, Recipe" /></label></section>
+        <div className="modal-actions"><button className="admin-secondary" type="button" onClick={onClose}>Hủy</button><button className="admin-primary" type="submit">Lưu bài viết</button></div>
+      </form>
+    </Modal>
+  )
+}
+
+function ArticleDetailModal({ article, onClose, onEdit, onRemove }) {
+  return (
+    <Modal title="Chi tiết bài viết" onClose={onClose}>
+      <div className="article-detail-preview"><img src={article.image} alt="" /><h3>{article.title}</h3><p>{article.excerpt}</p></div>
+      <div className="discount-detail">
+        <p><span>Slug</span><b>{article.slug}</b></p>
+        <p><span>Loại</span><b>{article.type}</b></p>
+        <p><span>Trạng thái</span><b>{article.status}</b></p>
+        <p><span>Tác giả</span><b>{article.author}</b></p>
+        <p><span>Thẻ</span><b>{article.tags?.join(', ') || 'Không có'}</b></p>
+      </div>
+      <div className="modal-actions discount-type-actions"><button className="admin-secondary" type="button" onClick={onClose}>Đóng</button><button className="admin-secondary" type="button" onClick={() => onEdit(article)}><Pencil size={14} /> Sửa</button><button className="product-danger" type="button" onClick={() => onRemove(article.id)}><Trash2 size={14} /> Xóa</button></div>
+    </Modal>
+  )
+}
+
+function AnalyticsPage({ meta, orders, products, customers }) {
+  const paidOrders = orders.filter((order) => order.payment === 'Paid')
+  void products
+  void customers
+  const chart = Array.from({ length: 12 }, (_, index) => Math.max(8, Math.round((paidOrders[index % Math.max(1, paidOrders.length)]?.total || 20) * 1.8)))
   return (
     <>
       <SectionTitle title={meta.analytics[0]} description={meta.analytics[1]} action="Xuất báo cáo" icon={Download} />
@@ -1199,6 +1354,7 @@ function LocationsPage({ meta }) {
   )
 }
 
+// eslint-disable-next-line no-unused-vars
 function SettingsPage({ meta }) {
   return (
     <>
@@ -1213,6 +1369,26 @@ function SettingsPage({ meta }) {
           [Globe2, 'Tên miền', 'Kết nối tên miền storefront'],
         ].map(([Icon, title, copy]) => <button className="admin-panel setting-card" type="button" key={title}><Icon size={23} /><span><b>{title}</b><small>{copy}</small></span><ChevronRight size={17} /></button>)}
       </section>
+    </>
+  )
+}
+
+function SettingsManagePage({ meta, settings, onSave }) {
+  const [form, setForm] = useState(settings)
+  const setGroupValue = (group, name, value) => setForm((current) => ({ ...current, [group]: { ...current[group], [name]: value } }))
+  const submit = (event) => {
+    event.preventDefault()
+    onSave(form)
+  }
+  return (
+    <>
+      <SectionTitle title={meta.settings[0]} description={meta.settings[1]} />
+      <form className="settings-editor" onSubmit={submit}>
+        <section className="admin-panel"><h3>Chung</h3><label><span>Tên cửa hàng</span><input value={form.general.storeName} onChange={(event) => setGroupValue('general', 'storeName', event.target.value)} /></label><label><span>Email liên hệ</span><input type="email" value={form.general.contactEmail} onChange={(event) => setGroupValue('general', 'contactEmail', event.target.value)} /></label><label><span>Điện thoại</span><input value={form.general.phone} onChange={(event) => setGroupValue('general', 'phone', event.target.value)} /></label><div className="settings-two"><label><span>Tiền tệ</span><select value={form.general.currency} onChange={(event) => setGroupValue('general', 'currency', event.target.value)}><option>VND</option><option>USD</option></select></label><label><span>Múi giờ</span><input value={form.general.timezone} onChange={(event) => setGroupValue('general', 'timezone', event.target.value)} /></label></div></section>
+        <section className="admin-panel"><h3>Vận chuyển và giao hàng</h3><label className="discount-check"><input type="checkbox" checked={form.shipping.pickupEnabled} onChange={(event) => setGroupValue('shipping', 'pickupEnabled', event.target.checked)} /> Cho phép nhận hàng tại cửa hàng</label><label className="discount-check"><input type="checkbox" checked={form.shipping.deliveryEnabled} onChange={(event) => setGroupValue('shipping', 'deliveryEnabled', event.target.checked)} /> Cho phép giao hàng tận nơi</label><div className="settings-two"><label><span>Miễn phí từ</span><input type="number" value={form.shipping.freeShippingThreshold} onChange={(event) => setGroupValue('shipping', 'freeShippingThreshold', Number(event.target.value))} /></label><label><span>Phí giao nội địa</span><input type="number" value={form.shipping.domesticShippingFee} onChange={(event) => setGroupValue('shipping', 'domesticShippingFee', Number(event.target.value))} /></label></div><label><span>Cam kết giao/nhận</span><input value={form.shipping.promise} onChange={(event) => setGroupValue('shipping', 'promise', event.target.value)} /></label></section>
+        <section className="admin-panel"><h3>Thông báo</h3><label><span>Email người gửi</span><input type="email" value={form.notifications.senderEmail} onChange={(event) => setGroupValue('notifications', 'senderEmail', event.target.value)} /></label><label className="discount-check"><input type="checkbox" checked={form.notifications.customerNotifications} onChange={(event) => setGroupValue('notifications', 'customerNotifications', event.target.checked)} /> Gửi thông báo cho khách hàng</label><label className="discount-check"><input type="checkbox" checked={form.notifications.staffNotifications} onChange={(event) => setGroupValue('notifications', 'staffNotifications', event.target.checked)} /> Gửi thông báo cho nhân viên</label><label className="discount-check"><input type="checkbox" checked={form.notifications.webhooks} onChange={(event) => setGroupValue('notifications', 'webhooks', event.target.checked)} /> Bật webhook</label></section>
+        <div className="settings-save"><button className="admin-primary" type="submit">Lưu cài đặt</button></div>
+      </form>
     </>
   )
 }
@@ -1755,6 +1931,9 @@ function AdminApp() {
   const [categories, setCategories] = useState(initialCategories)
   const [adminOrders, setAdminOrders] = useState(initialOrders)
   const [discounts, setDiscounts] = useState(initialDiscounts)
+  const [adminCustomers, setAdminCustomers] = useState(customers)
+  const [adminArticles, setAdminArticles] = useState(articles)
+  const [storeSettings, setStoreSettings] = useState(initialStoreSettings)
   const [productModal, setProductModal] = useState(false)
   const [productEditing, setProductEditing] = useState(null)
   const [categoryModal, setCategoryModal] = useState(false)
@@ -1762,6 +1941,12 @@ function AdminApp() {
   const [discountModal, setDiscountModal] = useState(false)
   const [discountEditing, setDiscountEditing] = useState(null)
   const [discountDetail, setDiscountDetail] = useState(null)
+  const [customerModal, setCustomerModal] = useState(false)
+  const [customerEditing, setCustomerEditing] = useState(null)
+  const [customerDetail, setCustomerDetail] = useState(null)
+  const [articleModal, setArticleModal] = useState(false)
+  const [articleEditing, setArticleEditing] = useState(null)
+  const [articleDetail, setArticleDetail] = useState(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [tasks, setTasks] = useState(['name'])
@@ -1771,6 +1956,14 @@ function AdminApp() {
   const [adminError, setAdminError] = useState('')
   const adminCopy = adminI18n[adminLanguage] || adminI18n.vi
   const localizedMeta = adminCopy.pageMeta
+  const safeLoad = async (loader, fallback) => {
+    try {
+      return await loader()
+    } catch (error) {
+      console.error(error)
+      return fallback
+    }
+  }
 
   const toggleLanguage = () => {
     setAdminLanguage((current) => {
@@ -1813,12 +2006,23 @@ function AdminApp() {
           return
         }
 
-        const [remoteProducts, remoteCategories, remoteOrders, remoteDiscounts] = await Promise.all([loadAdminProducts(), loadAdminCategories(), loadAdminOrders(), loadAdminDiscounts()])
+        const [remoteProducts, remoteCategories, remoteOrders, remoteDiscounts, remoteCustomers, remoteArticles, remoteSettings] = await Promise.all([
+          safeLoad(loadAdminProducts, initialProducts),
+          safeLoad(loadAdminCategories, initialCategories),
+          safeLoad(loadAdminOrders, initialOrders),
+          safeLoad(loadAdminDiscounts, initialDiscounts),
+          safeLoad(loadAdminCustomers, customers),
+          safeLoad(loadAdminArticles, articles),
+          safeLoad(loadStoreSettings, initialStoreSettings),
+        ])
         if (!ignore) {
           setProducts(remoteProducts)
           setCategories(remoteCategories)
           setAdminOrders(remoteOrders || initialOrders)
           setDiscounts(remoteDiscounts || initialDiscounts)
+          setAdminCustomers(remoteCustomers || customers)
+          setAdminArticles(remoteArticles || articles)
+          if (remoteSettings) setStoreSettings({ ...initialStoreSettings, ...remoteSettings })
           setAuthStatus('ready')
         }
       } catch (error) {
@@ -1853,11 +2057,22 @@ function AdminApp() {
         setAuthStatus('unauthorized')
         return
       }
-      const [remoteProducts, remoteCategories, remoteOrders, remoteDiscounts] = await Promise.all([loadAdminProducts(), loadAdminCategories(), loadAdminOrders(), loadAdminDiscounts()])
+      const [remoteProducts, remoteCategories, remoteOrders, remoteDiscounts, remoteCustomers, remoteArticles, remoteSettings] = await Promise.all([
+        safeLoad(loadAdminProducts, initialProducts),
+        safeLoad(loadAdminCategories, initialCategories),
+        safeLoad(loadAdminOrders, initialOrders),
+        safeLoad(loadAdminDiscounts, initialDiscounts),
+        safeLoad(loadAdminCustomers, customers),
+        safeLoad(loadAdminArticles, articles),
+        safeLoad(loadStoreSettings, initialStoreSettings),
+      ])
       setProducts(remoteProducts)
       setCategories(remoteCategories)
       setAdminOrders(remoteOrders || initialOrders)
       setDiscounts(remoteDiscounts || initialDiscounts)
+      setAdminCustomers(remoteCustomers || customers)
+      setAdminArticles(remoteArticles || articles)
+      if (remoteSettings) setStoreSettings({ ...initialStoreSettings, ...remoteSettings })
       setAuthStatus('ready')
     } catch (error) {
       console.error(error)
@@ -2028,6 +2243,84 @@ function AdminApp() {
     }
   }
 
+  const saveCustomer = async (customer) => {
+    setAdminError('')
+    try {
+      if (customer.id) {
+        const updatedCustomer = await updateAdminCustomer(customer)
+        setAdminCustomers((current) => current.map((item) => item.id === updatedCustomer.id ? updatedCustomer : item))
+      } else {
+        const createdCustomer = await createAdminCustomer(customer)
+        setAdminCustomers((current) => [createdCustomer, ...current])
+      }
+      setCustomerEditing(null)
+      setCustomerModal(false)
+    } catch (error) {
+      console.error(error)
+      setAdminError(error.message)
+    }
+  }
+
+  const removeCustomer = async (id) => {
+    if (!id) return
+    setAdminError('')
+    try {
+      await removeAdminCustomers([id])
+      setAdminCustomers((current) => current.filter((customer) => customer.id !== id))
+      setCustomerDetail(null)
+      setCustomerEditing(null)
+      setCustomerModal(false)
+    } catch (error) {
+      console.error(error)
+      setAdminError('Không thể xóa khách hàng đã có đơn hàng. Hãy giữ hồ sơ để bảo toàn lịch sử đơn.')
+    }
+  }
+
+  const saveArticle = async (article) => {
+    setAdminError('')
+    try {
+      const payload = { ...article, slug: article.slug || slugify(article.title) }
+      if (payload.id) {
+        const updatedArticle = await updateAdminArticle(payload)
+        setAdminArticles((current) => current.map((item) => item.id === updatedArticle.id ? updatedArticle : item))
+      } else {
+        const createdArticle = await createAdminArticle(payload)
+        setAdminArticles((current) => [createdArticle, ...current])
+      }
+      setArticleEditing(null)
+      setArticleModal(false)
+    } catch (error) {
+      console.error(error)
+      setAdminError(error.message)
+    }
+  }
+
+  const removeArticle = async (id) => {
+    if (!id) return
+    setAdminError('')
+    try {
+      await removeAdminArticles([id])
+      setAdminArticles((current) => current.filter((article) => article.id !== id))
+      setArticleDetail(null)
+      setArticleEditing(null)
+      setArticleModal(false)
+    } catch (error) {
+      console.error(error)
+      setAdminError(error.message)
+    }
+  }
+
+  const saveSettings = async (settings) => {
+    setAdminError('')
+    try {
+      await saveStoreSettings(settings)
+      setStoreSettings(settings)
+    } catch (error) {
+      console.error(error)
+      setAdminError(error.message)
+    }
+  }
+
   const saveOrder = async (order) => {
     setAdminError('')
     try {
@@ -2059,13 +2352,13 @@ function AdminApp() {
     if (page === 'products') return <ProductsPage meta={localizedMeta} categories={categories} products={products} onBulkEdit={bulkEditProducts} onCreate={() => { setProductEditing(null); setProductModal(true) }} onEdit={(product) => { setProductEditing(product); setProductModal(true) }} onImport={importProducts} onRemove={removeProducts} />
     if (page === 'categories') return <CategoriesPage meta={localizedMeta} categories={categories} products={products} onCreate={() => { setCategoryEditing(null); setCategoryModal(true) }} onEdit={(category) => { setCategoryEditing(category); setCategoryModal(true) }} onRemove={removeCategory} onToggle={toggleCategory} />
     if (page === 'orders') return <OrdersPage meta={localizedMeta} orders={adminOrders} onUpdate={saveOrder} onBulkUpdate={bulkSaveOrders} />
-    if (page === 'customers') return <CustomersPage meta={localizedMeta} />
+    if (page === 'customers') return <CustomersManagePage meta={localizedMeta} customers={adminCustomers} onCreate={() => { setCustomerEditing(null); setCustomerModal(true) }} onEdit={(customer) => { setCustomerDetail(null); setCustomerEditing(customer); setCustomerModal(true) }} onView={setCustomerDetail} onRemove={removeCustomer} />
     if (page === 'marketing') return <MarketingPage meta={localizedMeta} />
     if (page === 'discounts') return <DiscountsManagePage meta={localizedMeta} discounts={discounts} onCreate={() => { setDiscountEditing(null); setDiscountModal(true) }} onEdit={editDiscount} onView={setDiscountDetail} onRemove={removeDiscount} />
-    if (page === 'content') return <ContentPage meta={localizedMeta} />
-    if (page === 'analytics') return <AnalyticsPage meta={localizedMeta} />
+    if (page === 'content') return <ContentManagePage meta={localizedMeta} articles={adminArticles} onCreate={() => { setArticleEditing(null); setArticleModal(true) }} onEdit={(article) => { setArticleDetail(null); setArticleEditing(article); setArticleModal(true) }} onView={setArticleDetail} onRemove={removeArticle} />
+    if (page === 'analytics') return <AnalyticsPage meta={localizedMeta} orders={adminOrders} products={products} customers={adminCustomers} />
     if (page === 'locations') return <LocationsPage meta={localizedMeta} />
-    if (page === 'settings') return <SettingsPage meta={localizedMeta} />
+    if (page === 'settings') return <SettingsManagePage meta={localizedMeta} settings={storeSettings} onSave={saveSettings} />
     return <Dashboard tasks={tasks} setTasks={setTasks} orders={adminOrders} />
   }
 
@@ -2122,6 +2415,10 @@ function AdminApp() {
       {categoryModal && <CategoryModal categories={categories} category={categoryEditing} onClose={() => { setCategoryEditing(null); setCategoryModal(false) }} onSubmit={saveCategory} />}
       {discountModal && <DiscountBuilderModal discount={discountEditing} onClose={() => { setDiscountEditing(null); setDiscountModal(false) }} onSubmit={addDiscount} />}
       {discountDetail && <DiscountDetailModal discount={discountDetail} onClose={() => setDiscountDetail(null)} onEdit={editDiscount} onRemove={removeDiscount} />}
+      {customerModal && <CustomerModal customer={customerEditing} onClose={() => { setCustomerEditing(null); setCustomerModal(false) }} onSubmit={saveCustomer} />}
+      {customerDetail && <CustomerDetailModal customer={customerDetail} onClose={() => setCustomerDetail(null)} onEdit={(customer) => { setCustomerDetail(null); setCustomerEditing(customer); setCustomerModal(true) }} onRemove={removeCustomer} />}
+      {articleModal && <ArticleModal article={articleEditing} onClose={() => { setArticleEditing(null); setArticleModal(false) }} onSubmit={saveArticle} />}
+      {articleDetail && <ArticleDetailModal article={articleDetail} onClose={() => setArticleDetail(null)} onEdit={(article) => { setArticleDetail(null); setArticleEditing(article); setArticleModal(true) }} onRemove={removeArticle} />}
     </div>
   )
 }
