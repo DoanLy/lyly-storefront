@@ -395,6 +395,116 @@ function CatalogProductCard({ product, onAdd }) {
   )
 }
 
+function QuickProductModal({ product, onAdd, onBuyNow, onClose }) {
+  const [quantity, setQuantity] = useState(1)
+  const meta = getCatalogMeta(product)
+  const sale = Boolean(product.oldPrice)
+
+  return (
+    <div className="quick-product-overlay" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+      <section className="quick-product-modal">
+        <button className="quick-product-close" type="button" onClick={onClose} aria-label="Close product preview"><X size={22} /></button>
+        <div className="quick-product-media">
+          {product.badge && <span>{product.badge}</span>}
+          <img src={product.image} alt={product.name} />
+        </div>
+        <div className="quick-product-info">
+          <p className="quick-product-price">
+            <strong>{formatPrice(product.price)}</strong>
+            {sale && <del>{formatPrice(product.oldPrice)}</del>}
+          </p>
+          <h2>{product.name}</h2>
+          <p>{meta.description}. Selected for dependable quality, everyday freshness, and simple meal planning.</p>
+          <div className="quick-product-style">
+            <span>Style</span>
+            <button className="active" type="button">{product.unit}</button>
+            <button type="button">Family pack</button>
+          </div>
+          <div className="quick-product-actions">
+            <div className="quick-qty">
+              <button type="button" onClick={() => setQuantity((value) => Math.max(1, value - 1))}><Minus size={16} /></button>
+              <span>{quantity}</span>
+              <button type="button" onClick={() => setQuantity((value) => value + 1)}><Plus size={16} /></button>
+            </div>
+            <button className="quick-add-cart" type="button" onClick={() => onAdd(product, quantity)}>Add to cart</button>
+          </div>
+          <button className="quick-buy-now" type="button" onClick={() => onBuyNow(product, quantity)}>Buy it now</button>
+        </div>
+      </section>
+    </div>
+  )
+}
+
+function CartTotals({ subtotal, discountCode }) {
+  const normalized = discountCode.trim().toUpperCase()
+  const discount = normalized === 'SUMMER25' ? subtotal * 0.25 : normalized === 'FRESH20' ? subtotal * 0.2 : 0
+  return {
+    discount,
+    total: Math.max(0, subtotal - discount),
+    normalized,
+  }
+}
+
+function CartPage({ cart, products, discountCode, notes, termsAccepted, onDiscountChange, onNotesChange, onTermsChange, onQuantity, onCheckout, onAddRelated }) {
+  const subtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0)
+  const totals = CartTotals({ subtotal, discountCode })
+  const relatedProducts = products.filter((product) => !cart.some((item) => item.id === product.id) && product.stock !== 0).slice(0, 3)
+
+  return (
+    <main className="cart-page container">
+      <div className="breadcrumbs"><a href="/">Home</a><ChevronRight size={13} /><b>Cart</b></div>
+      <h1>Shopping Cart</h1>
+      <div className="cart-page-layout">
+        <section className="cart-page-main">
+          <div className="cart-table admin-like">
+            <div className="cart-table-head"><span>Product</span><span>Quantity</span><span>Total</span></div>
+            {cart.length ? cart.map((item) => (
+              <div className="cart-row" key={item.id}>
+                <img src={item.image} alt="" />
+                <div><p>{formatPrice(item.price)} {item.oldPrice && <del>{formatPrice(item.oldPrice)}</del>}</p><b>{item.name}</b><small>Style: {item.unit}</small></div>
+                <div className="cart-row-qty"><button type="button" onClick={() => onQuantity(item.id, -1)}><Minus size={14} /></button><span>{item.quantity}</span><button type="button" onClick={() => onQuantity(item.id, 1)}><Plus size={14} /></button><button type="button" onClick={() => onQuantity(item.id, -item.quantity)}>Remove</button></div>
+                <strong>{formatPrice(item.price * item.quantity)} {item.oldPrice && <del>{formatPrice(item.oldPrice * item.quantity)}</del>}</strong>
+              </div>
+            )) : <div className="cart-page-empty"><ShoppingBag size={36} /><p>Your cart is empty.</p><a href="/products">Continue shopping</a></div>}
+          </div>
+
+          <div className="related-cart-products">
+            <h2>Related products</h2>
+            {relatedProducts.map((product) => (
+              <div className="related-cart-row" key={product.id}>
+                <img src={product.image} alt="" />
+                <span><b>{product.name}</b><small>{formatPrice(product.price)} {product.oldPrice && <del>{formatPrice(product.oldPrice)}</del>}</small></span>
+                <button type="button" onClick={() => onAddRelated(product)}>Buy now</button>
+              </div>
+            ))}
+          </div>
+
+          <div className="estimate-shipping">
+            <h2>Estimate shipping</h2>
+            <div><label>Country<select><option>United States</option><option>France</option><option>Vietnam</option></select></label><label>Postal/Zip Code<input /></label><button type="button">Estimate</button></div>
+          </div>
+        </section>
+
+        <aside className="cart-page-summary">
+          <div className="free-shipping-box">You are {formatPrice(Math.max(0, 75 - subtotal))} away from free shipping.</div>
+          <div className="cart-summary-card">
+            <p>Subtotal <b>{formatPrice(subtotal)}</b></p>
+            <p>Discounts</p>
+            {totals.discount > 0 && <p className="discount-line"><span>{totals.normalized}</span><b>-{formatPrice(totals.discount)}</b></p>}
+            <h3>Total <strong>{formatPrice(totals.total)}</strong></h3>
+            <label>Order instructions<textarea value={notes} onChange={(event) => onNotesChange(event.target.value)} /></label>
+            <label>Discount codes<div className="discount-entry"><input value={discountCode} onChange={(event) => onDiscountChange(event.target.value)} /><button type="button">Apply</button></div></label>
+            <small>Use code SUMMER25 for 25% off your order.</small>
+            <p className="tax-note">Tax included. Shipping calculated at checkout.</p>
+            <label className="terms-row"><input type="checkbox" checked={termsAccepted} onChange={(event) => onTermsChange(event.target.checked)} /> I agree to the terms and conditions</label>
+            <button className="checkout-wide" type="button" disabled={!cart.length || !termsAccepted} onClick={onCheckout}>Checkout</button>
+          </div>
+        </aside>
+      </div>
+    </main>
+  )
+}
+
 function ProductsPage({ categories, products, onAdd }) {
   const initialCategory = new URLSearchParams(window.location.search).get('category') || ''
   const [sort, setSort] = useState('featured')
@@ -752,12 +862,23 @@ function CheckoutModal({ items, onClose, onComplete }) {
 function App() {
   const isProductsPage = window.location.pathname.startsWith('/products')
   const isCollectionsPage = window.location.pathname.startsWith('/collections')
+  const isCartPage = window.location.pathname.startsWith('/cart')
   const [products, setProducts] = useState(fallbackProducts)
   const [categories, setCategories] = useState(fallbackCategories)
-  const [cart, setCart] = useState([])
+  const [cart, setCart] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('lyly-cart') || '[]')
+    } catch {
+      return []
+    }
+  })
   const [cartOpen, setCartOpen] = useState(false)
   const [categoriesOpen, setCategoriesOpen] = useState(false)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
+  const [quickProduct, setQuickProduct] = useState(null)
+  const [discountCode, setDiscountCode] = useState('SUMMER25')
+  const [orderNotes, setOrderNotes] = useState('')
+  const [termsAccepted, setTermsAccepted] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
@@ -775,6 +896,9 @@ function App() {
   }, [])
 
   useEffect(() => () => clearTimeout(categoriesCloseTimer.current), [])
+  useEffect(() => {
+    localStorage.setItem('lyly-cart', JSON.stringify(cart))
+  }, [cart])
 
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0)
   const subtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0)
@@ -794,19 +918,35 @@ function App() {
     return managedItems.length ? [{ label: 'Shop all', href: '/products' }, ...managedItems] : fallbackMenuItems
   }, [categories])
 
-  const addToCart = (product) => {
+  const addToCart = (product, quantity = 1, openCart = true) => {
     if (product.stock === 0) return
 
     setCart((current) => {
       const found = current.find((item) => item.id === product.id)
       if (found) {
         return current.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item,
+          item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item,
         )
       }
-      return [...current, { ...product, quantity: 1 }]
+      return [...current, { ...product, quantity }]
     })
-    setCartOpen(true)
+    setQuickProduct(null)
+    if (openCart) setCartOpen(true)
+  }
+
+  const openQuickProduct = (product) => {
+    if (product.stock === 0) return
+    setQuickProduct(product)
+  }
+
+  const buyNow = (product, quantity = 1) => {
+    addToCart(product, quantity, false)
+    setCheckoutOpen(true)
+  }
+
+  const openCheckout = () => {
+    setCartOpen(false)
+    setCheckoutOpen(true)
   }
 
   const updateQuantity = (id, delta) => {
@@ -952,7 +1092,21 @@ function App() {
         </div>
       </header>
 
-      {isProductsPage ? <ProductsPage categories={categories} products={products} onAdd={addToCart} /> : isCollectionsPage ? <CollectionsPage categories={categories} /> : (
+      {isProductsPage ? <ProductsPage categories={categories} products={products} onAdd={openQuickProduct} /> : isCollectionsPage ? <CollectionsPage categories={categories} /> : isCartPage ? (
+      <CartPage
+        cart={cart}
+        products={products}
+        discountCode={discountCode}
+        notes={orderNotes}
+        termsAccepted={termsAccepted}
+        onDiscountChange={setDiscountCode}
+        onNotesChange={setOrderNotes}
+        onTermsChange={setTermsAccepted}
+        onQuantity={updateQuantity}
+        onCheckout={openCheckout}
+        onAddRelated={(product) => addToCart(product, 1, true)}
+      />
+      ) : (
       <main>
         <section className="hero-section">
           <img className="hero-image" src="/images/lyly-hero.png" alt="Fresh grocery basket filled with fruit and vegetables" />
@@ -1011,7 +1165,7 @@ function App() {
             <a href="/products">Shop all products <ArrowRight size={17} /></a>
           </div>
           <div className="container product-grid">
-            {products.filter((product) => product.stock !== 0).map((product) => <ProductCard product={product} onAdd={addToCart} key={product.id} />)}
+            {products.filter((product) => product.stock !== 0).map((product) => <ProductCard product={product} onAdd={openQuickProduct} key={product.id} />)}
           </div>
         </section>
 
@@ -1110,37 +1264,52 @@ function App() {
 
       {cartOpen && <div className="page-overlay" onClick={() => setCartOpen(false)} />}
       <aside className={`side-drawer cart-drawer ${cartOpen ? 'open' : ''}`}>
-        <div className="drawer-header"><h2>Your Cart</h2><button type="button" onClick={() => setCartOpen(false)} aria-label="Close cart"><X /></button></div>
-        <div className="shipping-progress">
-          <p>{subtotal >= 75 ? 'You unlocked free delivery.' : `You're ${formatPrice(75 - subtotal)} from free delivery.`}</p>
-          <i><span style={{ width: `${Math.min(100, subtotal / 75 * 100)}%` }} /></i>
-        </div>
+        <div className="drawer-header"><h2>Shopping Cart ({cartCount})</h2><button type="button" onClick={() => setCartOpen(false)} aria-label="Close cart"><X /></button></div>
         <div className="cart-items">
           {cart.length ? cart.map((item) => (
             <div className="cart-item" key={item.id}>
               <img src={item.image} alt="" />
               <div>
+                <p>{formatPrice(item.price)} {item.oldPrice && <del>{formatPrice(item.oldPrice)}</del>}</p>
                 <h3>{item.name}</h3>
-                <p>{item.unit}</p>
-                <strong>{formatPrice(item.price)}</strong>
+                <small>Style: {item.unit}</small>
                 <div className="quantity">
                   <button type="button" onClick={() => updateQuantity(item.id, -1)} aria-label="Decrease quantity"><Minus size={14} /></button>
                   <span>{item.quantity}</span>
                   <button type="button" onClick={() => updateQuantity(item.id, 1)} aria-label="Increase quantity"><Plus size={14} /></button>
                 </div>
               </div>
+              <strong>{formatPrice(item.price * item.quantity)}</strong>
             </div>
           )) : (
             <div className="empty-cart"><ShoppingBag size={42} /><h3>Your cart is empty</h3><p>Add something fresh to get started.</p><button type="button" onClick={() => setCartOpen(false)}>Continue shopping</button></div>
           )}
         </div>
+        <div className="cart-drawer-panels">
+          <details><summary>Order instructions <ChevronDown size={18} /></summary><textarea value={orderNotes} onChange={(event) => setOrderNotes(event.target.value)} placeholder="Add delivery notes" /></details>
+          <details><summary>Discount codes <ChevronDown size={18} /></summary><div className="drawer-discount"><input value={discountCode} onChange={(event) => setDiscountCode(event.target.value)} placeholder="SUMMER25" /><button type="button">Apply</button></div></details>
+        </div>
         <div className="cart-summary">
-          <div><span>Subtotal</span><b>{formatPrice(subtotal)}</b></div>
-          <p>Taxes and delivery calculated at checkout.</p>
-          <button type="button" disabled={!cart.length} onClick={() => { setCartOpen(false); setCheckoutOpen(true) }}>Checkout <ArrowRight size={17} /></button>
+          {(() => {
+            const totals = CartTotals({ subtotal, discountCode })
+            return (
+              <>
+                <div><span>Subtotal</span><b>{formatPrice(subtotal)}</b></div>
+                {totals.discount > 0 && <div className="drawer-discount-line"><span>Discounts <small>{totals.normalized}</small></span><b>-{formatPrice(totals.discount)}</b></div>}
+                <div className="drawer-total"><span>Total</span><b>{formatPrice(totals.total)}</b></div>
+                <p>Tax included. Shipping calculated at checkout.</p>
+              </>
+            )
+          })()}
+          <label className="terms-row"><input type="checkbox" checked={termsAccepted} onChange={(event) => setTermsAccepted(event.target.checked)} /> I agree to the terms and conditions</label>
+          <div className="cart-drawer-actions">
+            <a href="/cart" onClick={() => setCartOpen(false)}>View Cart</a>
+            <button type="button" disabled={!cart.length || !termsAccepted} onClick={openCheckout}>Checkout</button>
+          </div>
         </div>
       </aside>
 
+      {quickProduct && <QuickProductModal product={quickProduct} onAdd={addToCart} onBuyNow={buyNow} onClose={() => setQuickProduct(null)} />}
       {checkoutOpen && <CheckoutModal items={cart} onClose={() => setCheckoutOpen(false)} onComplete={() => setCart([])} />}
       {searchOpen && <button className="search-closer" aria-label="Close search" type="button" onClick={() => setSearchOpen(false)} />}
     </div>
