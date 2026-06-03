@@ -363,6 +363,10 @@
 .confirm-delete { display: grid; gap: 13px; padding: 18px; }
 .confirm-delete > svg { color: #a94f46; }
 .confirm-delete p { margin: 0; color: #465850; font-size: 13px; line-height: 1.55; }
+.csv-guide { display: grid; gap: 13px; padding: 18px; color: #465850; font-size: 12px; line-height: 1.55; }
+.csv-guide p { margin: 0; }
+.csv-guide ul { display: grid; gap: 6px; margin: 0; padding-left: 18px; }
+.csv-guide .modal-actions { margin-top: 4px; }
 .bulk-editor-overlay { display: block; padding: 0; background: #f6f8f5; backdrop-filter: none; }
 .bulk-editor { height: 100vh; display: grid; grid-template-rows: 58px minmax(0, 1fr); background: #f6f8f5; }
 .bulk-editor-head { display: grid; grid-template-columns: 120px 1fr auto 88px; align-items: center; gap: 12px; padding: 0 18px; border-bottom: 1px solid #d8e2dc; background: white; box-shadow: 0 1px 8px #1d30250f; }

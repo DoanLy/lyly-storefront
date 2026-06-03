@@ -375,6 +375,32 @@ function downloadProductsCsv(products) {
   downloadBlob(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }), 'lyly-products.csv')
 }
 
+function downloadProductsCsvTemplate(categories) {
+  const category = categories.find((item) => item.active)?.name || 'Bread & Bakery'
+  const sample = [
+    'SKU-DEMO-001',
+    'Tên sản phẩm mẫu',
+    category,
+    '10.00',
+    '12.00',
+    '25',
+    'active',
+    '500g',
+    'New',
+    'https://example.com/product-image.jpg',
+    'LyLy Market',
+    'LyLy Market',
+    'Main Store',
+    'Grocery',
+    'Tiêu đề mô tả\nNội dung mô tả chi tiết của sản phẩm.',
+    'https://example.com/gallery-1.jpg|https://example.com/gallery-2.jpg',
+    '[]',
+    '[]',
+  ]
+  const csv = [productCsvColumns, sample].map((row) => row.map(csvCell).join(',')).join('\r\n')
+  downloadBlob(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }), 'lyly-product-import-template.csv')
+}
+
 function parseCsv(text) {
   const rows = []
   let cell = ''
@@ -586,6 +612,26 @@ function ConfirmDeleteModal({ title, message, confirmLabel = 'Xóa', onCancel, o
   )
 }
 
+function CsvImportGuideModal({ categories, onClose, onChooseFile }) {
+  return (
+    <Modal title="Nhập sản phẩm bằng CSV" onClose={onClose}>
+      <div className="csv-guide">
+        <p>Tải template CSV, điền dữ liệu theo đúng cột rồi upload lại file để tạo hoặc cập nhật sản phẩm theo SKU.</p>
+        <ul>
+          <li>Các cột bắt buộc: sku, name, category, price, stock, unit.</li>
+          <li>Trạng thái chỉ nhận active hoặc draft.</li>
+          <li>Ảnh phụ nhập nhiều URL bằng dấu | trong cột images.</li>
+          <li>Options và variants dùng JSON; nếu chưa dùng biến thể hãy để [].</li>
+        </ul>
+        <div className="modal-actions">
+          <button className="admin-secondary" type="button" onClick={() => downloadProductsCsvTemplate(categories)}><Download size={14} /> Tải template</button>
+          <button className="admin-primary" type="button" onClick={onChooseFile}><Upload size={14} /> Chọn file CSV</button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
 function Dashboard({ tasks, setTasks, orders }) {
   const [assistantText, setAssistantText] = useState('')
   const [assistantReply, setAssistantReply] = useState('')
@@ -688,6 +734,7 @@ function ProductsPage({ meta, categories, products, onBulkEdit, onCreate, onEdit
   const [selected, setSelected] = useState([])
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [bulkOpen, setBulkOpen] = useState(false)
+  const [importGuideOpen, setImportGuideOpen] = useState(false)
   const [deleteRequest, setDeleteRequest] = useState(null)
   const [selectionWarning, setSelectionWarning] = useState(false)
   const [sku, setSku] = useState('')
@@ -796,7 +843,7 @@ function ProductsPage({ meta, categories, products, onBulkEdit, onCreate, onEdit
         <button className="admin-secondary" type="button" disabled={!selected.length} onClick={() => setBulkOpen(true)}><Pencil size={15} /> Sửa hàng loạt</button>
         <button className="admin-secondary" type="button" onClick={() => downloadCatalogPdf(visible)}><FileText size={15} /> Tải catalog PDF</button>
         <button className="admin-secondary" type="button" onClick={() => downloadProductsCsv(visible)}><Download size={15} /> Xuất CSV</button>
-        <button className="admin-secondary" type="button" onClick={() => importInput.current?.click()}><Upload size={15} /> Nhập CSV</button>
+        <button className="admin-secondary" type="button" onClick={() => setImportGuideOpen(true)}><Upload size={15} /> Nhập CSV</button>
         <button className="product-danger" type="button" onClick={removeSelected}><Trash2 size={15} /> Xóa đã chọn{selected.length ? ` (${selected.length})` : ''}</button>
         <input ref={importInput} type="file" accept=".csv,text/csv" hidden onChange={importCsv} />
       </div>
@@ -863,6 +910,7 @@ function ProductsPage({ meta, categories, products, onBulkEdit, onCreate, onEdit
           </div>
         </Modal>
       )}
+      {importGuideOpen && <CsvImportGuideModal categories={categories} onClose={() => setImportGuideOpen(false)} onChooseFile={() => { setImportGuideOpen(false); importInput.current?.click() }} />}
       {bulkOpen && <BulkProductEditor categories={categories} products={products.filter((product) => selected.includes(product.id))} onClose={() => setBulkOpen(false)} onSubmit={async (updates) => { await onBulkEdit(updates); setSelected([]); setBulkOpen(false) }} />}
     </>
   )

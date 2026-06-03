@@ -1508,6 +1508,7 @@ function ProductDetailPage({ product, products, onAdd, onBuyNow }) {
   const meta = getCatalogMeta(product)
   const detailDescription = getProductDetailDescription(product, meta)
   const sale = Boolean(selected.oldPrice)
+  const savings = sale ? Number(selected.oldPrice) - Number(selected.price) : 0
   const related = products.filter((item) => item.id !== product.id && item.category === product.category).slice(0, 4)
 
   useEffect(() => {
@@ -1531,7 +1532,7 @@ function ProductDetailPage({ product, products, onAdd, onBuyNow }) {
         <article className="product-detail-panel">
           <p className="quick-product-price">
             <strong>{formatPrice(selected.price)}</strong>
-            {sale && <del>{formatPrice(Number(selected.oldPrice))}</del>}
+            {sale && <span><del>{formatPrice(Number(selected.oldPrice))}</del><small>you save {formatPrice(savings)}</small></span>}
           </p>
           <h1>{product.name}</h1>
           <div className="catalog-rating" aria-label={`${meta.rating} out of 5 stars, ${meta.reviews} reviews`}>
@@ -1560,8 +1561,8 @@ function ProductDetailPage({ product, products, onAdd, onBuyNow }) {
               <button type="button" onClick={() => setQuantity((value) => value + 1)}><Plus size={16} /></button>
             </div>
             <button className="quick-add-cart" type="button" disabled={selected.stock === 0} onClick={() => onAdd(product, quantity, true, selectedVariant)}>Add to cart</button>
+            <button className="quick-buy-now" type="button" disabled={selected.stock === 0} onClick={() => onBuyNow(product, quantity, selectedVariant)}>Buy it now</button>
           </div>
-          <button className="quick-buy-now" type="button" disabled={selected.stock === 0} onClick={() => onBuyNow(product, quantity, selectedVariant)}>Buy it now</button>
         </article>
       </section>
 
