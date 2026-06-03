@@ -1179,15 +1179,16 @@ function skuPrefix(category) {
   return (letters || 'PRD').padEnd(3, 'X').toUpperCase()
 }
 
-function generateProductSku(category, products, currentId) {
+function generateProductSku(category, products, currentId, afterSku = '') {
   const prefix = skuPrefix(category)
   const used = new Set(products.filter((product) => product.id !== currentId).map((product) => product.sku))
+  const afterNumber = afterSku.startsWith(`${prefix}-`) ? Number(afterSku.slice(prefix.length + 1)) : 0
   const maxNumber = products.reduce((highest, product) => {
     if (product.id === currentId || !product.sku?.startsWith(`${prefix}-`)) return highest
     const value = Number(product.sku.slice(prefix.length + 1))
     return Number.isFinite(value) ? Math.max(highest, value) : highest
   }, 1029)
-  let number = maxNumber + 1
+  let number = Math.max(maxNumber, Number.isFinite(afterNumber) ? afterNumber : 0) + 1
   let sku = `${prefix}-${String(number).padStart(4, '0')}`
   while (used.has(sku)) {
     number += 1
@@ -1290,7 +1291,7 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy }
     reader.onload = () => setImagePreview(reader.result)
     reader.readAsDataURL(file)
   }
-  const regenerateSku = () => setForm((current) => ({ ...current, sku: generateProductSku(current.category, products, product?.id) }))
+  const regenerateSku = () => setForm((current) => ({ ...current, sku: generateProductSku(current.category, products, product?.id, current.sku) }))
   const submit = (event) => {
     event.preventDefault()
     onSubmit({
