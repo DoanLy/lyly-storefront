@@ -2199,14 +2199,7 @@ function App() {
                 </div>
               </div>
             </div>
-            <div className="about-menu">
-              <a href="/about-us">About us <ChevronDown size={15} /></a>
-              <div>
-                <a href="/about-us">About us</a>
-                <a href="/our-stores">Our stores</a>
-                <a href="/faq">FAQ</a>
-              </div>
-            </div>
+            <a href="/about-us">About us</a>
             <a href="/recipes">Recipes</a>
             <a href="/blog">Blog</a>
           </nav>

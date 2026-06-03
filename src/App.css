@@ -72,11 +72,6 @@ header { background: #fff; position: relative; z-index: 10; border-bottom: 1px s
 .mega-menu-promo p { margin: 0 0 10px; font-size: 13px; font-weight: 600; }
 .mega-menu-promo h3 { margin: 0 0 24px; color: #20382c; font-family: 'Libre Baskerville', Georgia, serif; font-size: 28px; font-weight: 400; letter-spacing: -.06em; }
 .mega-menu-promo span { width: 174px; height: 47px; display: inline-flex; align-items: center; justify-content: center; border-radius: 25px; color: white; background: #1e211f; font-size: 13px; font-weight: 700; }
-.about-menu { position: relative; display: flex; align-self: stretch; align-items: center; }
-.about-menu > div { min-width: 164px; position: absolute; z-index: 35; top: calc(100% - 8px); left: -18px; display: grid; gap: 4px; visibility: hidden; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: white; box-shadow: 0 16px 28px #1b302414; opacity: 0; transform: translateY(-6px); transition: .18s ease; }
-.about-menu:hover > div, .about-menu:focus-within > div { visibility: visible; opacity: 1; transform: translateY(0); }
-.about-menu > div a { padding: 9px 10px; border-radius: 5px; color: #3b5348; font-size: 13px; }
-.about-menu > div a:hover { background: var(--soft-sage); }
 .service-links { display: flex; gap: 33px; }
 .service-links a, .service-links button { gap: 10px; border: 0; color: var(--ink); background: transparent; font-size: 13px; text-align: left; }
 .service-links span { align-items: flex-start; flex-direction: column; gap: 2px; font-weight: 600; }
