@@ -48,11 +48,13 @@ import './AdminApp.css'
 import {
   checkAdminAccess,
   createAdminCategory,
+  createAdminDiscount,
   createAdminProduct,
   getAdminSession,
   importAdminProducts,
   isSupabaseConfigured,
   loadAdminCategories,
+  loadAdminDiscounts,
   loadAdminOrders,
   loadAdminProducts,
   removeAdminCategories,
@@ -130,9 +132,9 @@ const customers = [
 ]
 
 const initialDiscounts = [
-  { code: 'FRESH20', type: 'Percentage', value: '20%', uses: 128, status: 'Active', ends: '30 Jun 2026' },
-  { code: 'WELCOME10', type: 'Percentage', value: '10%', uses: 67, status: 'Active', ends: 'No end date' },
-  { code: 'LOCALDELIVERY', type: 'Free delivery', value: '$0 delivery', uses: 42, status: 'Scheduled', ends: '15 Jun 2026' },
+  { code: 'FRESH20', title: 'Fresh 20', method: 'code', discountType: 'order', valueType: 'percentage', valueAmount: 20, type: 'Order discount', value: '20%', uses: 128, status: 'Active', ends: '30 Jun 2026', minimumType: 'none', minimumValue: 0, active: true },
+  { code: 'WELCOME10', title: 'Welcome 10', method: 'code', discountType: 'order', valueType: 'percentage', valueAmount: 10, type: 'Order discount', value: '10%', uses: 67, status: 'Active', ends: 'No end date', minimumType: 'none', minimumValue: 0, active: true },
+  { code: 'LOCALDELIVERY', title: 'Local delivery', method: 'code', discountType: 'shipping', valueType: 'free', valueAmount: 0, type: 'Free shipping', value: 'Free shipping', uses: 42, status: 'Scheduled', ends: '15 Jun 2026', minimumType: 'none', minimumValue: 0, active: true },
 ]
 
 const articles = [
@@ -1472,6 +1474,7 @@ function BulkProductModal({ categories, count, onClose, onSubmit }) {
   )
 }
 
+// eslint-disable-next-line no-unused-vars
 function DiscountModal({ onClose, onSubmit }) {
   const [code, setCode] = useState('')
   const [value, setValue] = useState('')
@@ -1486,6 +1489,141 @@ function DiscountModal({ onClose, onSubmit }) {
         <label><span>Phần trăm giảm giá</span><input required min="1" max="100" type="number" value={value} onChange={(event) => setValue(event.target.value)} placeholder="15" /></label>
         <label><span>Áp dụng</span><select><option>Tất cả sản phẩm</option><option>Danh mục được chọn</option><option>Sản phẩm được chọn</option></select></label>
         <div className="modal-actions"><button className="admin-secondary" type="button" onClick={onClose}>Hủy</button><button className="admin-primary" type="submit">Tạo mã</button></div>
+      </form>
+    </Modal>
+  )
+}
+
+const discountTypeOptions = [
+  { id: 'product', title: 'Số tiền giảm cho sản phẩm', description: 'Giảm giá sản phẩm hoặc bộ sưu tập cụ thể', icon: Tag },
+  { id: 'buy_x_get_y', title: 'Mua X nhận Y', description: 'Ưu đãi theo số lượng sản phẩm trong giỏ', icon: BadgePercent },
+  { id: 'order', title: 'Số tiền giảm cho đơn hàng', description: 'Giảm tổng số tiền đơn hàng', icon: ShoppingBag },
+  { id: 'shipping', title: 'Vận chuyển miễn phí', description: 'Cung cấp vận chuyển miễn phí cho đơn hàng', icon: Truck },
+]
+
+function generateDiscountCode() {
+  return `LYLY${Math.random().toString(36).slice(2, 8).toUpperCase()}`
+}
+
+function DiscountBuilderModal({ onClose, onSubmit }) {
+  const [selectedType, setSelectedType] = useState('')
+  const [form, setForm] = useState({
+    method: 'code',
+    code: '',
+    title: '',
+    valueType: 'percentage',
+    valueAmount: '',
+    appliesToType: 'all',
+    appliesToSearch: '',
+    minimumType: 'none',
+    minimumValue: '',
+    usageLimitEnabled: false,
+    usageLimit: '',
+    oncePerCustomer: false,
+    combinesProduct: false,
+    combinesOrder: false,
+    combinesShipping: false,
+    startsAt: new Date().toISOString().slice(0, 10),
+    endsEnabled: false,
+    endsAt: '',
+  })
+  const selected = discountTypeOptions.find((item) => item.id === selectedType)
+  const change = (event) => {
+    const { name, value, type, checked } = event.target
+    setForm((current) => ({ ...current, [name]: type === 'checkbox' ? checked : value }))
+  }
+  const submit = (event) => {
+    event.preventDefault()
+    onSubmit({
+      code: form.method === 'code' ? form.code.trim().toUpperCase() : '',
+      title: form.method === 'automatic' ? form.title.trim() : form.code.trim().toUpperCase(),
+      method: form.method,
+      discountType: selectedType,
+      valueType: selectedType === 'shipping' ? 'free' : form.valueType,
+      valueAmount: selectedType === 'shipping' || form.valueType === 'free' ? 0 : Number(form.valueAmount),
+      appliesTo: { type: form.appliesToType, query: form.appliesToSearch.trim() },
+      minimumType: form.minimumType,
+      minimumValue: form.minimumType === 'none' ? 0 : Number(form.minimumValue || 0),
+      usageLimit: form.usageLimitEnabled ? Number(form.usageLimit || 0) : null,
+      oncePerCustomer: form.oncePerCustomer,
+      combines: { product: form.combinesProduct, order: form.combinesOrder, shipping: form.combinesShipping },
+      startsAt: form.startsAt ? new Date(`${form.startsAt}T00:00:00`).toISOString() : new Date().toISOString(),
+      endsAt: form.endsEnabled && form.endsAt ? new Date(`${form.endsAt}T23:59:59`).toISOString() : null,
+      active: true,
+    })
+  }
+
+  if (!selectedType) {
+    return (
+      <Modal title="Chọn loại giảm giá" onClose={onClose}>
+        <div className="discount-type-list">
+          {discountTypeOptions.map((option) => {
+            const Icon = option.icon
+            return (
+              <button type="button" onClick={() => setSelectedType(option.id)} key={option.id}>
+                <Icon size={18} />
+                <span><b>{option.title}</b><small>{option.description}</small></span>
+                <ChevronRight size={18} />
+              </button>
+            )
+          })}
+        </div>
+        <div className="modal-actions discount-type-actions"><button className="admin-secondary" type="button" onClick={onClose}>Hủy</button></div>
+      </Modal>
+    )
+  }
+
+  return (
+    <Modal wide title={`Tạo giảm giá - ${selected.title}`} onClose={onClose}>
+      <form className="modal-form discount-form" onSubmit={submit}>
+        <section>
+          <h3>{selected.title}</h3>
+          <label><span>Phương thức</span><select name="method" value={form.method} onChange={change}><option value="code">Mã giảm giá</option><option value="automatic">Giảm giá tự động</option></select></label>
+          {form.method === 'code' ? (
+            <label><span>Mã giảm giá</span><div className="discount-code-input"><input required name="code" value={form.code} onChange={change} placeholder="Ví dụ: SUMMER20" /><button type="button" onClick={() => setForm((current) => ({ ...current, code: generateDiscountCode() }))}>Tạo mã</button></div></label>
+          ) : (
+            <label><span>Tiêu đề</span><input required name="title" value={form.title} onChange={change} placeholder="Khách hàng sẽ thấy mục này trong giỏ hàng" /></label>
+          )}
+        </section>
+        {selectedType !== 'shipping' && (
+          <section>
+            <h3>Giá trị giảm giá</h3>
+            <div><label><span>Loại giá trị</span><select name="valueType" value={form.valueType} onChange={change}><option value="percentage">Phần trăm</option><option value="fixed">Số tiền cố định</option>{selectedType === 'buy_x_get_y' && <option value="free">Miễn phí</option>}</select></label><label><span>Giá trị</span><input required={form.valueType !== 'free'} disabled={form.valueType === 'free'} min="0" max={form.valueType === 'percentage' ? 100 : undefined} step=".01" type="number" name="valueAmount" value={form.valueAmount} onChange={change} /></label></div>
+            {(selectedType === 'product' || selectedType === 'buy_x_get_y') && (
+              <>
+                <label><span>Áp dụng cho</span><select name="appliesToType" value={form.appliesToType} onChange={change}><option value="all">Tất cả sản phẩm</option><option value="collection">Bộ sưu tập cụ thể</option><option value="product">Sản phẩm cụ thể</option></select></label>
+                <label><span>Tìm kiếm áp dụng</span><input name="appliesToSearch" value={form.appliesToSearch} onChange={change} placeholder="Nhập tên sản phẩm hoặc danh mục" /></label>
+              </>
+            )}
+          </section>
+        )}
+        {selectedType === 'buy_x_get_y' && <p className="modal-note">Ưu đãi Mua X nhận Y sẽ đồng bộ ra storefront theo điều kiện số lượng tối thiểu và mức giảm đã nhập.</p>}
+        <section>
+          <h3>Yêu cầu mua tối thiểu</h3>
+          <div className="discount-radio-list">
+            <label><input type="radio" name="minimumType" value="none" checked={form.minimumType === 'none'} onChange={change} /> Không có yêu cầu tối thiểu</label>
+            <label><input type="radio" name="minimumType" value="amount" checked={form.minimumType === 'amount'} onChange={change} /> Số tiền mua tối thiểu</label>
+            <label><input type="radio" name="minimumType" value="quantity" checked={form.minimumType === 'quantity'} onChange={change} /> Số lượng mặt hàng tối thiểu</label>
+          </div>
+          {form.minimumType !== 'none' && <label><span>Giá trị tối thiểu</span><input required min="0" step=".01" type="number" name="minimumValue" value={form.minimumValue} onChange={change} /></label>}
+        </section>
+        <section>
+          <h3>Giới hạn và kết hợp</h3>
+          <label className="discount-check"><input type="checkbox" name="usageLimitEnabled" checked={form.usageLimitEnabled} onChange={change} /> Giới hạn tổng số lần sử dụng</label>
+          {form.usageLimitEnabled && <label><span>Số lần sử dụng</span><input required min="1" type="number" name="usageLimit" value={form.usageLimit} onChange={change} /></label>}
+          <label className="discount-check"><input type="checkbox" name="oncePerCustomer" checked={form.oncePerCustomer} onChange={change} /> Giới hạn mỗi khách hàng một lần</label>
+          <div className="modal-check-grid">
+            <label><input type="checkbox" name="combinesProduct" checked={form.combinesProduct} onChange={change} /><span>Giảm giá sản phẩm</span></label>
+            <label><input type="checkbox" name="combinesOrder" checked={form.combinesOrder} onChange={change} /><span>Giảm giá đơn hàng</span></label>
+            <label><input type="checkbox" name="combinesShipping" checked={form.combinesShipping} onChange={change} /><span>Giảm phí vận chuyển</span></label>
+          </div>
+        </section>
+        <section>
+          <h3>Ngày hoạt động</h3>
+          <div><label><span>Ngày bắt đầu</span><input required type="date" name="startsAt" value={form.startsAt} onChange={change} /></label><label><span>Ngày kết thúc</span><input disabled={!form.endsEnabled} type="date" name="endsAt" value={form.endsAt} onChange={change} /></label></div>
+          <label className="discount-check"><input type="checkbox" name="endsEnabled" checked={form.endsEnabled} onChange={change} /> Thiết lập ngày kết thúc</label>
+        </section>
+        <div className="modal-actions"><button className="admin-secondary" type="button" onClick={() => setSelectedType('')}>Quay lại</button><button className="admin-primary" type="submit">Lưu giảm giá</button></div>
       </form>
     </Modal>
   )
@@ -1594,11 +1732,12 @@ function AdminApp() {
           return
         }
 
-        const [remoteProducts, remoteCategories, remoteOrders] = await Promise.all([loadAdminProducts(), loadAdminCategories(), loadAdminOrders()])
+        const [remoteProducts, remoteCategories, remoteOrders, remoteDiscounts] = await Promise.all([loadAdminProducts(), loadAdminCategories(), loadAdminOrders(), loadAdminDiscounts()])
         if (!ignore) {
           setProducts(remoteProducts)
           setCategories(remoteCategories)
           setAdminOrders(remoteOrders || initialOrders)
+          setDiscounts(remoteDiscounts || initialDiscounts)
           setAuthStatus('ready')
         }
       } catch (error) {
@@ -1633,10 +1772,11 @@ function AdminApp() {
         setAuthStatus('unauthorized')
         return
       }
-      const [remoteProducts, remoteCategories, remoteOrders] = await Promise.all([loadAdminProducts(), loadAdminCategories(), loadAdminOrders()])
+      const [remoteProducts, remoteCategories, remoteOrders, remoteDiscounts] = await Promise.all([loadAdminProducts(), loadAdminCategories(), loadAdminOrders(), loadAdminDiscounts()])
       setProducts(remoteProducts)
       setCategories(remoteCategories)
       setAdminOrders(remoteOrders || initialOrders)
+      setDiscounts(remoteDiscounts || initialDiscounts)
       setAuthStatus('ready')
     } catch (error) {
       console.error(error)
@@ -1768,9 +1908,16 @@ function AdminApp() {
     }
   }
 
-  const addDiscount = (discount) => {
-    setDiscounts((current) => [discount, ...current])
-    setDiscountModal(false)
+  const addDiscount = async (discount) => {
+    setAdminError('')
+    try {
+      const createdDiscount = await createAdminDiscount(discount)
+      setDiscounts((current) => [createdDiscount, ...current])
+      setDiscountModal(false)
+    } catch (error) {
+      console.error(error)
+      setAdminError(error.message)
+    }
   }
 
   const saveOrder = async (order) => {
@@ -1865,7 +2012,7 @@ function AdminApp() {
       </main>
       {productModal && <ProductModal categories={categories} products={products} product={productEditing} copy={adminCopy.product} onClose={() => { setProductEditing(null); setProductModal(false) }} onSubmit={saveProduct} />}
       {categoryModal && <CategoryModal categories={categories} category={categoryEditing} onClose={() => { setCategoryEditing(null); setCategoryModal(false) }} onSubmit={saveCategory} />}
-      {discountModal && <DiscountModal onClose={() => setDiscountModal(false)} onSubmit={addDiscount} />}
+      {discountModal && <DiscountBuilderModal onClose={() => setDiscountModal(false)} onSubmit={addDiscount} />}
     </div>
   )
 }

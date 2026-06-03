@@ -28,7 +28,7 @@ import {
   X,
 } from 'lucide-react'
 import './App.css'
-import { createStorefrontOrder, loadPublicCategories, loadPublicProducts, subscribeToNewsletter } from './lib/storeApi'
+import { createStorefrontOrder, loadPublicCategories, loadPublicDiscounts, loadPublicProducts, subscribeToNewsletter } from './lib/storeApi'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 
 const fallbackCategories = [
@@ -135,6 +135,11 @@ const fallbackProducts = [
     stock: 6,
     image: 'https://images.unsplash.com/photo-1599084993091-1cb5c0721cc6?auto=format&fit=crop&w=700&q=90',
   },
+]
+
+const fallbackDiscounts = [
+  { code: 'FRESH20', title: 'Fresh 20', method: 'code', discountType: 'order', valueType: 'percentage', valueAmount: 20, minimumType: 'none', minimumValue: 0, status: 'Active', active: true },
+  { code: 'WELCOME10', title: 'Welcome 10', method: 'code', discountType: 'order', valueType: 'percentage', valueAmount: 10, minimumType: 'none', minimumValue: 0, status: 'Active', active: true },
 ]
 
 const articles = [
@@ -621,17 +626,73 @@ function QuickProductModal({ product, onAdd, onBuyNow, onClose }) {
   )
 }
 
-function CartTotals({ subtotal, discountCode = '' }) {
+function isDiscountActive(discount) {
+  const now = Date.now()
+  const startsAt = discount.startsAt ? new Date(discount.startsAt).getTime() : 0
+  const endsAt = discount.endsAt ? new Date(discount.endsAt).getTime() : null
+  return discount.active !== false && (!startsAt || startsAt <= now) && (!endsAt || endsAt >= now) && discount.status !== 'Expired'
+}
+
+function discountBaseSubtotal(discount, items, subtotal) {
+  const applies = discount.appliesTo || {}
+  const query = String(applies.query || '').trim().toLowerCase()
+  if (!query || applies.type === 'all' || discount.discountType === 'order' || discount.discountType === 'shipping') return subtotal
+
+  const matched = items.filter((item) => {
+    const haystack = `${item.name} ${item.category}`.toLowerCase()
+    return haystack.includes(query)
+  })
+  return matched.reduce((total, item) => total + item.price * item.quantity, 0)
+}
+
+function minimumSatisfied(discount, subtotal, items) {
+  if (discount.minimumType === 'amount') return subtotal >= Number(discount.minimumValue || 0)
+  if (discount.minimumType === 'quantity') return items.reduce((total, item) => total + item.quantity, 0) >= Number(discount.minimumValue || 0)
+  return true
+}
+
+function evaluateDiscount(discount, subtotal, items, deliveryFee = 0) {
+  if (!discount || !isDiscountActive(discount) || !minimumSatisfied(discount, subtotal, items)) return null
+  const base = discountBaseSubtotal(discount, items, subtotal)
+  if (base <= 0 && discount.discountType !== 'shipping') return null
+
+  if (discount.discountType === 'shipping') {
+    return { discount: 0, shippingDiscount: deliveryFee, discountObject: discount }
+  }
+
+  const amount = Number(discount.valueAmount || discount.percentOff || 0)
+  const discountValue = discount.valueType === 'percentage'
+    ? base * (amount / 100)
+    : discount.valueType === 'free'
+      ? base
+      : amount
+
+  return { discount: Math.min(base, Math.max(0, discountValue)), shippingDiscount: 0, discountObject: discount }
+}
+
+function CartTotals({ subtotal, discountCode = '', discounts = [], items = [], deliveryFee = 0 }) {
   const normalized = discountCode.trim().toUpperCase()
-  const discount = normalized === 'SUMMER25' ? subtotal * 0.25 : normalized === 'FRESH20' ? subtotal * 0.2 : 0
+  const pool = discounts.length ? discounts : fallbackDiscounts
+  const candidates = normalized
+    ? pool.filter((discount) => discount.method !== 'automatic' && discount.code?.toUpperCase() === normalized)
+    : pool.filter((discount) => discount.method === 'automatic')
+  const best = candidates
+    .map((discount) => evaluateDiscount(discount, subtotal, items, deliveryFee))
+    .filter(Boolean)
+    .sort((a, b) => (b.discount + b.shippingDiscount) - (a.discount + a.shippingDiscount))[0]
+  const discount = best?.discount || 0
+  const shippingDiscount = best?.shippingDiscount || 0
   return {
     discount,
-    total: Math.max(0, subtotal - discount),
-    normalized,
+    shippingDiscount,
+    total: Math.max(0, subtotal - discount + Math.max(0, deliveryFee - shippingDiscount)),
+    normalized: best?.discountObject?.code || normalized,
+    title: best?.discountObject?.title || best?.discountObject?.code || normalized,
+    discountObject: best?.discountObject || null,
   }
 }
 
-function DiscountCodeForm({ value, appliedCode, error, onChange, onApply, onRemove, compact = false }) {
+function DiscountCodeForm({ value, appliedCode, error, hint, onChange, onApply, onRemove, compact = false }) {
   return (
     <div className={`discount-code-form ${compact ? 'compact' : ''}`}>
       <div className="discount-code-row">
@@ -649,7 +710,7 @@ function DiscountCodeForm({ value, appliedCode, error, onChange, onApply, onRemo
         />
         <button type="button" disabled={!value.trim()} onClick={onApply}>Apply</button>
       </div>
-      <p>Use code SUMMER25 for 25% off your order</p>
+      {hint && <p>{hint}</p>}
       {error && <small className="discount-error">{error}</small>}
       {appliedCode && (
         <span className="discount-chip">
@@ -664,6 +725,7 @@ function DiscountCodeForm({ value, appliedCode, error, onChange, onApply, onRemo
 function CartPage({
   cart,
   products,
+  discounts,
   discountDraft,
   appliedDiscountCode,
   discountError,
@@ -679,7 +741,7 @@ function CartPage({
   onAddRelated,
 }) {
   const subtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0)
-  const totals = CartTotals({ subtotal, discountCode: appliedDiscountCode })
+  const totals = CartTotals({ subtotal, discountCode: appliedDiscountCode, discounts, items: cart })
   const relatedProducts = products.filter((product) => !cart.some((item) => (item.productId || item.id) === product.id) && productSelection(product).stock !== 0).slice(0, 3)
   const [shippingEstimate, setShippingEstimate] = useState({ country: 'United States', postalCode: '', result: null, error: '' })
   const estimateShipping = (event) => {
@@ -1507,6 +1569,57 @@ function ProductDetailPage({ product, products, onAdd, onBuyNow }) {
   )
 }
 
+function AboutPage({ products, onAdd }) {
+  const favorites = products.filter((product) => product.stock !== 0).slice(0, 4)
+
+  useEffect(() => {
+    document.title = 'About Us | LyLy Fresh Market'
+  }, [])
+
+  return (
+    <main className="about-page">
+      <section className="about-head container">
+        <div className="breadcrumbs"><a href="/">Home</a><ChevronRight size={13} /><b>About Us</b></div>
+        <h1>About Us</h1>
+      </section>
+      <section className="about-intro container">
+        <h2>Many local growers and food makers need a simpler way to bring fresh, honest products to everyday shoppers.</h2>
+        <p>LyLy Fresh Market connects carefully selected producers with customers who care about freshness, transparency, and practical everyday food. We keep the catalog focused, the sourcing clear, and the delivery experience simple.</p>
+        <p>Our work starts with dependable ingredients and ends with a basket that feels easy to trust. From bakery staples to seasonal produce, each product is chosen for quality, consistency, and usefulness in a real kitchen.</p>
+      </section>
+      <section className="about-feature">
+        <div className="container about-feature-row">
+          <div>
+            <p className="eyebrow">Local resources</p>
+            <h2>Fresh food with a closer supply chain.</h2>
+            <p>We prioritize producers and distributors that can keep products traceable, reduce unnecessary handling, and deliver better freshness from market to table.</p>
+            <a className="dark-button" href="/products">Shop local picks</a>
+          </div>
+          <img src="https://images.unsplash.com/photo-1515586000433-45406d8e6662?auto=format&fit=crop&w=900&q=88" alt="Fresh green fern leaf" />
+        </div>
+      </section>
+      <section className="about-feature alternate">
+        <div className="container about-feature-row">
+          <img src="https://images.unsplash.com/photo-1514517220039-0f8a2d8a6f32?auto=format&fit=crop&w=900&q=88" alt="Natural wood texture" />
+          <div>
+            <p className="eyebrow">Sustainable choices</p>
+            <h2>Better routines, less waste.</h2>
+            <p>We build the store around food people actually use, flexible pickup and delivery, and a product range that supports thoughtful weekly shopping.</p>
+            <a className="dark-button" href="/delivery">Delivery options</a>
+          </div>
+        </div>
+      </section>
+      <section className="section products-section">
+        <div className="container section-heading">
+          <div><p className="eyebrow">Our favourites</p><h2>Products we reach for often</h2></div>
+          <a href="/products">View all products <ArrowRight size={17} /></a>
+        </div>
+        <div className="container product-grid">{favorites.map((product) => <ProductCard product={product} onAdd={onAdd} key={product.id} />)}</div>
+      </section>
+    </main>
+  )
+}
+
 function CollectionsPage({ categories }) {
   const groups = useMemo(() => buildCollectionGroups(categories), [categories])
   const collectionCount = groups.reduce((total, group) => total + group.children.length, 0)
@@ -1564,7 +1677,7 @@ function CollectionsPage({ categories }) {
   )
 }
 
-function CheckoutModal({ items, onClose, onComplete }) {
+function CheckoutModal({ items, discounts, initialDiscountCode = '', onClose, onComplete }) {
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -1578,20 +1691,26 @@ function CheckoutModal({ items, onClose, onComplete }) {
     notes: '',
   })
   const [checkoutDiscountDraft, setCheckoutDiscountDraft] = useState('')
-  const [checkoutDiscountCode, setCheckoutDiscountCode] = useState('')
+  const [checkoutDiscountCode, setCheckoutDiscountCode] = useState(initialDiscountCode)
   const [checkoutDiscountError, setCheckoutDiscountError] = useState('')
   const [status, setStatus] = useState('idle')
   const [message, setMessage] = useState('')
   const [order, setOrder] = useState(null)
   const subtotal = items.reduce((total, item) => total + item.price * item.quantity, 0)
-  const discount = CartTotals({ subtotal, discountCode: checkoutDiscountCode }).discount
-  const deliveryFee = form.deliveryMethod === 'pickup' || subtotal - discount >= 75 ? 0 : 8
+  const baseDeliveryFee = form.deliveryMethod === 'pickup' || subtotal >= 75 ? 0 : 8
+  const totals = CartTotals({ subtotal, discountCode: checkoutDiscountCode, discounts, items, deliveryFee: baseDeliveryFee })
+  const discount = totals.discount
+  const deliveryFee = Math.max(0, baseDeliveryFee - totals.shippingDiscount)
   const tax = (subtotal - discount) * 0.0825
   const total = subtotal - discount + deliveryFee + tax
+  const checkoutDiscountHint = discounts.find((discountItem) => discountItem.method !== 'automatic' && isDiscountActive(discountItem))?.code
+    ? `Use code ${discounts.find((discountItem) => discountItem.method !== 'automatic' && isDiscountActive(discountItem)).code} for a fresh discount`
+    : ''
   const change = (event) => setForm({ ...form, [event.target.name]: event.target.value })
   const applyCheckoutDiscount = () => {
     const normalized = checkoutDiscountDraft.trim().toUpperCase()
-    if (!['SUMMER25', 'FRESH20'].includes(normalized)) {
+    const result = CartTotals({ subtotal, discountCode: normalized, discounts, items, deliveryFee: baseDeliveryFee })
+    if (!result.discountObject) {
       setCheckoutDiscountError('This discount code is not available.')
       return
     }
@@ -1705,6 +1824,7 @@ function CheckoutModal({ items, onClose, onComplete }) {
                   value={checkoutDiscountDraft}
                   appliedCode={checkoutDiscountCode}
                   error={checkoutDiscountError}
+                  hint={checkoutDiscountHint}
                   onChange={(value) => {
                     setCheckoutDiscountDraft(value)
                     setCheckoutDiscountError('')
@@ -1719,6 +1839,7 @@ function CheckoutModal({ items, onClose, onComplete }) {
                 <div className="checkout-totals">
                   <p><span>Subtotal</span><b>{formatPrice(subtotal)}</b></p>
                   <p><span>Discount</span><b>-{formatPrice(discount)}</b></p>
+                  {totals.shippingDiscount > 0 && <p><span>Shipping discount</span><b>-{formatPrice(totals.shippingDiscount)}</b></p>}
                   <p><span>Delivery</span><b>{deliveryFee ? formatPrice(deliveryFee) : 'Free'}</b></p>
                   <p><span>Estimated tax</span><b>{formatPrice(tax)}</b></p>
                   <p className="grand-total"><span>Total</span><b>{formatPrice(total)}</b></p>
@@ -1744,6 +1865,7 @@ function App() {
   const isCartPage = currentPath.startsWith('/cart')
   const isAccountPage = currentPath.startsWith('/account')
   const isStoresPage = currentPath.startsWith('/our-stores') || currentPath.startsWith('/pages/our-stores')
+  const isAboutPage = currentPath.startsWith('/about-us') || currentPath.startsWith('/pages/about-us')
   const isDeliveryPage = currentPath.startsWith('/delivery') || currentPath.startsWith('/pages/delivery')
   const isFaqPage = currentPath.startsWith('/faq') || currentPath.startsWith('/pages/faq')
   const isRecipesPage = currentPath === '/recipes' || currentPath === '/blogs/recipes'
@@ -1755,6 +1877,7 @@ function App() {
     : null
   const [products, setProducts] = useState(fallbackProducts)
   const [categories, setCategories] = useState(fallbackCategories)
+  const [discounts, setDiscounts] = useState(fallbackDiscounts)
   const [cart, setCart] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('lyly-cart') || '[]')
@@ -1803,6 +1926,9 @@ function App() {
     loadPublicCategories()
       .then((data) => data?.length && setCategories(data))
       .catch((error) => console.error('Unable to load categories from Supabase.', error))
+    loadPublicDiscounts()
+      .then((data) => data?.length && setDiscounts(data))
+      .catch((error) => console.error('Unable to load discounts from Supabase.', error))
   }, [])
 
   useEffect(() => {
@@ -1832,6 +1958,9 @@ function App() {
 
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0)
   const subtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0)
+  const discountHint = discounts.find((discount) => discount.method !== 'automatic' && isDiscountActive(discount))?.code
+    ? `Use code ${discounts.find((discount) => discount.method !== 'automatic' && isDiscountActive(discount)).code} for a fresh discount`
+    : ''
   const searchResults = useMemo(() => {
     const query = search.trim().toLowerCase()
     if (!query) return []
@@ -1897,7 +2026,8 @@ function App() {
       setDiscountError('')
       return
     }
-    if (!['SUMMER25', 'FRESH20'].includes(normalized)) {
+    const result = CartTotals({ subtotal, discountCode: normalized, discounts, items: cart })
+    if (!result.discountObject) {
       setDiscountError('This discount code is not available.')
       return
     }
@@ -2070,8 +2200,9 @@ function App() {
               </div>
             </div>
             <div className="about-menu">
-              <a href="/#promise">About us <ChevronDown size={15} /></a>
+              <a href="/about-us">About us <ChevronDown size={15} /></a>
               <div>
+                <a href="/about-us">About us</a>
                 <a href="/our-stores">Our stores</a>
                 <a href="/faq">FAQ</a>
               </div>
@@ -2090,6 +2221,8 @@ function App() {
       <main className="catalog-page"><section className="catalog-empty container"><Search size={30} /><h2>Product not found</h2><p>This product is no longer available.</p><a href="/products">Back to products</a></section></main>
       ) : isProductsPage ? <ProductsPage categories={categories} products={products} onAdd={openQuickProduct} /> : isCollectionsPage ? <CollectionsPage categories={categories} /> : isStoresPage ? (
       <OurStoresPage />
+      ) : isAboutPage ? (
+      <AboutPage products={products} onAdd={openQuickProduct} />
       ) : isDeliveryPage ? (
       <DeliveryPage onOpenPickup={() => setPickupOpen(true)} />
       ) : isFaqPage ? (
@@ -2114,6 +2247,7 @@ function App() {
       <CartPage
         cart={cart}
         products={products}
+        discounts={discounts}
         discountDraft={discountDraft}
         appliedDiscountCode={appliedDiscountCode}
         discountError={discountError}
@@ -2207,7 +2341,7 @@ function App() {
               <span><Truck size={20} />Packed with care</span>
               <span><ShieldCheck size={20} />Quality checked</span>
             </div>
-            <a className="light-button" href="#footer">Our story</a>
+            <a className="light-button" href="/about-us">Our story</a>
           </div>
         </section>
 
@@ -2267,7 +2401,7 @@ function App() {
             <div><a href="#footer"><b className="social-mark">ig</b></a><a href="#footer"><b className="social-mark">f</b></a><a href="#footer"><Mail size={18} /></a></div>
           </div>
           <div><h4>Shop</h4><a href="/collections">Categories</a><a href="/products">Best sellers</a><a href="/products">New arrivals</a><a href="/products">Special offers</a></div>
-          <div><h4>About</h4><a href="/our-stores">Our stores</a><a href="/faq">FAQ</a><a href="/blog">Journal</a><a href="/#footer">Contact</a></div>
+          <div><h4>About</h4><a href="/about-us">About us</a><a href="/our-stores">Our stores</a><a href="/faq">FAQ</a><a href="/blog">Journal</a><a href="/#footer">Contact</a></div>
           <div><h4>Need help?</h4><a href="/delivery">Delivery & pickup</a><a href="/faq">FAQs</a><a href="/delivery">Returns</a><a href="/account?tab=orders">Track an order</a></div>
           <div className="store-card">
             <MapPin size={22} />
@@ -2283,6 +2417,7 @@ function App() {
         <div className="drawer-header"><Logo /><button type="button" onClick={() => setMenuOpen(false)} aria-label="Close menu"><X /></button></div>
         <nav>
           {menuItems.map((item) => <a href={item.href} onClick={() => setMenuOpen(false)} key={item.label}>{item.label}<ChevronRight size={16} /></a>)}
+          <a href="/about-us" onClick={() => setMenuOpen(false)}>About us<ChevronRight size={16} /></a>
           <a href="/our-stores" onClick={() => setMenuOpen(false)}>Our stores<ChevronRight size={16} /></a>
           <a href="/faq" onClick={() => setMenuOpen(false)}>FAQ<ChevronRight size={16} /></a>
           <a href="/recipes" onClick={() => setMenuOpen(false)}>Recipes<ChevronRight size={16} /></a>
@@ -2323,6 +2458,7 @@ function App() {
                 value={discountDraft}
                 appliedCode={appliedDiscountCode}
                 error={discountError}
+                hint={discountHint}
                 onChange={(value) => {
                   setDiscountDraft(value)
                   setDiscountError('')
@@ -2336,7 +2472,7 @@ function App() {
         </div>
         <div className="cart-summary">
           {(() => {
-            const totals = CartTotals({ subtotal, discountCode: appliedDiscountCode })
+            const totals = CartTotals({ subtotal, discountCode: appliedDiscountCode, discounts, items: cart })
             return (
               <>
                 <div><span>Subtotal</span><b>{formatPrice(subtotal)}</b></div>
@@ -2357,7 +2493,7 @@ function App() {
       {quickProduct && <QuickProductModal product={quickProduct} onAdd={addToCart} onBuyNow={buyNow} onClose={() => setQuickProduct(null)} />}
       {accountOpen && <AccountModal user={storefrontUser} profile={accountProfile} onClose={() => setAccountOpen(false)} onSignOut={signOutAccount} />}
       {pickupOpen && <SelectPickupModal selectedId={selectedPickup?.id} onSelect={selectPickup} onClose={() => setPickupOpen(false)} />}
-      {checkoutOpen && <CheckoutModal items={cart} onClose={() => setCheckoutOpen(false)} onComplete={() => setCart([])} />}
+      {checkoutOpen && <CheckoutModal items={cart} discounts={discounts} initialDiscountCode={appliedDiscountCode} onClose={() => setCheckoutOpen(false)} onComplete={() => setCart([])} />}
       {searchOpen && <button className="search-closer" aria-label="Close search" type="button" onClick={() => setSearchOpen(false)} />}
     </div>
   )

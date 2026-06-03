@@ -204,6 +204,20 @@
 .admin-status.unfulfilled { color: #7b6a54; background: #eeeae3; }
 .admin-status.ready { color: #446f7b; background: #e0f0f1; }
 .discount-code { display: flex; align-items: center; gap: 5px; color: #3f5c50; }
+.discount-type-list { display: grid; padding: 6px 0; }
+.discount-type-list button { min-height: 78px; display: grid; grid-template-columns: 28px 1fr 24px; align-items: center; gap: 12px; padding: 14px 18px; border: 0; border-bottom: 1px solid var(--admin-line); color: #42584f; text-align: left; background: white; }
+.discount-type-list button:hover { background: #f8faf8; }
+.discount-type-list button:last-child { border-bottom: 0; }
+.discount-type-list b { display: block; margin-bottom: 5px; color: #2f463b; font-size: 13px; }
+.discount-type-list small { color: #75837c; font-size: 11px; line-height: 1.45; }
+.discount-type-actions { padding: 12px 17px 16px; border-top: 1px solid var(--admin-line); }
+.discount-form section { display: grid; gap: 11px; padding: 13px; border: 1px solid var(--admin-line); border-radius: 8px; background: #fff; }
+.discount-form section h3 { margin: 0; color: #344f43; font-size: 13px; }
+.discount-form .discount-code-input { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.discount-code-input button { height: 37px; padding: 0 11px; border: 1px solid #cbd9cf; border-radius: 5px; color: #315846; background: #f8faf8; font-size: 11px; font-weight: 700; }
+.discount-radio-list { display: grid; gap: 9px; }
+.discount-radio-list label, .discount-check { display: flex !important; flex-direction: row !important; align-items: center; gap: 8px; color: #596961; font-size: 12px; }
+.discount-radio-list input, .discount-check input { width: 16px; height: 16px; accent-color: var(--admin-green); }
 .empty-hint { padding: 70px 20px; color: #8ba097; text-align: center; }
 .empty-hint h3 { margin: 12px 0 5px; color: #496358; font-family: 'Lora'; font-size: 18px; font-weight: 400; }
 .empty-hint p { margin: 0; font-size: 11px; }
