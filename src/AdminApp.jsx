@@ -64,6 +64,7 @@ import {
   updateAdminOrders,
   updateAdminProduct,
   updateAdminProducts,
+  uploadAdminProductImage,
 } from './lib/storeApi'
 
 const initialProducts = [
@@ -1039,6 +1040,49 @@ function slugify(value) {
     .replace(/(^-|-$)/g, '')
 }
 
+function skuPrefix(category) {
+  const known = {
+    'bread-bakery': 'BRD',
+    bakery: 'BRD',
+    beverages: 'BEV',
+    drinks: 'BEV',
+    coffee: 'COF',
+    'dairy-eggs': 'DRY',
+    produce: 'FRT',
+    'fruits-vegetables': 'FRT',
+    vegetables: 'VEG',
+    fruit: 'FRT',
+    pantry: 'PAN',
+    'pasta-noodles': 'PAS',
+  }
+  const slug = slugify(category || 'product')
+  if (known[slug]) return known[slug]
+  const letters = slug.split('-').filter(Boolean).map((part) => part[0]).join('').slice(0, 3)
+  return (letters || 'PRD').padEnd(3, 'X').toUpperCase()
+}
+
+function generateProductSku(category, products, currentId) {
+  const prefix = skuPrefix(category)
+  const used = new Set(products.filter((product) => product.id !== currentId).map((product) => product.sku))
+  const maxNumber = products.reduce((highest, product) => {
+    if (product.id === currentId || !product.sku?.startsWith(`${prefix}-`)) return highest
+    const value = Number(product.sku.slice(prefix.length + 1))
+    return Number.isFinite(value) ? Math.max(highest, value) : highest
+  }, 1029)
+  let number = maxNumber + 1
+  let sku = `${prefix}-${String(number).padStart(4, '0')}`
+  while (used.has(sku)) {
+    number += 1
+    sku = `${prefix}-${String(number).padStart(4, '0')}`
+  }
+  return sku
+}
+
+function ensureUniqueSku(product, products) {
+  const duplicate = products.some((item) => item.id !== product.id && item.sku === product.sku)
+  return duplicate || !product.sku ? { ...product, sku: generateProductSku(product.category, products, product.id) } : product
+}
+
 function CategoryModal({ categories, category, onClose, onSubmit }) {
   const rootCategories = categories.filter((item) => !item.parentId)
   const editingRoot = Boolean(category && !category.parentId)
@@ -1091,12 +1135,13 @@ function CategoryModal({ categories, category, onClose, onSubmit }) {
   )
 }
 
-function ProductModal({ categories, product, onClose, onSubmit }) {
+function ProductModal({ categories, products, product, onClose, onSubmit }) {
   const activeCategories = categories.filter((category) => category.active)
+  const initialCategory = product?.category || activeCategories[0]?.name || ''
   const [form, setForm] = useState(product || {
     name: '',
-    category: activeCategories[0]?.name || '',
-    sku: '',
+    category: initialCategory,
+    sku: generateProductSku(initialCategory, products),
     price: '',
     oldPrice: '',
     stock: '',
@@ -1109,29 +1154,59 @@ function ProductModal({ categories, product, onClose, onSubmit }) {
     warehouse: 'Main Store',
     productType: 'Grocery',
   })
-  const change = (event) => setForm({ ...form, [event.target.name]: event.target.value })
+  const [imageFile, setImageFile] = useState(null)
+  const [imagePreview, setImagePreview] = useState(form.image || defaultProductImage)
+  const change = (event) => {
+    const { name, value } = event.target
+    setForm((current) => {
+      const next = { ...current, [name]: value }
+      if (name === 'category') next.sku = generateProductSku(value, products, product?.id)
+      return next
+    })
+  }
+  const chooseImage = (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    setImageFile(file)
+    const reader = new FileReader()
+    reader.onload = () => setImagePreview(reader.result)
+    reader.readAsDataURL(file)
+  }
+  const regenerateSku = () => setForm((current) => ({ ...current, sku: generateProductSku(current.category, products, product?.id) }))
   const submit = (event) => {
     event.preventDefault()
     onSubmit({
       ...form,
+      sku: ensureUniqueSku(form, products).sku,
       price: Number(form.price),
       oldPrice: form.oldPrice ? Number(form.oldPrice) : undefined,
       stock: Number(form.stock),
-      image: form.image || defaultProductImage,
+      image: form.image || imagePreview || defaultProductImage,
+      imageFile,
     })
   }
   return (
     <Modal wide title={product ? 'Sửa sản phẩm' : 'Thêm sản phẩm mới'} onClose={onClose}>
       <form className="modal-form" onSubmit={submit}>
         <label><span>Tên sản phẩm</span><input required name="name" value={form.name} onChange={change} placeholder="Ví dụ: Organic Baby Spinach" /></label>
-        <div><label><span>Danh mục</span><select required name="category" value={form.category} onChange={change}>{activeCategories.map((category) => <option key={category.id}>{category.name}</option>)}</select></label><label><span>SKU</span><input required name="sku" value={form.sku} onChange={change} placeholder="FRT-1030" /></label></div>
+        <div>
+          <label><span>Danh mục</span><select required name="category" value={form.category} onChange={change}>{activeCategories.map((category) => <option key={category.id}>{category.name}</option>)}</select></label>
+          <div className="sku-field"><span>SKU</span><strong>{form.sku}</strong><small>Tự sinh theo danh mục và không trùng lặp.</small><button className="admin-secondary" type="button" onClick={regenerateSku}>Tạo lại</button></div>
+        </div>
         <div><label><span>Giá bán</span><input required min="0" step=".01" type="number" name="price" value={form.price} onChange={change} placeholder="0.00" /></label><label><span>Giá trước giảm</span><input min={form.price || 0} step=".01" type="number" name="oldPrice" value={form.oldPrice || ''} onChange={change} placeholder="Để trống nếu không sale" /></label></div>
         <div><label><span>Tồn kho</span><input required min="0" type="number" name="stock" value={form.stock} onChange={change} placeholder="0" /></label><label><span>Trạng thái</span><select name="status" value={form.status} onChange={change}><option value="active">Đang hiển thị</option><option value="draft">Bản nháp</option></select></label></div>
         <div><label><span>Quy cách</span><input required name="unit" value={form.unit} onChange={change} placeholder="Ví dụ: 250g" /></label><label><span>Nhãn sản phẩm</span><input name="badge" value={form.badge || ''} onChange={change} placeholder="Ví dụ: Organic" /></label></div>
-        <label><span>URL ảnh sản phẩm</span><input required name="image" value={form.image} onChange={change} placeholder="https://..." /></label>
+        <label className="product-upload-field">
+          <span>Ảnh sản phẩm</span>
+          <div className="product-image-picker">
+            <img src={imagePreview || defaultProductImage} alt="" />
+            <div><Upload size={21} /><b>{imageFile ? imageFile.name : 'Chọn ảnh từ máy'}</b><small>JPG, PNG hoặc WebP. Tối đa 5MB.</small></div>
+            <input accept="image/*" type="file" onChange={chooseImage} />
+          </div>
+        </label>
         <div><label><span>Nhà sản xuất</span><input required name="manufacturer" value={form.manufacturer} onChange={change} /></label><label><span>Nhà cung cấp</span><input required name="vendor" value={form.vendor} onChange={change} /></label></div>
         <div><label><span>Kho hàng</span><input required name="warehouse" value={form.warehouse} onChange={change} /></label><label><span>Loại sản phẩm</span><input required name="productType" value={form.productType} onChange={change} /></label></div>
-        <div className="upload-box"><Upload size={19} /><span>Ảnh từ URL sẽ được hiển thị trực tiếp trên storefront sau khi lưu.</span></div>
+        <div className="upload-box"><Upload size={19} /><span>Ảnh upload sẽ được lưu và hiển thị trực tiếp trên storefront sau khi lưu.</span></div>
         <div className="modal-actions"><button className="admin-secondary" type="button" onClick={onClose}>Hủy</button><button className="admin-primary" type="submit">{product ? 'Lưu thay đổi' : 'Thêm sản phẩm'}</button></div>
       </form>
     </Modal>
@@ -1338,11 +1413,15 @@ function AdminApp() {
   const saveProduct = async (product) => {
     setAdminError('')
     try {
-      if (product.id) {
-        const updatedProduct = await updateAdminProduct(product)
+      const { imageFile, ...productFields } = ensureUniqueSku(product, products)
+      const image = imageFile ? await uploadAdminProductImage(imageFile, productFields.sku) : productFields.image
+      const payload = { ...productFields, image: image || defaultProductImage }
+
+      if (payload.id) {
+        const updatedProduct = await updateAdminProduct(payload)
         setProducts((current) => current.map((item) => item.id === updatedProduct.id ? updatedProduct : item))
       } else {
-        const createdProduct = await createAdminProduct(product)
+        const createdProduct = await createAdminProduct(payload)
         setProducts((current) => [createdProduct, ...current])
       }
       setProductEditing(null)
@@ -1538,7 +1617,7 @@ function AdminApp() {
         {page !== 'dashboard' && <div className="admin-breadcrumb"><button type="button" onClick={() => navigate('dashboard')}>LyLy</button><ChevronRight size={13} /><span>{pageMeta[page]?.[0] || 'Trang chủ'}</span></div>}
         {renderPage()}
       </main>
-      {productModal && <ProductModal categories={categories} product={productEditing} onClose={() => { setProductEditing(null); setProductModal(false) }} onSubmit={saveProduct} />}
+      {productModal && <ProductModal categories={categories} products={products} product={productEditing} onClose={() => { setProductEditing(null); setProductModal(false) }} onSubmit={saveProduct} />}
       {categoryModal && <CategoryModal categories={categories} category={categoryEditing} onClose={() => { setCategoryEditing(null); setCategoryModal(false) }} onSubmit={saveCategory} />}
       {discountModal && <DiscountModal onClose={() => setDiscountModal(false)} onSubmit={addDiscount} />}
     </div>

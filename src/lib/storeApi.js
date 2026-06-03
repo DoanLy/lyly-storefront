@@ -270,6 +270,34 @@ export async function removeAdminProducts(ids) {
   if (error) throw error
 }
 
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = () => reject(reader.error)
+    reader.readAsDataURL(file)
+  })
+}
+
+export async function uploadAdminProductImage(file, sku) {
+  if (!file) return null
+  if (!file.type.startsWith('image/')) throw new Error('Chỉ hỗ trợ upload file hình ảnh.')
+  if (file.size > 5 * 1024 * 1024) throw new Error('Ảnh sản phẩm không được vượt quá 5MB.')
+  if (!supabase) return fileToDataUrl(file)
+
+  const extension = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg'
+  const safeSku = String(sku || 'product').toLowerCase().replace(/[^a-z0-9-]/g, '-')
+  const path = `${safeSku}/${Date.now()}.${extension}`
+  const { error } = await supabase.storage
+    .from('product-images')
+    .upload(path, file, { cacheControl: '3600', upsert: false, contentType: file.type })
+
+  if (error) throw error
+
+  const { data } = supabase.storage.from('product-images').getPublicUrl(path)
+  return data.publicUrl
+}
+
 export async function loadAdminOrders() {
   if (!supabase) return null
 
