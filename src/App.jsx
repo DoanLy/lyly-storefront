@@ -21,12 +21,14 @@ import {
   ShoppingCart,
   Star,
   Store,
+  Tag,
   Truck,
   User,
   X,
 } from 'lucide-react'
 import './App.css'
 import { createStorefrontOrder, loadPublicCategories, loadPublicProducts, subscribeToNewsletter } from './lib/storeApi'
+import { isSupabaseConfigured, supabase } from './lib/supabase'
 
 const fallbackCategories = [
   { name: 'Bread & Bakery', image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=700&q=85', showOnHome: true },
@@ -435,7 +437,7 @@ function QuickProductModal({ product, onAdd, onBuyNow, onClose }) {
   )
 }
 
-function CartTotals({ subtotal, discountCode }) {
+function CartTotals({ subtotal, discountCode = '' }) {
   const normalized = discountCode.trim().toUpperCase()
   const discount = normalized === 'SUMMER25' ? subtotal * 0.25 : normalized === 'FRESH20' ? subtotal * 0.2 : 0
   return {
@@ -445,9 +447,55 @@ function CartTotals({ subtotal, discountCode }) {
   }
 }
 
-function CartPage({ cart, products, discountCode, notes, termsAccepted, onDiscountChange, onNotesChange, onTermsChange, onQuantity, onCheckout, onAddRelated }) {
+function DiscountCodeForm({ value, appliedCode, error, onChange, onApply, onRemove, compact = false }) {
+  return (
+    <div className={`discount-code-form ${compact ? 'compact' : ''}`}>
+      <div className="discount-code-row">
+        <input
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault()
+              onApply()
+            }
+          }}
+          placeholder=""
+          aria-label="Discount code"
+        />
+        <button type="button" disabled={!value.trim()} onClick={onApply}>Apply</button>
+      </div>
+      <p>Use code SUMMER25 for 25% off your order</p>
+      {error && <small className="discount-error">{error}</small>}
+      {appliedCode && (
+        <span className="discount-chip">
+          <Tag size={16} /> {appliedCode}
+          <button type="button" onClick={onRemove} aria-label="Remove discount code"><X size={15} /></button>
+        </span>
+      )}
+    </div>
+  )
+}
+
+function CartPage({
+  cart,
+  products,
+  discountDraft,
+  appliedDiscountCode,
+  discountError,
+  notes,
+  termsAccepted,
+  onDiscountDraftChange,
+  onApplyDiscount,
+  onRemoveDiscount,
+  onNotesChange,
+  onTermsChange,
+  onQuantity,
+  onCheckout,
+  onAddRelated,
+}) {
   const subtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0)
-  const totals = CartTotals({ subtotal, discountCode })
+  const totals = CartTotals({ subtotal, discountCode: appliedDiscountCode })
   const relatedProducts = products.filter((product) => !cart.some((item) => item.id === product.id) && product.stock !== 0).slice(0, 3)
 
   return (
@@ -493,14 +541,260 @@ function CartPage({ cart, products, discountCode, notes, termsAccepted, onDiscou
             {totals.discount > 0 && <p className="discount-line"><span>{totals.normalized}</span><b>-{formatPrice(totals.discount)}</b></p>}
             <h3>Total <strong>{formatPrice(totals.total)}</strong></h3>
             <label>Order instructions<textarea value={notes} onChange={(event) => onNotesChange(event.target.value)} /></label>
-            <label>Discount codes<div className="discount-entry"><input value={discountCode} onChange={(event) => onDiscountChange(event.target.value)} /><button type="button">Apply</button></div></label>
-            <small>Use code SUMMER25 for 25% off your order.</small>
+            <div className="cart-summary-label">Discount codes</div>
+            <DiscountCodeForm
+              value={discountDraft}
+              appliedCode={appliedDiscountCode}
+              error={discountError}
+              onChange={onDiscountDraftChange}
+              onApply={onApplyDiscount}
+              onRemove={onRemoveDiscount}
+            />
             <p className="tax-note">Tax included. Shipping calculated at checkout.</p>
             <label className="terms-row"><input type="checkbox" checked={termsAccepted} onChange={(event) => onTermsChange(event.target.checked)} /> I agree to the terms and conditions</label>
             <button className="checkout-wide" type="button" disabled={!cart.length || !termsAccepted} onClick={onCheckout}>Checkout</button>
           </div>
         </aside>
       </div>
+    </main>
+  )
+}
+
+function getAccountName(user, profile = {}) {
+  const metadataName = user?.user_metadata?.full_name || user?.user_metadata?.name
+  const localName = [profile.firstName, profile.lastName].filter(Boolean).join(' ')
+  return localName || metadataName || user?.email?.split('@')[0] || 'Customer'
+}
+
+function AccountModal({ user, profile, onClose, onSignOut }) {
+  const [mode, setMode] = useState('signin')
+  const [form, setForm] = useState({ name: '', email: '', password: '' })
+  const [status, setStatus] = useState('idle')
+  const [message, setMessage] = useState('')
+
+  const change = (event) => {
+    setForm((current) => ({ ...current, [event.target.name]: event.target.value }))
+    setMessage('')
+  }
+
+  const submit = async (event) => {
+    event.preventDefault()
+    setStatus('submitting')
+    setMessage('')
+
+    try {
+      if (!isSupabaseConfigured || !supabase) {
+        throw new Error('Supabase is not configured for storefront auth.')
+      }
+
+      if (mode === 'signin') {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: form.email.trim(),
+          password: form.password,
+        })
+        if (error) throw error
+        onClose()
+      } else {
+        const { error } = await supabase.auth.signUp({
+          email: form.email.trim(),
+          password: form.password,
+          options: { data: { full_name: form.name.trim() } },
+        })
+        if (error) throw error
+        setMessage('Account created. Please check your email if confirmation is required.')
+      }
+    } catch (error) {
+      setMessage(error.message || 'Please try again.')
+    } finally {
+      setStatus('idle')
+    }
+  }
+
+  return (
+    <div className="account-overlay" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+      <section className="account-modal">
+        <button className="account-modal-close" type="button" onClick={onClose} aria-label="Close account"><X size={28} /></button>
+        {user ? (
+          <>
+            <h2>Account</h2>
+            <p className="account-email">{user.email}</p>
+            <div className="account-modal-actions">
+              <a href="/account?tab=orders" onClick={onClose}><Package size={25} /> Orders</a>
+              <a href="/account?tab=profile" onClick={onClose}><User size={25} /> Profile</a>
+            </div>
+            <div className="account-signed-in">
+              <span>{getAccountName(user, profile)}</span>
+              <button type="button" onClick={onSignOut}>Sign out</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <h2>{mode === 'signin' ? 'Sign in' : 'Create account'}</h2>
+            <div className="account-tabs">
+              <button className={mode === 'signin' ? 'active' : ''} type="button" onClick={() => setMode('signin')}>Sign in</button>
+              <button className={mode === 'signup' ? 'active' : ''} type="button" onClick={() => setMode('signup')}>Register</button>
+            </div>
+            <form className="account-auth-form" onSubmit={submit}>
+              {mode === 'signup' && <label>Name<input name="name" value={form.name} onChange={change} autoComplete="name" required /></label>}
+              <label>Email<input name="email" type="email" value={form.email} onChange={change} autoComplete="email" required /></label>
+              <label>Password<input name="password" type="password" value={form.password} onChange={change} autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} required minLength={6} /></label>
+              {message && <p className="account-message">{message}</p>}
+              <button type="submit" disabled={status === 'submitting'}>{status === 'submitting' ? 'Working...' : mode === 'signin' ? 'Sign in' : 'Create account'}</button>
+            </form>
+          </>
+        )}
+      </section>
+    </div>
+  )
+}
+
+function AccountPage({ user, profile, addresses, onOpenAccount, onSaveProfile, onSaveAddress, onSignOut }) {
+  const initialTab = new URLSearchParams(window.location.search).get('tab') === 'orders' ? 'orders' : 'profile'
+  const [tab, setTab] = useState(initialTab)
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [addressOpen, setAddressOpen] = useState(false)
+  const [profileForm, setProfileForm] = useState({
+    firstName: profile.firstName || '',
+    lastName: profile.lastName || '',
+    emailOffers: Boolean(profile.emailOffers),
+  })
+  const [addressForm, setAddressForm] = useState({
+    country: 'United States',
+    firstName: '',
+    lastName: '',
+    address: '',
+    apartment: '',
+    city: '',
+    state: 'Alabama',
+    zip: '',
+    isDefault: true,
+  })
+
+  if (!user) {
+    return (
+      <main className="account-page">
+        <header className="account-page-header">
+          <a href="/">LyLy Fresh Market</a>
+        </header>
+        <section className="account-empty-state">
+          <h1>Account</h1>
+          <p>Sign in or create an account to view orders, profile and saved addresses.</p>
+          <button type="button" onClick={onOpenAccount}>Sign in</button>
+        </section>
+      </main>
+    )
+  }
+
+  const saveProfile = async (event) => {
+    event.preventDefault()
+    await onSaveProfile(profileForm)
+    setProfileOpen(false)
+  }
+
+  const saveAddress = (event) => {
+    event.preventDefault()
+    onSaveAddress(addressForm)
+    setAddressOpen(false)
+    setAddressForm((current) => ({ ...current, address: '', apartment: '', city: '', zip: '' }))
+  }
+
+  return (
+    <main className="account-page">
+      <header className="account-page-header">
+        <a href="/">LyLy Fresh Market</a>
+        <nav>
+          <button className={tab === 'orders' ? 'active' : ''} type="button" onClick={() => setTab('orders')}>Orders</button>
+          <button className={tab === 'profile' ? 'active' : ''} type="button" onClick={() => setTab('profile')}>Profile</button>
+        </nav>
+        <button className="account-avatar" type="button" onClick={onOpenAccount}><User size={28} /></button>
+      </header>
+
+      <section className="account-content">
+        <h1>{tab === 'orders' ? 'Orders' : 'Profile'}</h1>
+        {tab === 'orders' ? (
+          <div className="account-card account-empty-row">
+            <Package size={24} />
+            <span>No orders yet</span>
+          </div>
+        ) : (
+          <>
+            <div className="account-card profile-card">
+              <button
+                type="button"
+                onClick={() => {
+                  setProfileForm({
+                    firstName: profile.firstName || '',
+                    lastName: profile.lastName || '',
+                    emailOffers: Boolean(profile.emailOffers),
+                  })
+                  setProfileOpen(true)
+                }}
+                aria-label="Edit profile"
+              >
+                <span>Name</span><Plus size={18} />
+              </button>
+              <p>Email</p>
+              <strong>{user.email}</strong>
+              {getAccountName(user, profile) && <small>{getAccountName(user, profile)}</small>}
+            </div>
+            <div className="account-card address-card">
+              <h2>Addresses <button type="button" onClick={() => setAddressOpen(true)}>+ Add</button></h2>
+              {addresses.length ? addresses.map((address) => (
+                <div className="address-row" key={`${address.address}-${address.zip}`}>
+                  <b>{address.firstName} {address.lastName}</b>
+                  <span>{address.address}{address.apartment ? `, ${address.apartment}` : ''}</span>
+                  <small>{address.city}, {address.state} {address.zip}, {address.country}</small>
+                </div>
+              )) : (
+                <div className="account-empty-row"><ShieldCheck size={22} /><span>No addresses added</span></div>
+              )}
+            </div>
+            <div className="account-signout-row">
+              <button type="button" onClick={onSignOut}>Sign out</button>
+              <button type="button" onClick={onSignOut}>Sign out of all devices</button>
+            </div>
+          </>
+        )}
+      </section>
+
+      {profileOpen && (
+        <div className="account-overlay" onMouseDown={(event) => event.target === event.currentTarget && setProfileOpen(false)}>
+          <form className="account-edit-modal" onSubmit={saveProfile}>
+            <button className="account-modal-close" type="button" onClick={() => setProfileOpen(false)} aria-label="Close edit profile"><X size={28} /></button>
+            <h2>Edit profile</h2>
+            <div className="account-form-grid two">
+              <input value={profileForm.firstName} onChange={(event) => setProfileForm((current) => ({ ...current, firstName: event.target.value }))} placeholder="First name" autoFocus />
+              <input value={profileForm.lastName} onChange={(event) => setProfileForm((current) => ({ ...current, lastName: event.target.value }))} placeholder="Last name" />
+            </div>
+            <label className="stacked-input">Email<input value={user.email} disabled /></label>
+            <label className="account-check"><input type="checkbox" checked={profileForm.emailOffers} onChange={(event) => setProfileForm((current) => ({ ...current, emailOffers: event.target.checked }))} /> Email me with news and offers</label>
+            <div className="modal-button-row"><button type="button" onClick={() => setProfileOpen(false)}>Cancel</button><button type="submit">Save</button></div>
+          </form>
+        </div>
+      )}
+
+      {addressOpen && (
+        <div className="account-overlay" onMouseDown={(event) => event.target === event.currentTarget && setAddressOpen(false)}>
+          <form className="account-edit-modal address-modal" onSubmit={saveAddress}>
+            <button className="account-modal-close" type="button" onClick={() => setAddressOpen(false)} aria-label="Close add address"><X size={28} /></button>
+            <h2>Add address</h2>
+            <label className="stacked-input">Country/region<select value={addressForm.country} onChange={(event) => setAddressForm((current) => ({ ...current, country: event.target.value }))}><option>United States</option><option>Vietnam</option><option>France</option></select></label>
+            <div className="account-form-grid two">
+              <input required value={addressForm.firstName} onChange={(event) => setAddressForm((current) => ({ ...current, firstName: event.target.value }))} placeholder="First name" />
+              <input required value={addressForm.lastName} onChange={(event) => setAddressForm((current) => ({ ...current, lastName: event.target.value }))} placeholder="Last name" />
+            </div>
+            <input required value={addressForm.address} onChange={(event) => setAddressForm((current) => ({ ...current, address: event.target.value }))} placeholder="Address" />
+            <input value={addressForm.apartment} onChange={(event) => setAddressForm((current) => ({ ...current, apartment: event.target.value }))} placeholder="Apartment, suite, etc (optional)" />
+            <div className="account-form-grid three">
+              <input required value={addressForm.city} onChange={(event) => setAddressForm((current) => ({ ...current, city: event.target.value }))} placeholder="City" />
+              <select value={addressForm.state} onChange={(event) => setAddressForm((current) => ({ ...current, state: event.target.value }))}><option>Alabama</option><option>California</option><option>New York</option><option>Texas</option></select>
+              <input required value={addressForm.zip} onChange={(event) => setAddressForm((current) => ({ ...current, zip: event.target.value }))} placeholder="ZIP code" />
+            </div>
+            <label className="account-check"><input type="checkbox" checked={addressForm.isDefault} onChange={(event) => setAddressForm((current) => ({ ...current, isDefault: event.target.checked }))} /> This is my default address</label>
+            <div className="modal-button-row"><button type="button" onClick={() => setAddressOpen(false)}>Cancel</button><button type="submit">Save</button></div>
+          </form>
+        </div>
+      )}
     </main>
   )
 }
@@ -725,17 +1019,28 @@ function CheckoutModal({ items, onClose, onComplete }) {
     deliveryMethod: 'local',
     paymentMethod: 'cod',
     notes: '',
-    discountCode: '',
   })
+  const [checkoutDiscountDraft, setCheckoutDiscountDraft] = useState('')
+  const [checkoutDiscountCode, setCheckoutDiscountCode] = useState('')
+  const [checkoutDiscountError, setCheckoutDiscountError] = useState('')
   const [status, setStatus] = useState('idle')
   const [message, setMessage] = useState('')
   const [order, setOrder] = useState(null)
   const subtotal = items.reduce((total, item) => total + item.price * item.quantity, 0)
-  const discount = form.discountCode.trim().toUpperCase() === 'FRESH20' ? subtotal * 0.2 : 0
+  const discount = CartTotals({ subtotal, discountCode: checkoutDiscountCode }).discount
   const deliveryFee = form.deliveryMethod === 'pickup' || subtotal - discount >= 75 ? 0 : 8
   const tax = (subtotal - discount) * 0.0825
   const total = subtotal - discount + deliveryFee + tax
   const change = (event) => setForm({ ...form, [event.target.name]: event.target.value })
+  const applyCheckoutDiscount = () => {
+    const normalized = checkoutDiscountDraft.trim().toUpperCase()
+    if (!['SUMMER25', 'FRESH20'].includes(normalized)) {
+      setCheckoutDiscountError('This discount code is not available.')
+      return
+    }
+    setCheckoutDiscountCode(normalized)
+    setCheckoutDiscountError('')
+  }
 
   const submit = async (event) => {
     event.preventDefault()
@@ -743,7 +1048,7 @@ function CheckoutModal({ items, onClose, onComplete }) {
     setMessage('')
 
     try {
-      const createdOrder = await createStorefrontOrder({ ...form, totals: { subtotal, discount, deliveryFee, tax, total } }, items)
+      const createdOrder = await createStorefrontOrder({ ...form, discountCode: checkoutDiscountCode, totals: { subtotal, discount, deliveryFee, tax, total } }, items)
       setOrder(createdOrder)
       setStatus('success')
       onComplete()
@@ -838,7 +1143,22 @@ function CheckoutModal({ items, onClose, onComplete }) {
                     </div>
                   ))}
                 </div>
-                <label className="checkout-discount"><span>Discount code</span><div><input name="discountCode" value={form.discountCode} onChange={change} placeholder="FRESH20" /><b>Apply</b></div></label>
+                <div className="checkout-discount"><span>Discount code</span></div>
+                <DiscountCodeForm
+                  value={checkoutDiscountDraft}
+                  appliedCode={checkoutDiscountCode}
+                  error={checkoutDiscountError}
+                  onChange={(value) => {
+                    setCheckoutDiscountDraft(value)
+                    setCheckoutDiscountError('')
+                  }}
+                  onApply={applyCheckoutDiscount}
+                  onRemove={() => {
+                    setCheckoutDiscountCode('')
+                    setCheckoutDiscountError('')
+                  }}
+                  compact
+                />
                 <div className="checkout-totals">
                   <p><span>Subtotal</span><b>{formatPrice(subtotal)}</b></p>
                   <p><span>Discount</span><b>-{formatPrice(discount)}</b></p>
@@ -863,6 +1183,7 @@ function App() {
   const isProductsPage = window.location.pathname.startsWith('/products')
   const isCollectionsPage = window.location.pathname.startsWith('/collections')
   const isCartPage = window.location.pathname.startsWith('/cart')
+  const isAccountPage = window.location.pathname.startsWith('/account')
   const [products, setProducts] = useState(fallbackProducts)
   const [categories, setCategories] = useState(fallbackCategories)
   const [cart, setCart] = useState(() => {
@@ -876,9 +1197,27 @@ function App() {
   const [categoriesOpen, setCategoriesOpen] = useState(false)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [quickProduct, setQuickProduct] = useState(null)
-  const [discountCode, setDiscountCode] = useState('SUMMER25')
+  const [discountDraft, setDiscountDraft] = useState('')
+  const [appliedDiscountCode, setAppliedDiscountCode] = useState('')
+  const [discountError, setDiscountError] = useState('')
   const [orderNotes, setOrderNotes] = useState('')
   const [termsAccepted, setTermsAccepted] = useState(false)
+  const [accountOpen, setAccountOpen] = useState(false)
+  const [storefrontUser, setStorefrontUser] = useState(null)
+  const [accountProfile, setAccountProfile] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('lyly-account-profile') || '{}')
+    } catch {
+      return {}
+    }
+  })
+  const [accountAddresses, setAccountAddresses] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('lyly-account-addresses') || '[]')
+    } catch {
+      return []
+    }
+  })
   const [menuOpen, setMenuOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
@@ -895,10 +1234,30 @@ function App() {
       .catch((error) => console.error('Unable to load categories from Supabase.', error))
   }, [])
 
+  useEffect(() => {
+    if (!isSupabaseConfigured || !supabase) return undefined
+
+    supabase.auth.getUser()
+      .then(({ data }) => setStorefrontUser(data.user || null))
+      .catch((error) => console.error('Unable to load storefront user.', error))
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setStorefrontUser(session?.user || null)
+    })
+
+    return () => listener.subscription.unsubscribe()
+  }, [])
+
   useEffect(() => () => clearTimeout(categoriesCloseTimer.current), [])
   useEffect(() => {
     localStorage.setItem('lyly-cart', JSON.stringify(cart))
   }, [cart])
+  useEffect(() => {
+    localStorage.setItem('lyly-account-profile', JSON.stringify(accountProfile))
+  }, [accountProfile])
+  useEffect(() => {
+    localStorage.setItem('lyly-account-addresses', JSON.stringify(accountAddresses))
+  }, [accountAddresses])
 
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0)
   const subtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0)
@@ -947,6 +1306,50 @@ function App() {
   const openCheckout = () => {
     setCartOpen(false)
     setCheckoutOpen(true)
+  }
+
+  const applyDiscount = () => {
+    const normalized = discountDraft.trim().toUpperCase()
+    if (!normalized) {
+      setDiscountError('')
+      return
+    }
+    if (!['SUMMER25', 'FRESH20'].includes(normalized)) {
+      setDiscountError('This discount code is not available.')
+      return
+    }
+    setAppliedDiscountCode(normalized)
+    setDiscountError('')
+  }
+
+  const removeDiscount = () => {
+    setAppliedDiscountCode('')
+    setDiscountError('')
+  }
+
+  const saveAccountProfile = async (profile) => {
+    setAccountProfile(profile)
+    if (isSupabaseConfigured && supabase) {
+      const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(' ')
+      const { error } = await supabase.auth.updateUser({ data: { full_name: fullName } })
+      if (error) console.error('Unable to update storefront profile.', error)
+    }
+  }
+
+  const saveAccountAddress = (address) => {
+    setAccountAddresses((current) => [
+      { ...address, id: globalThis.crypto?.randomUUID?.() || `${Date.now()}` },
+      ...current.map((item) => address.isDefault ? { ...item, isDefault: false } : item),
+    ])
+  }
+
+  const signOutAccount = async () => {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase.auth.signOut()
+      if (error) console.error('Unable to sign out storefront user.', error)
+    }
+    setStorefrontUser(null)
+    setAccountOpen(false)
   }
 
   const updateQuantity = (id, delta) => {
@@ -1029,7 +1432,9 @@ function App() {
             )}
           </div>
           <div className="header-actions">
-            <button className="account-button desktop-only" type="button"><User size={21} /> Account</button>
+            <button className="account-button desktop-only" type="button" onClick={() => setAccountOpen(true)}>
+              <User size={21} /> {storefrontUser ? getAccountName(storefrontUser, accountProfile) : 'Account'}
+            </button>
             <button className="cart-button" type="button" onClick={() => setCartOpen(true)}>
               <ShoppingCart size={20} />
               <span className="desktop-only">{formatPrice(subtotal)} ({cartCount})</span>
@@ -1092,14 +1497,31 @@ function App() {
         </div>
       </header>
 
-      {isProductsPage ? <ProductsPage categories={categories} products={products} onAdd={openQuickProduct} /> : isCollectionsPage ? <CollectionsPage categories={categories} /> : isCartPage ? (
+      {isProductsPage ? <ProductsPage categories={categories} products={products} onAdd={openQuickProduct} /> : isCollectionsPage ? <CollectionsPage categories={categories} /> : isAccountPage ? (
+      <AccountPage
+        user={storefrontUser}
+        profile={accountProfile}
+        addresses={accountAddresses}
+        onOpenAccount={() => setAccountOpen(true)}
+        onSaveProfile={saveAccountProfile}
+        onSaveAddress={saveAccountAddress}
+        onSignOut={signOutAccount}
+      />
+      ) : isCartPage ? (
       <CartPage
         cart={cart}
         products={products}
-        discountCode={discountCode}
+        discountDraft={discountDraft}
+        appliedDiscountCode={appliedDiscountCode}
+        discountError={discountError}
         notes={orderNotes}
         termsAccepted={termsAccepted}
-        onDiscountChange={setDiscountCode}
+        onDiscountDraftChange={(value) => {
+          setDiscountDraft(value)
+          setDiscountError('')
+        }}
+        onApplyDiscount={applyDiscount}
+        onRemoveDiscount={removeDiscount}
         onNotesChange={setOrderNotes}
         onTermsChange={setTermsAccepted}
         onQuantity={updateQuantity}
@@ -1259,7 +1681,7 @@ function App() {
         <nav>
           {menuItems.map((item) => <a href={item.href} onClick={() => setMenuOpen(false)} key={item.label}>{item.label}<ChevronRight size={16} /></a>)}
         </nav>
-        <div className="menu-footer"><a href="#footer"><User size={18} /> Account</a><a href="#footer"><Store size={18} /> Find a store</a></div>
+        <div className="menu-footer"><button type="button" onClick={() => { setMenuOpen(false); setAccountOpen(true) }}><User size={18} /> Account</button><a href="#footer"><Store size={18} /> Find a store</a></div>
       </aside>
 
       {cartOpen && <div className="page-overlay" onClick={() => setCartOpen(false)} />}
@@ -1287,11 +1709,26 @@ function App() {
         </div>
         <div className="cart-drawer-panels">
           <details><summary>Order instructions <ChevronDown size={18} /></summary><textarea value={orderNotes} onChange={(event) => setOrderNotes(event.target.value)} placeholder="Add delivery notes" /></details>
-          <details><summary>Discount codes <ChevronDown size={18} /></summary><div className="drawer-discount"><input value={discountCode} onChange={(event) => setDiscountCode(event.target.value)} placeholder="SUMMER25" /><button type="button">Apply</button></div></details>
+          <details><summary>Discount codes <ChevronDown size={18} /></summary>
+            <div className="drawer-discount">
+              <DiscountCodeForm
+                value={discountDraft}
+                appliedCode={appliedDiscountCode}
+                error={discountError}
+                onChange={(value) => {
+                  setDiscountDraft(value)
+                  setDiscountError('')
+                }}
+                onApply={applyDiscount}
+                onRemove={removeDiscount}
+                compact
+              />
+            </div>
+          </details>
         </div>
         <div className="cart-summary">
           {(() => {
-            const totals = CartTotals({ subtotal, discountCode })
+            const totals = CartTotals({ subtotal, discountCode: appliedDiscountCode })
             return (
               <>
                 <div><span>Subtotal</span><b>{formatPrice(subtotal)}</b></div>
@@ -1310,6 +1747,7 @@ function App() {
       </aside>
 
       {quickProduct && <QuickProductModal product={quickProduct} onAdd={addToCart} onBuyNow={buyNow} onClose={() => setQuickProduct(null)} />}
+      {accountOpen && <AccountModal user={storefrontUser} profile={accountProfile} onClose={() => setAccountOpen(false)} onSignOut={signOutAccount} />}
       {checkoutOpen && <CheckoutModal items={cart} onClose={() => setCheckoutOpen(false)} onComplete={() => setCart([])} />}
       {searchOpen && <button className="search-closer" aria-label="Close search" type="button" onClick={() => setSearchOpen(false)} />}
     </div>
