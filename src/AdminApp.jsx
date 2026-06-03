@@ -183,6 +183,124 @@ const pageMeta = {
   settings: ['Cài đặt', 'Cấu hình vận hành chung cho cửa hàng LyLy.'],
 }
 
+const adminI18n = {
+  vi: {
+    code: 'VI',
+    search: 'Tìm kiếm sản phẩm, đơn hàng, khách hàng',
+    settings: 'Cài đặt',
+    notifications: 'Thông báo',
+    noResults: 'Không tìm thấy kết quả phù hợp.',
+    demo: 'Chế độ demo local: thêm',
+    nav: {
+      dashboard: 'Trang chủ',
+      orders: 'Đơn hàng',
+      products: 'Sản phẩm',
+      categories: 'Danh mục',
+      customers: 'Khách hàng',
+      marketing: 'Tiếp thị',
+      discounts: 'Giảm giá',
+      content: 'Nội dung',
+      analytics: 'Phân tích',
+      'online-store': 'Cửa hàng trực tuyến',
+      locations: 'Điểm bán hàng',
+    },
+    navGroup: { salesChannels: 'Kênh bán hàng' },
+    pageMeta,
+    product: {
+      create: 'Thêm sản phẩm mới',
+      edit: 'Sửa sản phẩm',
+      name: 'Tên sản phẩm',
+      namePlaceholder: 'Ví dụ: Organic Baby Spinach',
+      category: 'Danh mục',
+      price: 'Giá bán',
+      oldPrice: 'Giá trước giảm',
+      oldPricePlaceholder: 'Để trống nếu không sale',
+      stock: 'Tồn kho',
+      status: 'Trạng thái',
+      active: 'Đang hiển thị',
+      draft: 'Bản nháp',
+      unit: 'Quy cách',
+      unitPlaceholder: 'Ví dụ: 250g',
+      badge: 'Nhãn sản phẩm',
+      badgePlaceholder: 'Ví dụ: Organic',
+      image: 'Ảnh sản phẩm',
+      chooseImage: 'Chọn ảnh từ máy',
+      imageHelp: 'JPG, PNG hoặc WebP. Tối đa 5MB.',
+      manufacturer: 'Nhà sản xuất',
+      vendor: 'Nhà cung cấp',
+      warehouse: 'Kho hàng',
+      productType: 'Loại sản phẩm',
+      regenerate: 'Tạo lại',
+      cancel: 'Hủy',
+      save: 'Lưu thay đổi',
+      add: 'Thêm sản phẩm',
+    },
+  },
+  en: {
+    code: 'EN',
+    search: 'Search products, orders, customers',
+    settings: 'Settings',
+    notifications: 'Notifications',
+    noResults: 'No matching results found.',
+    demo: 'Local demo mode: add',
+    nav: {
+      dashboard: 'Home',
+      orders: 'Orders',
+      products: 'Products',
+      categories: 'Categories',
+      customers: 'Customers',
+      marketing: 'Marketing',
+      discounts: 'Discounts',
+      content: 'Content',
+      analytics: 'Analytics',
+      'online-store': 'Online store',
+      locations: 'Locations',
+    },
+    navGroup: { salesChannels: 'Sales channels' },
+    pageMeta: {
+      products: ['Products', 'Manage product catalog, inventory, and sales status.'],
+      categories: ['Categories', 'Manage category structure, menus, and storefront category display.'],
+      orders: ['Orders', 'Track payment, packing, and delivery for your store.'],
+      customers: ['Customers', 'View purchase history and care for LyLy customers.'],
+      marketing: ['Marketing', 'Create campaigns that bring customers back to LyLy.'],
+      discounts: ['Discounts', 'Manage promotion codes and discount programs.'],
+      content: ['Content', 'Manage articles and content displayed on the storefront.'],
+      analytics: ['Analytics', 'Track sales performance and customer behavior.'],
+      locations: ['Locations', 'Configure pickup points and delivery zones.'],
+      settings: ['Settings', 'Configure general operations for LyLy store.'],
+    },
+    product: {
+      create: 'Add new product',
+      edit: 'Edit product',
+      name: 'Product name',
+      namePlaceholder: 'Example: Organic Baby Spinach',
+      category: 'Category',
+      price: 'Price',
+      oldPrice: 'Compare-at price',
+      oldPricePlaceholder: 'Leave blank if not on sale',
+      stock: 'Inventory',
+      status: 'Status',
+      active: 'Active',
+      draft: 'Draft',
+      unit: 'Unit',
+      unitPlaceholder: 'Example: 250g',
+      badge: 'Product badge',
+      badgePlaceholder: 'Example: Organic',
+      image: 'Product image',
+      chooseImage: 'Choose image from device',
+      imageHelp: 'JPG, PNG, or WebP. Max 5MB.',
+      manufacturer: 'Manufacturer',
+      vendor: 'Vendor',
+      warehouse: 'Warehouse',
+      productType: 'Product type',
+      regenerate: 'Regenerate',
+      cancel: 'Cancel',
+      save: 'Save changes',
+      add: 'Add product',
+    },
+  },
+}
+
 function money(value) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)
 }
@@ -508,7 +626,7 @@ function SetupCard({ id, title, copy, button, children, wide, tasks, onToggle })
   )
 }
 
-function ProductsPage({ categories, products, onBulkEdit, onCreate, onEdit, onImport, onRemove }) {
+function ProductsPage({ meta, categories, products, onBulkEdit, onCreate, onEdit, onImport, onRemove }) {
   const [query, setQuery] = useState('')
   const [statusTab, setStatusTab] = useState('all')
   const [selected, setSelected] = useState([])
@@ -604,7 +722,7 @@ function ProductsPage({ categories, products, onBulkEdit, onCreate, onEdit, onIm
 
   return (
     <>
-      <SectionTitle title="Sản phẩm" description={pageMeta.products[1]} />
+      <SectionTitle title={meta.products[0]} description={meta.products[1]} />
       <div className="product-action-bar">
         <button className="admin-primary" type="button" onClick={onCreate}><Plus size={15} /> Thêm mới</button>
         <button className="admin-secondary" type="button" disabled={!selected.length} onClick={() => setBulkOpen(true)}><Pencil size={15} /> Sửa hàng loạt</button>
@@ -660,7 +778,7 @@ function ProductsPage({ categories, products, onBulkEdit, onCreate, onEdit, onIm
   )
 }
 
-function CategoriesPage({ categories, products, onCreate, onEdit, onRemove, onToggle }) {
+function CategoriesPage({ meta, categories, products, onCreate, onEdit, onRemove, onToggle }) {
   const [query, setQuery] = useState('')
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [filters, setFilters] = useState({ root: 'all', status: 'all', homepage: 'all', menu: 'all' })
@@ -682,7 +800,7 @@ function CategoriesPage({ categories, products, onCreate, onEdit, onRemove, onTo
 
   return (
     <>
-      <SectionTitle title="Danh mục" description={pageMeta.categories[1]} action="Thêm danh mục" onAction={onCreate} />
+      <SectionTitle title={meta.categories[0]} description={meta.categories[1]} action="Thêm danh mục" onAction={onCreate} />
       <section className="admin-panel data-panel">
         <div className="table-toolbar category-toolbar">
           <label><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm kiếm danh mục" /></label>
@@ -723,7 +841,7 @@ function CategoriesPage({ categories, products, onCreate, onEdit, onRemove, onTo
   )
 }
 
-function OrdersPage({ orders, onUpdate, onBulkUpdate }) {
+function OrdersPage({ meta, orders, onUpdate, onBulkUpdate }) {
   const [query, setQuery] = useState('')
   const [tab, setTab] = useState('all')
   const [deliveryFilter, setDeliveryFilter] = useState('all')
@@ -771,7 +889,7 @@ function OrdersPage({ orders, onUpdate, onBulkUpdate }) {
 
   return (
     <>
-      <SectionTitle title="Đơn hàng" description={pageMeta.orders[1]} action="Xuất đơn hàng" onAction={() => downloadOrdersCsv(visible)} icon={Download} />
+      <SectionTitle title={meta.orders[0]} description={meta.orders[1]} action="Xuất đơn hàng" onAction={() => downloadOrdersCsv(visible)} icon={Download} />
       <section className="metrics-grid">
         <MetricCard label="Tổng đơn" value={orders.length} note={`${openCount} đơn đang xử lý`} />
         <MetricCard label="Cần thanh toán" value={unpaidCount} note="Theo dõi trước khi đóng gói" />
@@ -897,12 +1015,12 @@ function OrderDetailModal({ order, onClose, onUpdate }) {
   )
 }
 
-function CustomersPage() {
+function CustomersPage({ meta }) {
   const [query, setQuery] = useState('')
   const visible = customers.filter((customer) => `${customer.name} ${customer.email} ${customer.location}`.toLowerCase().includes(query.toLowerCase()))
   return (
     <>
-      <SectionTitle title="Khách hàng" description={pageMeta.customers[1]} action="Thêm khách hàng" />
+      <SectionTitle title={meta.customers[0]} description={meta.customers[1]} action="Thêm khách hàng" />
       <section className="admin-panel data-panel">
         <div className="data-tabs"><button className="active" type="button">Tất cả</button><button type="button">Khách quay lại</button><button type="button">Đăng ký email</button></div>
         <div className="table-toolbar"><label><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm tên, email hoặc địa điểm" /></label><button type="button"><Filter size={15} /> Phân khúc</button></div>
@@ -917,10 +1035,10 @@ function CustomersPage() {
   )
 }
 
-function MarketingPage() {
+function MarketingPage({ meta }) {
   return (
     <>
-      <SectionTitle title="Tiếp thị" description={pageMeta.marketing[1]} action="Tạo chiến dịch" />
+      <SectionTitle title={meta.marketing[0]} description={meta.marketing[1]} action="Tạo chiến dịch" />
       <section className="marketing-banner">
         <div><p className="admin-eyebrow">Grow with LyLy</p><h2>Đưa câu chuyện tươi ngon<br />đến đúng khách hàng.</h2><p>Tạo chiến dịch email, social và ưu đãi theo mùa từ một nơi.</p><button className="admin-primary" type="button"><Plus size={16} />Tạo chiến dịch</button></div>
         <div className="marketing-illustration"><Megaphone size={74} /><i></i><i></i><i></i></div>
@@ -933,10 +1051,10 @@ function MarketingPage() {
   )
 }
 
-function DiscountsPage({ discounts, onCreate }) {
+function DiscountsPage({ meta, discounts, onCreate }) {
   return (
     <>
-      <SectionTitle title="Giảm giá" description={pageMeta.discounts[1]} action="Tạo mã giảm giá" onAction={onCreate} />
+      <SectionTitle title={meta.discounts[0]} description={meta.discounts[1]} action="Tạo mã giảm giá" onAction={onCreate} />
       <section className="metrics-grid">
         <MetricCard label="Doanh số từ ưu đãi" value={money(1438)} note="Trong 30 ngày qua" />
         <MetricCard label="Mã đang hoạt động" value={String(discounts.filter((item) => item.status === 'Active').length)} note={`${discounts.length} mã đã tạo`} />
@@ -955,10 +1073,10 @@ function DiscountsPage({ discounts, onCreate }) {
   )
 }
 
-function ContentPage() {
+function ContentPage({ meta }) {
   return (
     <>
-      <SectionTitle title="Nội dung" description={pageMeta.content[1]} action="Viết bài mới" />
+      <SectionTitle title={meta.content[0]} description={meta.content[1]} action="Viết bài mới" />
       <section className="content-grid">
         {articles.map((article) => (
           <article className="admin-panel article-admin-card" key={article.title}>
@@ -972,11 +1090,11 @@ function ContentPage() {
   )
 }
 
-function AnalyticsPage() {
+function AnalyticsPage({ meta }) {
   const chart = [34, 48, 43, 55, 58, 72, 67, 81, 76, 88, 92, 98]
   return (
     <>
-      <SectionTitle title="Phân tích" description={pageMeta.analytics[1]} action="Xuất báo cáo" icon={Download} />
+      <SectionTitle title={meta.analytics[0]} description={meta.analytics[1]} action="Xuất báo cáo" icon={Download} />
       <section className="metrics-grid analytics-metrics">
         <MetricCard label="Tổng doanh thu" value={money(12846.35)} note="+18.6% so với kỳ trước" />
         <MetricCard label="Giá trị đơn trung bình" value={money(53.74)} note="+4.2% so với kỳ trước" />
@@ -997,10 +1115,10 @@ function AnalyticsPage() {
   )
 }
 
-function LocationsPage() {
+function LocationsPage({ meta }) {
   return (
     <>
-      <SectionTitle title="Điểm bán hàng" description={pageMeta.locations[1]} action="Thêm địa điểm" />
+      <SectionTitle title={meta.locations[0]} description={meta.locations[1]} action="Thêm địa điểm" />
       <section className="location-grid">
         <div className="admin-panel location-card"><MapPin size={24} /><div><StatusPill>Active</StatusPill><h3>LyLy Market · Brooklyn</h3><p>68 Greenpoint Avenue<br />Brooklyn, NY 11222</p><span>Pickup · Local delivery · Inventory</span></div><button className="row-icon" type="button"><MoreHorizontal size={17} /></button></div>
         <div className="admin-panel location-card"><MapPin size={24} /><div><StatusPill>Active</StatusPill><h3>LyLy Market · Manhattan</h3><p>214 Spring Street<br />New York, NY 10013</p><span>Pickup · Inventory</span></div><button className="row-icon" type="button"><MoreHorizontal size={17} /></button></div>
@@ -1009,10 +1127,10 @@ function LocationsPage() {
   )
 }
 
-function SettingsPage() {
+function SettingsPage({ meta }) {
   return (
     <>
-      <SectionTitle title="Cài đặt" description={pageMeta.settings[1]} />
+      <SectionTitle title={meta.settings[0]} description={meta.settings[1]} />
       <section className="settings-grid">
         {[
           [Store, 'Thông tin cửa hàng', 'Tên, địa chỉ và thông tin liên hệ'],
@@ -1135,7 +1253,7 @@ function CategoryModal({ categories, category, onClose, onSubmit }) {
   )
 }
 
-function ProductModal({ categories, products, product, onClose, onSubmit }) {
+function ProductModal({ categories, products, product, onClose, onSubmit, copy }) {
   const activeCategories = categories.filter((category) => category.active)
   const initialCategory = product?.category || activeCategories[0]?.name || ''
   const [form, setForm] = useState(product || {
@@ -1186,28 +1304,27 @@ function ProductModal({ categories, products, product, onClose, onSubmit }) {
     })
   }
   return (
-    <Modal wide title={product ? 'Sửa sản phẩm' : 'Thêm sản phẩm mới'} onClose={onClose}>
+    <Modal wide title={product ? copy.edit : copy.create} onClose={onClose}>
       <form className="modal-form" onSubmit={submit}>
-        <label><span>Tên sản phẩm</span><input required name="name" value={form.name} onChange={change} placeholder="Ví dụ: Organic Baby Spinach" /></label>
+        <label><span>{copy.name}</span><input required name="name" value={form.name} onChange={change} placeholder={copy.namePlaceholder} /></label>
         <div>
-          <label><span>Danh mục</span><select required name="category" value={form.category} onChange={change}>{activeCategories.map((category) => <option key={category.id}>{category.name}</option>)}</select></label>
-          <div className="sku-field"><span>SKU</span><strong>{form.sku}</strong><small>Tự sinh theo danh mục và không trùng lặp.</small><button className="admin-secondary" type="button" onClick={regenerateSku}>Tạo lại</button></div>
+          <label><span>{copy.category}</span><select required name="category" value={form.category} onChange={change}>{activeCategories.map((category) => <option key={category.id}>{category.name}</option>)}</select></label>
+          <div className="sku-field"><span>SKU</span><strong>{form.sku}</strong><button className="admin-secondary" type="button" onClick={regenerateSku}>{copy.regenerate}</button></div>
         </div>
-        <div><label><span>Giá bán</span><input required min="0" step=".01" type="number" name="price" value={form.price} onChange={change} placeholder="0.00" /></label><label><span>Giá trước giảm</span><input min={form.price || 0} step=".01" type="number" name="oldPrice" value={form.oldPrice || ''} onChange={change} placeholder="Để trống nếu không sale" /></label></div>
-        <div><label><span>Tồn kho</span><input required min="0" type="number" name="stock" value={form.stock} onChange={change} placeholder="0" /></label><label><span>Trạng thái</span><select name="status" value={form.status} onChange={change}><option value="active">Đang hiển thị</option><option value="draft">Bản nháp</option></select></label></div>
-        <div><label><span>Quy cách</span><input required name="unit" value={form.unit} onChange={change} placeholder="Ví dụ: 250g" /></label><label><span>Nhãn sản phẩm</span><input name="badge" value={form.badge || ''} onChange={change} placeholder="Ví dụ: Organic" /></label></div>
+        <div><label><span>{copy.price}</span><input required min="0" step=".01" type="number" name="price" value={form.price} onChange={change} placeholder="0.00" /></label><label><span>{copy.oldPrice}</span><input min={form.price || 0} step=".01" type="number" name="oldPrice" value={form.oldPrice || ''} onChange={change} placeholder={copy.oldPricePlaceholder} /></label></div>
+        <div><label><span>{copy.stock}</span><input required min="0" type="number" name="stock" value={form.stock} onChange={change} placeholder="0" /></label><label><span>{copy.status}</span><select name="status" value={form.status} onChange={change}><option value="active">{copy.active}</option><option value="draft">{copy.draft}</option></select></label></div>
+        <div><label><span>{copy.unit}</span><input required name="unit" value={form.unit} onChange={change} placeholder={copy.unitPlaceholder} /></label><label><span>{copy.badge}</span><input name="badge" value={form.badge || ''} onChange={change} placeholder={copy.badgePlaceholder} /></label></div>
         <label className="product-upload-field">
-          <span>Ảnh sản phẩm</span>
+          <span>{copy.image}</span>
           <div className="product-image-picker">
             <img src={imagePreview || defaultProductImage} alt="" />
-            <div><Upload size={21} /><b>{imageFile ? imageFile.name : 'Chọn ảnh từ máy'}</b><small>JPG, PNG hoặc WebP. Tối đa 5MB.</small></div>
+            <div><Upload size={21} /><b>{imageFile ? imageFile.name : copy.chooseImage}</b><small>{copy.imageHelp}</small></div>
             <input accept="image/*" type="file" onChange={chooseImage} />
           </div>
         </label>
-        <div><label><span>Nhà sản xuất</span><input required name="manufacturer" value={form.manufacturer} onChange={change} /></label><label><span>Nhà cung cấp</span><input required name="vendor" value={form.vendor} onChange={change} /></label></div>
-        <div><label><span>Kho hàng</span><input required name="warehouse" value={form.warehouse} onChange={change} /></label><label><span>Loại sản phẩm</span><input required name="productType" value={form.productType} onChange={change} /></label></div>
-        <div className="upload-box"><Upload size={19} /><span>Ảnh upload sẽ được lưu và hiển thị trực tiếp trên storefront sau khi lưu.</span></div>
-        <div className="modal-actions"><button className="admin-secondary" type="button" onClick={onClose}>Hủy</button><button className="admin-primary" type="submit">{product ? 'Lưu thay đổi' : 'Thêm sản phẩm'}</button></div>
+        <div><label><span>{copy.manufacturer}</span><input required name="manufacturer" value={form.manufacturer} onChange={change} /></label><label><span>{copy.vendor}</span><input required name="vendor" value={form.vendor} onChange={change} /></label></div>
+        <div><label><span>{copy.warehouse}</span><input required name="warehouse" value={form.warehouse} onChange={change} /></label><label><span>{copy.productType}</span><input required name="productType" value={form.productType} onChange={change} /></label></div>
+        <div className="modal-actions"><button className="admin-secondary" type="button" onClick={onClose}>{copy.cancel}</button><button className="admin-primary" type="submit">{product ? copy.save : copy.add}</button></div>
       </form>
     </Modal>
   )
@@ -1313,8 +1430,19 @@ function AdminApp() {
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [tasks, setTasks] = useState(['name'])
   const [globalSearch, setGlobalSearch] = useState('')
+  const [adminLanguage, setAdminLanguage] = useState(() => localStorage.getItem('lyly-admin-language') || 'vi')
   const [authStatus, setAuthStatus] = useState(isSupabaseConfigured ? 'loading' : 'demo')
   const [adminError, setAdminError] = useState('')
+  const adminCopy = adminI18n[adminLanguage] || adminI18n.vi
+  const localizedMeta = adminCopy.pageMeta
+
+  const toggleLanguage = () => {
+    setAdminLanguage((current) => {
+      const next = current === 'vi' ? 'en' : 'vi'
+      localStorage.setItem('lyly-admin-language', next)
+      return next
+    })
+  }
 
   const searchMatches = useMemo(() => {
     if (!globalSearch.trim()) return []
@@ -1556,16 +1684,16 @@ function AdminApp() {
 
   const renderPage = () => {
     if (page === 'dashboard') return <Dashboard tasks={tasks} setTasks={setTasks} orders={adminOrders} />
-    if (page === 'products') return <ProductsPage categories={categories} products={products} onBulkEdit={bulkEditProducts} onCreate={() => { setProductEditing(null); setProductModal(true) }} onEdit={(product) => { setProductEditing(product); setProductModal(true) }} onImport={importProducts} onRemove={removeProducts} />
-    if (page === 'categories') return <CategoriesPage categories={categories} products={products} onCreate={() => { setCategoryEditing(null); setCategoryModal(true) }} onEdit={(category) => { setCategoryEditing(category); setCategoryModal(true) }} onRemove={removeCategory} onToggle={toggleCategory} />
-    if (page === 'orders') return <OrdersPage orders={adminOrders} onUpdate={saveOrder} onBulkUpdate={bulkSaveOrders} />
-    if (page === 'customers') return <CustomersPage />
-    if (page === 'marketing') return <MarketingPage />
-    if (page === 'discounts') return <DiscountsPage discounts={discounts} onCreate={() => setDiscountModal(true)} />
-    if (page === 'content') return <ContentPage />
-    if (page === 'analytics') return <AnalyticsPage />
-    if (page === 'locations') return <LocationsPage />
-    if (page === 'settings') return <SettingsPage />
+    if (page === 'products') return <ProductsPage meta={localizedMeta} categories={categories} products={products} onBulkEdit={bulkEditProducts} onCreate={() => { setProductEditing(null); setProductModal(true) }} onEdit={(product) => { setProductEditing(product); setProductModal(true) }} onImport={importProducts} onRemove={removeProducts} />
+    if (page === 'categories') return <CategoriesPage meta={localizedMeta} categories={categories} products={products} onCreate={() => { setCategoryEditing(null); setCategoryModal(true) }} onEdit={(category) => { setCategoryEditing(category); setCategoryModal(true) }} onRemove={removeCategory} onToggle={toggleCategory} />
+    if (page === 'orders') return <OrdersPage meta={localizedMeta} orders={adminOrders} onUpdate={saveOrder} onBulkUpdate={bulkSaveOrders} />
+    if (page === 'customers') return <CustomersPage meta={localizedMeta} />
+    if (page === 'marketing') return <MarketingPage meta={localizedMeta} />
+    if (page === 'discounts') return <DiscountsPage meta={localizedMeta} discounts={discounts} onCreate={() => setDiscountModal(true)} />
+    if (page === 'content') return <ContentPage meta={localizedMeta} />
+    if (page === 'analytics') return <AnalyticsPage meta={localizedMeta} />
+    if (page === 'locations') return <LocationsPage meta={localizedMeta} />
+    if (page === 'settings') return <SettingsPage meta={localizedMeta} />
     return <Dashboard tasks={tasks} setTasks={setTasks} orders={adminOrders} />
   }
 
@@ -1581,17 +1709,18 @@ function AdminApp() {
         <AdminLogo />
         <div className="admin-global-search">
           <Search size={17} />
-          <input value={globalSearch} onChange={(event) => setGlobalSearch(event.target.value)} placeholder="Tìm kiếm sản phẩm, đơn hàng, khách hàng" />
+          <input value={globalSearch} onChange={(event) => setGlobalSearch(event.target.value)} placeholder={adminCopy.search} />
           <kbd>CTRL K</kbd>
-          {globalSearch && <div className="global-search-results">{searchMatches.length ? searchMatches.map((item) => <button type="button" onClick={() => { navigate(item.page); setGlobalSearch('') }} key={`${item.type}-${item.label}`}><span>{item.type}</span><b>{item.label}</b><ChevronRight size={15} /></button>) : <p>Không tìm thấy kết quả phù hợp.</p>}</div>}
+          {globalSearch && <div className="global-search-results">{searchMatches.length ? searchMatches.map((item) => <button type="button" onClick={() => { navigate(item.page); setGlobalSearch('') }} key={`${item.type}-${item.label}`}><span>{item.type}</span><b>{item.label}</b><ChevronRight size={15} /></button>) : <p>{adminCopy.noResults}</p>}</div>}
         </div>
         <div className="topbar-actions">
+          <button className="language-toggle" type="button" onClick={toggleLanguage} title="Switch language">{adminCopy.code}</button>
           <button type="button"><CircleHelp size={18} /></button>
           <button type="button" onClick={() => setNotificationsOpen(!notificationsOpen)}><Bell size={18} /><i></i></button>
           {isSupabaseConfigured && <button type="button" onClick={logout} title="Đăng xuất"><LogOut size={18} /></button>}
           <button className="store-switcher" type="button"><span>LY</span><b>LyLy Market</b><ChevronDown size={14} /></button>
         </div>
-        {notificationsOpen && <div className="notification-popover"><div><b>Thông báo</b><button type="button" onClick={() => setNotificationsOpen(false)}><X size={14} /></button></div><p><Truck size={16} /> Có 3 đơn hàng mới cần xử lý.</p><p><Package size={16} /> Atlantic Salmon Fillet sắp hết hàng.</p></div>}
+        {notificationsOpen && <div className="notification-popover"><div><b>{adminCopy.notifications}</b><button type="button" onClick={() => setNotificationsOpen(false)}><X size={14} /></button></div><p><Truck size={16} /> Có 3 đơn hàng mới cần xử lý.</p><p><Package size={16} /> Atlantic Salmon Fillet sắp hết hàng.</p></div>}
       </header>
 
       <aside className={`admin-sidebar ${menuOpen ? 'open' : ''}`}>
@@ -1599,25 +1728,25 @@ function AdminApp() {
         <nav>
           {navGroups.map((group, index) => (
             <div className="nav-group" key={index}>
-              {group.title && <p>{group.title}<ChevronRight size={13} /></p>}
+              {group.title && <p>{adminCopy.navGroup.salesChannels}<ChevronRight size={13} /></p>}
               {group.items.map((item) => {
                 const Icon = item.icon
-                return <button className={page === item.id ? 'active' : ''} type="button" onClick={() => navigate(item.id)} key={item.id}><Icon size={17} /><span>{item.label}</span>{item.count && <em>{item.count}</em>}</button>
+                return <button className={page === item.id ? 'active' : ''} type="button" onClick={() => navigate(item.id)} key={item.id}><Icon size={17} /><span>{adminCopy.nav[item.id] || item.label}</span>{item.count && <em>{item.count}</em>}</button>
               })}
             </div>
           ))}
         </nav>
-        <button className={`sidebar-settings ${page === 'settings' ? 'active' : ''}`} type="button" onClick={() => navigate('settings')}><Settings size={17} /> Cài đặt</button>
+        <button className={`sidebar-settings ${page === 'settings' ? 'active' : ''}`} type="button" onClick={() => navigate('settings')}><Settings size={17} /> {adminCopy.settings}</button>
       </aside>
 
       {menuOpen && <button className="admin-menu-overlay" type="button" onClick={() => setMenuOpen(false)} aria-label="Close menu" />}
       <main className={`admin-main ${page === 'dashboard' ? 'is-dashboard' : ''}`}>
-        {authStatus === 'demo' && <div className="admin-mode-banner">Chế độ demo local: thêm <code>VITE_SUPABASE_URL</code> và <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> để dùng database.</div>}
+        {authStatus === 'demo' && <div className="admin-mode-banner">{adminCopy.demo} <code>VITE_SUPABASE_URL</code> và <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> để dùng database.</div>}
         {adminError && <div className="admin-error-banner">{adminError}</div>}
-        {page !== 'dashboard' && <div className="admin-breadcrumb"><button type="button" onClick={() => navigate('dashboard')}>LyLy</button><ChevronRight size={13} /><span>{pageMeta[page]?.[0] || 'Trang chủ'}</span></div>}
+        {page !== 'dashboard' && <div className="admin-breadcrumb"><button type="button" onClick={() => navigate('dashboard')}>LyLy</button><ChevronRight size={13} /><span>{localizedMeta[page]?.[0] || adminCopy.nav.dashboard}</span></div>}
         {renderPage()}
       </main>
-      {productModal && <ProductModal categories={categories} products={products} product={productEditing} onClose={() => { setProductEditing(null); setProductModal(false) }} onSubmit={saveProduct} />}
+      {productModal && <ProductModal categories={categories} products={products} product={productEditing} copy={adminCopy.product} onClose={() => { setProductEditing(null); setProductModal(false) }} onSubmit={saveProduct} />}
       {categoryModal && <CategoryModal categories={categories} category={categoryEditing} onClose={() => { setCategoryEditing(null); setCategoryModal(false) }} onSubmit={saveCategory} />}
       {discountModal && <DiscountModal onClose={() => setDiscountModal(false)} onSubmit={addDiscount} />}
     </div>

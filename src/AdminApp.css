@@ -45,6 +45,7 @@
 .topbar-actions { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
 .topbar-actions > button:not(.store-switcher) { width: 37px; height: 37px; position: relative; display: grid; place-items: center; border: 0; border-radius: 6px; color: #dbe9e1; background: transparent; }
 .topbar-actions > button:hover { background: #ffffff12; }
+.topbar-actions .language-toggle { width: auto !important; min-width: 42px; padding: 0 10px; border: 1px solid #ffffff24 !important; color: #f2f8f4 !important; font-size: 11px; font-weight: 800; letter-spacing: .07em; }
 .topbar-actions i { width: 6px; height: 6px; position: absolute; top: 7px; right: 8px; border: 1px solid #17342b; border-radius: 50%; background: #cbe478; }
 .store-switcher { height: 42px; display: flex; align-items: center; gap: 8px; padding: 0 8px; border: 0; border-radius: 7px; color: white; background: transparent; }
 .store-switcher span { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; color: #213d31; background: #b8d36c; font-size: 10px; font-weight: 700; }
@@ -269,11 +270,10 @@
 .modal-form label { display: flex; flex-direction: column; gap: 5px; }
 .modal-form label span { color: #586b62; font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
 .modal-form input, .modal-form select { height: 37px; padding: 0 9px; border: 1px solid #d6e0d9; border-radius: 5px; outline-color: #6c927d; color: #42584f; background: white; font-size: 12px; }
-.sku-field { min-height: 67px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 8px; padding: 9px 10px; border: 1px solid #d6e0d9; border-radius: 5px; background: #f9fbf8; }
+.sku-field { min-height: 61px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 6px 10px; padding: 8px 10px; border: 1px solid #d6e0d9; border-radius: 5px; background: #fbfdfb; }
 .sku-field > span { grid-column: 1/-1; color: #586b62; font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
-.sku-field strong { color: #294d3e; font-size: 15px; letter-spacing: .04em; }
-.sku-field small { color: #7b8d84; font-size: 10px; line-height: 1.35; }
-.sku-field .admin-secondary { min-height: 29px; grid-row: 2/4; grid-column: 2; padding-inline: 9px; }
+.sku-field strong { color: #294d3e; font-size: 16px; letter-spacing: .06em; }
+.sku-field .admin-secondary { min-height: 31px; padding-inline: 10px; }
 .modal-form .modal-check-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
 .modal-check-grid label { display: flex; flex-direction: row; align-items: center; gap: 6px; color: #586b62; font-size: 10px; font-weight: 700; }
 .modal-check-grid input { width: 15px; height: 15px; accent-color: var(--admin-green); }
@@ -329,7 +329,8 @@
   .admin-global-search { width: 40px; height: 38px; padding: 0; justify-content: center; border: 0; background: transparent; }
   .admin-global-search input, .admin-global-search kbd { display: none; }
   .global-search-results { display: none; }
-  .topbar-actions > button:first-child, .store-switcher b, .store-switcher svg { display: none; }
+  .topbar-actions > button:first-child:not(.language-toggle), .store-switcher b, .store-switcher svg { display: none; }
+  .topbar-actions .language-toggle { min-width: 38px; height: 34px; padding-inline: 8px; }
   .store-switcher { padding: 0; }
   .admin-sidebar { width: min(270px, 86vw); z-index: 60; top: 0; padding-top: 10px; transform: translateX(-104%); transition: .3s ease; }
   .admin-sidebar.open { transform: translateX(0); }
