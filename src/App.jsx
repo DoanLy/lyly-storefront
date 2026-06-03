@@ -154,6 +154,122 @@ const articles = [
   },
 ]
 
+const storeLocations = [
+  {
+    id: 'champs',
+    name: 'Champs Elysees',
+    price: 5,
+    ready: 'Usually ready in 2 hrs',
+    address: '13 Champs-Elysees',
+    city: '75008 Paris',
+    hours: ['Sun: Closed', 'Mon-Fri: 9:00 - 18:00', 'Sat: 10:00 - 13:00'],
+    image: 'https://images.unsplash.com/photo-1534723452862-4c874018d66d?auto=format&fit=crop&w=900&q=88',
+  },
+  {
+    id: 'saint-germain',
+    name: 'Saint Germain',
+    price: 5,
+    ready: 'Usually ready in 2 hrs',
+    address: '18 Rue Saint-Germain',
+    city: '75006 Paris',
+    hours: ['Sun: 10:00 - 14:00', 'Mon-Fri: 8:30 - 19:00', 'Sat: 9:00 - 16:00'],
+    image: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=900&q=88',
+  },
+  {
+    id: 'defense',
+    name: 'La Defense',
+    price: 0,
+    ready: 'Usually ready in 24 hrs',
+    address: '22 Parvis de la Defense',
+    city: '92800 Puteaux',
+    hours: ['Sun: Closed', 'Mon-Fri: 9:00 - 17:30', 'Sat: 10:00 - 13:00'],
+    image: 'https://images.unsplash.com/photo-1543168256-418811576931?auto=format&fit=crop&w=900&q=88',
+  },
+  {
+    id: 'warehouse',
+    name: 'Warehouse',
+    price: 0,
+    ready: 'Usually ready in 24 hrs',
+    address: 'Fond du Val 23',
+    city: 'Maurecourt, France',
+    hours: ['Sun: Closed', 'Mon-Fri: 7:00 - 16:00', 'Sat: Closed'],
+    image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=900&q=88',
+  },
+]
+
+const shippingMethods = [
+  { id: 'local', title: 'Local Delivery', price: 0, summary: 'Same day delivery if ordered until 12:00 a.m.', detail: 'Available for addresses within our local delivery zone. Orders over $75 qualify for free local delivery.' },
+  { id: 'domestic', title: 'Domestic Shipping (US)', price: 8, summary: 'Up to 2 days (price calculated at checkout)', detail: 'All orders are processed within 1-2 business days. Orders are not shipped or delivered on weekends or holidays.' },
+  { id: 'express', title: 'Express Easy (DHL)', price: 18, summary: 'Next day delivery (price calculated at checkout)', detail: 'Priority handling for time-sensitive orders. Express rates may vary by postal code and order weight.' },
+]
+
+const editorialArticles = [
+  {
+    type: 'recipe',
+    slug: 'juicy-beef-sandwitch',
+    title: 'Juicy Beef Sandwitch',
+    date: 'June 29, 2022',
+    author: 'Mindaudas Budginas',
+    image: 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=1400&q=88',
+    excerpt: 'The origin of the hamburger is unclear, though hamburger steak sandwiches have been advertised in U.S. newspapers for decades.',
+    intro: 'The origin of the hamburger is unclear, though "hamburger steak sandwiches" have been advertised in U.S. newspapers from New York to Hawaii since at least the 1890s. So let us make one!',
+    ingredients: ['4 Burger Buns', '2 lb ground Beef', '4 Portobello Mushroom Caps', '1 Onion, sliced thin', '1 Avocado', '3 Tbsp. Cooking Oil', '4 Tbsp. Olive Oil', '1/4 cup BBQ Sauce', '1 Tbsp. Lemon Juice', 'Salt & Pepper', 'Mozzarella'],
+    tags: ['Food', 'Recipe'],
+  },
+  {
+    type: 'recipe',
+    slug: 'chicken-with-salads',
+    title: 'Chicken With Salads',
+    date: 'June 29, 2022',
+    author: 'Mindaudas Budginas',
+    image: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=1400&q=88',
+    excerpt: 'Chicken is sometimes cited as being more healthful than red meat, with lower concentrations of cholesterol and saturated fat.',
+    intro: 'Chicken is sometimes cited as being more healthful than red meat, with lower concentrations of cholesterol and saturated fat.',
+    ingredients: ['1 Big chicken', '1 Paprika', '3 Cucumbers', '1 Onion, sliced thin', '3 Tbsp. Cooking Oil', '4 Tbsp. Olive Oil', '1/4 cup Balsamic Vinegar', '1 Tbsp. Minced Garlic', '1 Tbsp. Lemon Juice', 'Salt & Pepper'],
+    tags: ['Food', 'Recipe'],
+  },
+  {
+    type: 'news',
+    slug: 'top-chef-grilling-recipes',
+    title: '11 Top Chef Grilling Recipes to Make This Summer',
+    date: 'June 7, 2022',
+    author: 'LyLy Market',
+    image: 'https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?auto=format&fit=crop&w=1400&q=88',
+    excerpt: 'Grilling is a form of cooking that involves dry heat applied to the surface of food.',
+    tags: ['Guide', 'Summer'],
+  },
+  {
+    type: 'news',
+    slug: 'healthy-high-fiber-diet',
+    title: '10 Ideas for a Healthy High Fiber Diet',
+    date: 'June 5, 2022',
+    author: 'LyLy Market',
+    image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=1400&q=88',
+    excerpt: 'Dietary fiber is the portion of plant-derived food that cannot be completely broken down.',
+    tags: ['Health', 'Food'],
+  },
+  {
+    type: 'news',
+    slug: 'healthy-sweets',
+    title: 'Healthy Sweets?',
+    date: 'June 1, 2022',
+    author: 'Mindaudas Budginas',
+    image: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=1400&q=88',
+    excerpt: 'Dessert is a course that concludes a meal. The course consists of sweet foods and beverages.',
+    tags: ['Food', 'Health'],
+  },
+  {
+    type: 'news',
+    slug: 'real-italian-crust',
+    title: 'Secret of Real Italian Crust',
+    date: 'May 17, 2022',
+    author: 'LyLy Market',
+    image: 'https://images.unsplash.com/photo-1594007654729-407eedc4be65?auto=format&fit=crop&w=1400&q=88',
+    excerpt: 'The bottom of the pizza, called the crust, may vary widely according to style.',
+    tags: ['Food', 'Pizza'],
+  },
+]
+
 const fallbackMenuItems = [
   { label: 'Shop all', href: '/products' },
   { label: 'Pantry', href: '/products?category=Pantry' },
@@ -497,6 +613,27 @@ function CartPage({
   const subtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0)
   const totals = CartTotals({ subtotal, discountCode: appliedDiscountCode })
   const relatedProducts = products.filter((product) => !cart.some((item) => item.id === product.id) && product.stock !== 0).slice(0, 3)
+  const [shippingEstimate, setShippingEstimate] = useState({ country: 'United States', postalCode: '', result: null, error: '' })
+  const estimateShipping = (event) => {
+    event.preventDefault()
+    const postalCode = shippingEstimate.postalCode.trim()
+    if (!postalCode) {
+      setShippingEstimate((current) => ({ ...current, result: null, error: 'Enter a postal or ZIP code to estimate shipping.' }))
+      return
+    }
+
+    const free = subtotal >= 75
+    const baseRates = {
+      'United States': { label: free ? 'Free domestic shipping' : 'Domestic Shipping (US)', price: free ? 0 : 8, eta: '1-2 business days' },
+      France: { label: free ? 'Free local delivery' : 'Local Delivery', price: free ? 0 : 5, eta: 'Same day or next day' },
+      Vietnam: { label: 'International Delivery', price: 14, eta: '3-5 business days' },
+    }
+    setShippingEstimate((current) => ({
+      ...current,
+      result: baseRates[current.country],
+      error: '',
+    }))
+  }
 
   return (
     <main className="cart-page container">
@@ -529,7 +666,19 @@ function CartPage({
 
           <div className="estimate-shipping">
             <h2>Estimate shipping</h2>
-            <div><label>Country<select><option>United States</option><option>France</option><option>Vietnam</option></select></label><label>Postal/Zip Code<input /></label><button type="button">Estimate</button></div>
+            <form onSubmit={estimateShipping}>
+              <label>Country<select value={shippingEstimate.country} onChange={(event) => setShippingEstimate((current) => ({ ...current, country: event.target.value, result: null, error: '' }))}><option>United States</option><option>France</option><option>Vietnam</option></select></label>
+              <label>Postal/Zip Code<input value={shippingEstimate.postalCode} onChange={(event) => setShippingEstimate((current) => ({ ...current, postalCode: event.target.value, result: null, error: '' }))} placeholder="10001" /></label>
+              <button type="submit">Estimate</button>
+            </form>
+            {shippingEstimate.error && <p className="estimate-error">{shippingEstimate.error}</p>}
+            {shippingEstimate.result && (
+              <div className="estimate-result">
+                <span><Truck size={18} /> {shippingEstimate.result.label}</span>
+                <b>{shippingEstimate.result.price ? formatPrice(shippingEstimate.result.price) : 'Free'}</b>
+                <small>{shippingEstimate.result.eta}</small>
+              </div>
+            )}
           </div>
         </section>
 
@@ -796,6 +945,270 @@ function AccountPage({ user, profile, addresses, onOpenAccount, onSaveProfile, o
         </div>
       )}
     </main>
+  )
+}
+
+function StoreMapMock() {
+  return (
+    <div className="store-map" aria-label="Store map preview">
+      <img src="https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?auto=format&fit=crop&w=1100&q=85" alt="" />
+      <i className="pin one" />
+      <i className="pin two" />
+      <i className="pin three" />
+      <span className="map-control full">[]</span>
+      <span className="map-control move">+</span>
+      <span className="map-control zoom">+<br />-</span>
+    </div>
+  )
+}
+
+function StoresAccordion({ selectedId, onSelect }) {
+  const [openId, setOpenId] = useState(selectedId || storeLocations[0].id)
+  return (
+    <div className="store-accordion">
+      {storeLocations.map((location) => {
+        const open = openId === location.id
+        return (
+          <article className={open ? 'open' : ''} key={location.id}>
+            <button type="button" onClick={() => setOpenId(open ? '' : location.id)}>
+              <span>{location.name}</span>
+              <b>{open ? '-' : '+'}</b>
+            </button>
+            {open && (
+              <div className="store-details">
+                <img src={location.image} alt="" />
+                <div>
+                  <p>{location.address}</p>
+                  <p>{location.city}</p>
+                  <b>Store Hours</b>
+                  {location.hours.map((line) => <span key={line}>{line}</span>)}
+                  {onSelect ? <button type="button" onClick={() => onSelect(location)}>Select location</button> : <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${location.address} ${location.city}`)}`} target="_blank" rel="noreferrer">Get directions</a>}
+                </div>
+              </div>
+            )}
+          </article>
+        )
+      })}
+    </div>
+  )
+}
+
+function OurStoresPage() {
+  const [message, setMessage] = useState('')
+  return (
+    <main className="info-page container">
+      <div className="breadcrumbs"><a href="/">Home</a><ChevronRight size={13} /><b>Our stores</b></div>
+      <h1>Our stores</h1>
+      <section className="stores-layout">
+        <StoreMapMock />
+        <StoresAccordion />
+      </section>
+      <section className="contact-layout">
+        <form className="contact-form" onSubmit={(event) => { event.preventDefault(); setMessage('Thanks. We will get back to you shortly.') }}>
+          <h2>Drop us a line</h2>
+          <input required placeholder="Name" />
+          <input required type="email" placeholder="Email" />
+          <input placeholder="Subject" />
+          <input placeholder="Phone Number" />
+          <textarea required placeholder="Message" />
+          <button type="submit">Submit</button>
+          {message && <p>{message}</p>}
+        </form>
+        <article className="info-card">
+          <h2>Mailing Address</h2>
+          <p>For any issues related to our products, please send us a mail at our warehouse and we will try to provide a solution.</p>
+          <b>Warehouse</b>
+          <span>Fond du Val 23<br />Maurecourt, France</span>
+        </article>
+        <article className="info-card">
+          <h2>Have a question?</h2>
+          <p>We have written some documentation to help you in purchasing from us.</p>
+          <a href="/faq">FAQ</a>
+          <a href="/delivery">Shipping</a>
+          <a href="/#promise">About</a>
+          <a href="/products">Search</a>
+        </article>
+      </section>
+    </main>
+  )
+}
+
+function DeliveryPage({ onOpenPickup }) {
+  const [openId, setOpenId] = useState('domestic')
+  return (
+    <main className="info-page container">
+      <div className="breadcrumbs"><a href="/">Home</a><ChevronRight size={13} /><b>Shipping & Delivery</b></div>
+      <h1>Shipping & Delivery</h1>
+      <p className="page-lede">You can choose the preferred shipping method at checkout.</p>
+      <section className="delivery-list">
+        {shippingMethods.map((method) => {
+          const open = openId === method.id
+          return (
+            <article className={open ? 'open' : ''} key={method.id}>
+              <button type="button" onClick={() => setOpenId(open ? '' : method.id)}>
+                <b>{open ? '-' : '+'}</b>
+                <span>{method.title} {method.price === 0 ? '(free)' : ''}<small><Clock3 size={18} />{method.summary}</small></span>
+              </button>
+              {open && <div><p>{method.detail}</p><p>If we are experiencing a high volume of orders, shipments may be delayed by a few days. We will contact you via email or telephone if there is a significant delay.</p></div>}
+            </article>
+          )
+        })}
+      </section>
+      <button className="pickup-inline-button" type="button" onClick={onOpenPickup}><Store size={19} /> Select pickup location</button>
+    </main>
+  )
+}
+
+function FaqPage() {
+  const faqs = [
+    ['Do you deliver to me?', 'Enter your postal code on the cart page to estimate available delivery rates and timing.'],
+    ['When do you deliver?', 'Customers can choose local delivery, domestic shipping, or pickup depending on location and stock availability.'],
+    ['What is meal delivery?', 'Meal delivery includes prepared fresh picks and pantry staples packed for convenient weeknight planning.'],
+    ["What's the order minimum?", 'There is no order minimum, but orders over $75 qualify for free shipping where available.'],
+    ['Delivery of ingredients, what is that?', 'We pack fresh ingredients for recipes and daily meals so you can cook without extra store runs.'],
+    ['Grocery delivery', 'Grocery delivery is available for selected service zones and is calculated at checkout.'],
+  ]
+  const [openIndex, setOpenIndex] = useState(1)
+  const [sent, setSent] = useState(false)
+  return (
+    <main className="info-page container">
+      <div className="breadcrumbs"><a href="/">Home</a><ChevronRight size={13} /><b>Frequently asked questions</b></div>
+      <h1>Frequently asked questions</h1>
+      <section className="faq-layout">
+        <div className="faq-list">
+          {faqs.map(([question, answer], index) => (
+            <article className={openIndex === index ? 'open' : ''} key={question}>
+              <button type="button" onClick={() => setOpenIndex(openIndex === index ? -1 : index)}><b>{openIndex === index ? '-' : '+'}</b>{question}</button>
+              {openIndex === index && <p>{answer}</p>}
+            </article>
+          ))}
+        </div>
+        <form className="ask-card" onSubmit={(event) => { event.preventDefault(); setSent(true) }}>
+          <h2>Do not find the answer? Ask us.</h2>
+          <input required placeholder="Name" />
+          <input required type="email" placeholder="Email" />
+          <textarea required placeholder="Message" />
+          <button type="submit">Submit</button>
+          {sent && <p>Question received. We will reply by email.</p>}
+        </form>
+      </section>
+    </main>
+  )
+}
+
+function BlogIndexPage({ type }) {
+  const isRecipes = type === 'recipe'
+  const list = editorialArticles.filter((article) => article.type === type)
+  return (
+    <main className="info-page container">
+      <div className="breadcrumbs"><a href="/">Home</a><ChevronRight size={13} /><b>{isRecipes ? 'Recipes' : 'News'}</b></div>
+      <h1>{isRecipes ? 'Recipes' : 'News'}</h1>
+      <section className="article-grid-page">
+        {list.map((article) => (
+          <a className="article-list-card" href={isRecipes ? `/blogs/recipes/${article.slug}` : `/blogs/news/${article.slug}`} key={article.slug}>
+            <img src={article.image} alt="" />
+            <h2>{article.title}</h2>
+            <small>{article.date}</small>
+            <p>{article.excerpt}</p>
+          </a>
+        ))}
+      </section>
+    </main>
+  )
+}
+
+function ArticlePage({ article }) {
+  if (!article) {
+    return (
+      <main className="info-page container">
+        <div className="breadcrumbs"><a href="/">Home</a><ChevronRight size={13} /><b>Article</b></div>
+        <h1>Article not found</h1>
+        <a className="dark-button" href="/blog">Back to blog</a>
+      </main>
+    )
+  }
+
+  const related = editorialArticles.filter((item) => item.slug !== article.slug && item.type === article.type).slice(0, 2)
+  return (
+    <main className="article-page container">
+      <div className="breadcrumbs"><a href="/">Home</a><ChevronRight size={13} /><a href={article.type === 'recipe' ? '/recipes' : '/blog'}>{article.type === 'recipe' ? 'Recipes' : 'News'}</a><ChevronRight size={13} /><b>{article.title}</b></div>
+      <h1>{article.title}</h1>
+      <p className="article-meta">{article.date} | {article.author}</p>
+      <img className="article-hero" src={article.image} alt="" />
+      <section className="article-body">
+        <div>
+          <h2>{article.intro || article.excerpt}</h2>
+          <p>{article.excerpt} Our kitchen team keeps the preparation simple, seasonal and flexible for everyday cooking.</p>
+          {article.type === 'recipe' && (
+            <>
+              <h3>Ingredients:</h3>
+              <ul>{article.ingredients.map((ingredient) => <li key={ingredient}>{ingredient}</li>)}</ul>
+              <h3>Preparation</h3>
+              <ol>
+                <li>Prepare your ingredients and season everything with salt, pepper and olive oil.</li>
+                <li>Cook the main ingredient until golden and tender, then let it rest briefly.</li>
+                <li>Assemble with fresh vegetables, sauces and warm bread or grains.</li>
+                <li>Serve immediately while the texture is bright and fresh.</li>
+              </ol>
+            </>
+          )}
+        </div>
+        <aside>
+          <b>Share</b>
+          <span>f x p</span>
+          <b>Tags</b>
+          {article.tags.map((tag) => <em key={tag}>{tag}</em>)}
+        </aside>
+      </section>
+      <section className="more-articles">
+        <h2>{article.type === 'recipe' ? 'Check out more recipes' : 'More articles'}</h2>
+        <div>{related.map((item) => <a className="article-list-card" href={item.type === 'recipe' ? `/blogs/recipes/${item.slug}` : `/blogs/news/${item.slug}`} key={item.slug}><img src={item.image} alt="" /><h3>{item.title}</h3><p>{item.excerpt}</p></a>)}</div>
+      </section>
+      {article.type === 'news' && (
+        <section className="comments-section">
+          <h2>Comments (3)</h2>
+          {['Thank you for your blog posts.', 'I really like the image you have chosen for this post.', 'Love the desserts! A great meal always needs a great dessert.'].map((comment) => <p key={comment}>{comment}</p>)}
+          <h2>Leave a comment</h2>
+          <form><input placeholder="Name" /><input placeholder="Email" /><textarea placeholder="Message" /><button type="button">Submit Comment</button></form>
+          <small>Please note: comments must be approved before they are published</small>
+        </section>
+      )}
+    </main>
+  )
+}
+
+function SelectPickupModal({ selectedId, onSelect, onClose }) {
+  const [expandedId, setExpandedId] = useState('')
+  return (
+    <div className="pickup-overlay" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+      <section className="pickup-modal">
+        <div className="pickup-head"><h2>Select pickup location</h2><button type="button" onClick={onClose} aria-label="Close pickup selector"><X size={30} /></button></div>
+        <div className="pickup-layout">
+          <StoreMapMock />
+          <div className="pickup-list">
+            {storeLocations.map((location) => {
+              const expanded = expandedId === location.id
+              return (
+                <article className={expanded ? 'open' : ''} key={location.id}>
+                  <div className="pickup-row">
+                    <label><input type="checkbox" checked={selectedId === location.id} onChange={() => onSelect(location)} /><span><b>{location.name}</b>{location.price ? formatPrice(location.price).replace('.00', '') : 'Free'}. {location.ready}</span></label>
+                    <button type="button" onClick={() => setExpandedId(expanded ? '' : location.id)}>{expanded ? '-' : '+'}</button>
+                  </div>
+                  {expanded && (
+                    <div className="pickup-details">
+                      <p>{location.address}<br />{location.city}</p>
+                      <b>Store Hours</b>
+                      {location.hours.map((line) => <span key={line}>{line}</span>)}
+                      <img src={location.image} alt="" />
+                    </div>
+                  )}
+                </article>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+    </div>
   )
 }
 
@@ -1180,10 +1593,21 @@ function CheckoutModal({ items, onClose, onComplete }) {
 }
 
 function App() {
-  const isProductsPage = window.location.pathname.startsWith('/products')
-  const isCollectionsPage = window.location.pathname.startsWith('/collections')
-  const isCartPage = window.location.pathname.startsWith('/cart')
-  const isAccountPage = window.location.pathname.startsWith('/account')
+  const currentPath = window.location.pathname
+  const isProductsPage = currentPath.startsWith('/products')
+  const isCollectionsPage = currentPath.startsWith('/collections')
+  const isCartPage = currentPath.startsWith('/cart')
+  const isAccountPage = currentPath.startsWith('/account')
+  const isStoresPage = currentPath.startsWith('/our-stores') || currentPath.startsWith('/pages/our-stores')
+  const isDeliveryPage = currentPath.startsWith('/delivery') || currentPath.startsWith('/pages/delivery')
+  const isFaqPage = currentPath.startsWith('/faq') || currentPath.startsWith('/pages/faq')
+  const isRecipesPage = currentPath === '/recipes' || currentPath === '/blogs/recipes'
+  const isBlogPage = currentPath === '/blog' || currentPath === '/blogs/news'
+  const recipeMatch = currentPath.match(/^\/blogs\/recipes\/([^/]+)/)
+  const newsMatch = currentPath.match(/^\/blogs\/news\/([^/]+)/)
+  const activeArticle = recipeMatch || newsMatch
+    ? editorialArticles.find((article) => article.slug === (recipeMatch?.[1] || newsMatch?.[1]))
+    : null
   const [products, setProducts] = useState(fallbackProducts)
   const [categories, setCategories] = useState(fallbackCategories)
   const [cart, setCart] = useState(() => {
@@ -1197,6 +1621,8 @@ function App() {
   const [categoriesOpen, setCategoriesOpen] = useState(false)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [quickProduct, setQuickProduct] = useState(null)
+  const [pickupOpen, setPickupOpen] = useState(false)
+  const [selectedPickup, setSelectedPickup] = useState(storeLocations[0])
   const [discountDraft, setDiscountDraft] = useState('')
   const [appliedDiscountCode, setAppliedDiscountCode] = useState('')
   const [discountError, setDiscountError] = useState('')
@@ -1306,6 +1732,11 @@ function App() {
   const openCheckout = () => {
     setCartOpen(false)
     setCheckoutOpen(true)
+  }
+
+  const selectPickup = (location) => {
+    setSelectedPickup(location)
+    setPickupOpen(false)
   }
 
   const applyDiscount = () => {
@@ -1486,18 +1917,36 @@ function App() {
                 </div>
               </div>
             </div>
-            <a href="/#promise">About us <ChevronDown size={15} /></a>
-            <a href="/#recipes">Recipes</a>
-            <a href="/#articles">Blog</a>
+            <div className="about-menu">
+              <a href="/#promise">About us <ChevronDown size={15} /></a>
+              <div>
+                <a href="/our-stores">Our stores</a>
+                <a href="/faq">FAQ</a>
+              </div>
+            </div>
+            <a href="/recipes">Recipes</a>
+            <a href="/blog">Blog</a>
           </nav>
           <div className="service-links">
-            <a href="/#footer"><Store size={28} /><span><small>Picking up?</small>Select store <ChevronDown size={14} /></span></a>
-            <a href="/#footer"><Package size={28} /><span><small>Need delivery?</small>See estimates</span></a>
+            <button type="button" onClick={() => setPickupOpen(true)}><Store size={28} /><span><small>Picking up?</small>{selectedPickup?.name || 'Select store'} <ChevronDown size={14} /></span></button>
+            <a href="/delivery"><Package size={28} /><span><small>Need delivery?</small>See estimates</span></a>
           </div>
         </div>
       </header>
 
-      {isProductsPage ? <ProductsPage categories={categories} products={products} onAdd={openQuickProduct} /> : isCollectionsPage ? <CollectionsPage categories={categories} /> : isAccountPage ? (
+      {isProductsPage ? <ProductsPage categories={categories} products={products} onAdd={openQuickProduct} /> : isCollectionsPage ? <CollectionsPage categories={categories} /> : isStoresPage ? (
+      <OurStoresPage />
+      ) : isDeliveryPage ? (
+      <DeliveryPage onOpenPickup={() => setPickupOpen(true)} />
+      ) : isFaqPage ? (
+      <FaqPage />
+      ) : isRecipesPage ? (
+      <BlogIndexPage type="recipe" />
+      ) : isBlogPage ? (
+      <BlogIndexPage type="news" />
+      ) : activeArticle ? (
+      <ArticlePage article={activeArticle} />
+      ) : isAccountPage ? (
       <AccountPage
         user={storefrontUser}
         profile={accountProfile}
@@ -1614,7 +2063,7 @@ function App() {
             <p className="eyebrow">What's cooking?</p>
             <h2>Simple ideas.<br />Delicious results.</h2>
             <p>Make tonight's dinner the easiest decision of your day.</p>
-            <a className="cream-button" href="#articles">Browse recipes</a>
+            <a className="cream-button" href="/recipes">Browse recipes</a>
           </div>
         </section>
 
@@ -1624,11 +2073,11 @@ function App() {
               <p className="eyebrow">Fresh from LyLy</p>
               <h2>Latest Articles</h2>
             </div>
-            <a href="#articles">Read the journal <ArrowRight size={17} /></a>
+            <a href="/blog">Read the journal <ArrowRight size={17} /></a>
           </div>
           <div className="article-grid">
             {articles.map((article) => (
-              <a className="article-card" href="#articles" key={article.title}>
+              <a className="article-card" href="/blog" key={article.title}>
                 <img src={article.image} alt="" />
                 <p>{article.category}</p>
                 <h3>{article.title}</h3>
@@ -1664,8 +2113,8 @@ function App() {
             <div><a href="#footer"><b className="social-mark">ig</b></a><a href="#footer"><b className="social-mark">f</b></a><a href="#footer"><Mail size={18} /></a></div>
           </div>
           <div><h4>Shop</h4><a href="/collections">Categories</a><a href="/products">Best sellers</a><a href="/products">New arrivals</a><a href="/products">Special offers</a></div>
-          <div><h4>About</h4><a href="/#promise">Our story</a><a href="/#articles">Journal</a><a href="/#footer">Careers</a><a href="/#footer">Contact</a></div>
-          <div><h4>Need help?</h4><a href="#footer">Delivery & pickup</a><a href="#footer">FAQs</a><a href="#footer">Returns</a><a href="#footer">Track an order</a></div>
+          <div><h4>About</h4><a href="/our-stores">Our stores</a><a href="/faq">FAQ</a><a href="/blog">Journal</a><a href="/#footer">Contact</a></div>
+          <div><h4>Need help?</h4><a href="/delivery">Delivery & pickup</a><a href="/faq">FAQs</a><a href="/delivery">Returns</a><a href="/account?tab=orders">Track an order</a></div>
           <div className="store-card">
             <MapPin size={22} />
             <span><small>Your neighborhood market</small><b>Find your closest LyLy</b></span>
@@ -1680,8 +2129,13 @@ function App() {
         <div className="drawer-header"><Logo /><button type="button" onClick={() => setMenuOpen(false)} aria-label="Close menu"><X /></button></div>
         <nav>
           {menuItems.map((item) => <a href={item.href} onClick={() => setMenuOpen(false)} key={item.label}>{item.label}<ChevronRight size={16} /></a>)}
+          <a href="/our-stores" onClick={() => setMenuOpen(false)}>Our stores<ChevronRight size={16} /></a>
+          <a href="/faq" onClick={() => setMenuOpen(false)}>FAQ<ChevronRight size={16} /></a>
+          <a href="/recipes" onClick={() => setMenuOpen(false)}>Recipes<ChevronRight size={16} /></a>
+          <a href="/blog" onClick={() => setMenuOpen(false)}>Blog<ChevronRight size={16} /></a>
+          <a href="/delivery" onClick={() => setMenuOpen(false)}>Shipping & Delivery<ChevronRight size={16} /></a>
         </nav>
-        <div className="menu-footer"><button type="button" onClick={() => { setMenuOpen(false); setAccountOpen(true) }}><User size={18} /> Account</button><a href="#footer"><Store size={18} /> Find a store</a></div>
+        <div className="menu-footer"><button type="button" onClick={() => { setMenuOpen(false); setAccountOpen(true) }}><User size={18} /> Account</button><a href="/our-stores"><Store size={18} /> Find a store</a><a href="/delivery"><Truck size={18} /> Delivery</a></div>
       </aside>
 
       {cartOpen && <div className="page-overlay" onClick={() => setCartOpen(false)} />}
@@ -1748,6 +2202,7 @@ function App() {
 
       {quickProduct && <QuickProductModal product={quickProduct} onAdd={addToCart} onBuyNow={buyNow} onClose={() => setQuickProduct(null)} />}
       {accountOpen && <AccountModal user={storefrontUser} profile={accountProfile} onClose={() => setAccountOpen(false)} onSignOut={signOutAccount} />}
+      {pickupOpen && <SelectPickupModal selectedId={selectedPickup?.id} onSelect={selectPickup} onClose={() => setPickupOpen(false)} />}
       {checkoutOpen && <CheckoutModal items={cart} onClose={() => setCheckoutOpen(false)} onComplete={() => setCart([])} />}
       {searchOpen && <button className="search-closer" aria-label="Close search" type="button" onClick={() => setSearchOpen(false)} />}
     </div>

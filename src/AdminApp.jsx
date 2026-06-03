@@ -1116,10 +1116,24 @@ function AnalyticsPage({ meta }) {
 }
 
 function LocationsPage({ meta }) {
+  const storefrontLocations = [
+    ['Champs Elysees', '13 Champs-Elysees', '75008 Paris', 'Pickup $5 - Ready in 2 hrs'],
+    ['Saint Germain', '18 Rue Saint-Germain', '75006 Paris', 'Pickup $5 - Ready in 2 hrs'],
+    ['La Defense', '22 Parvis de la Defense', '92800 Puteaux', 'Free pickup - Ready in 24 hrs'],
+    ['Warehouse', 'Fond du Val 23', 'Maurecourt, France', 'Free pickup - Ready in 24 hrs'],
+  ]
+
   return (
     <>
       <SectionTitle title={meta.locations[0]} description={meta.locations[1]} action="Thêm địa điểm" />
       <section className="location-grid">
+        {storefrontLocations.map(([name, address, city, note]) => (
+          <div className="admin-panel location-card" key={name}>
+            <MapPin size={24} />
+            <div><StatusPill>Active</StatusPill><h3>LyLy Market - {name}</h3><p>{address}<br />{city}</p><span>{note}</span></div>
+            <button className="row-icon" type="button"><MoreHorizontal size={17} /></button>
+          </div>
+        ))}
         <div className="admin-panel location-card"><MapPin size={24} /><div><StatusPill>Active</StatusPill><h3>LyLy Market · Brooklyn</h3><p>68 Greenpoint Avenue<br />Brooklyn, NY 11222</p><span>Pickup · Local delivery · Inventory</span></div><button className="row-icon" type="button"><MoreHorizontal size={17} /></button></div>
         <div className="admin-panel location-card"><MapPin size={24} /><div><StatusPill>Active</StatusPill><h3>LyLy Market · Manhattan</h3><p>214 Spring Street<br />New York, NY 10013</p><span>Pickup · Inventory</span></div><button className="row-icon" type="button"><MoreHorizontal size={17} /></button></div>
       </section>
