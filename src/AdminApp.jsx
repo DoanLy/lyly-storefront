@@ -32,6 +32,7 @@ import {
   Search,
   Send,
   Settings,
+  ShieldCheck,
   ShoppingBag,
   ShoppingCart,
   Sparkles,
@@ -52,12 +53,15 @@ import {
   importAdminProducts,
   isSupabaseConfigured,
   loadAdminCategories,
+  loadAdminOrders,
   loadAdminProducts,
   removeAdminCategories,
   removeAdminProducts,
   signInAdmin,
   signOutAdmin,
   updateAdminCategory,
+  updateAdminOrder,
+  updateAdminOrders,
   updateAdminProduct,
   updateAdminProducts,
 } from './lib/storeApi'
@@ -106,13 +110,13 @@ const initialCategories = [
   { id: 30, parentId: 5, name: 'Plant-Based', slug: 'plant-based', active: true, showOnHome: false, includeInMenu: false, displayOrder: 55 },
 ]
 
-const orders = [
-  { id: '#LY1048', date: '02 Jun, 13:42', customer: 'Emma Wilson', total: 54.2, payment: 'Paid', delivery: 'Packing', items: 5 },
-  { id: '#LY1047', date: '02 Jun, 12:16', customer: 'Noah Taylor', total: 82.75, payment: 'Paid', delivery: 'Ready', items: 7 },
-  { id: '#LY1046', date: '02 Jun, 10:04', customer: 'Ava Anderson', total: 34.5, payment: 'Pending', delivery: 'Unfulfilled', items: 3 },
-  { id: '#LY1045', date: '01 Jun, 18:32', customer: 'Liam Johnson', total: 96.4, payment: 'Paid', delivery: 'Delivered', items: 9 },
-  { id: '#LY1044', date: '01 Jun, 16:21', customer: 'Mia Brown', total: 41.85, payment: 'Refunded', delivery: 'Cancelled', items: 4 },
-  { id: '#LY1043', date: '01 Jun, 14:47', customer: 'Oliver Davis', total: 67.1, payment: 'Paid', delivery: 'Delivered', items: 6 },
+const initialOrders = [
+  { id: '#LY1048', date: '02 Jun, 13:42', customer: 'Emma Wilson', email: 'emma.wilson@example.com', phone: '+1 555 0184', location: 'Brooklyn, NY', total: 54.2, payment: 'Paid', delivery: 'Packing', items: 5, note: 'Leave at concierge if no answer.', lineItems: [{ name: 'Organic Hass Avocados', quantity: 2, price: 5.9, total: 11.8 }, { name: 'Farm Fresh Whole Milk', quantity: 1, price: 3.25, total: 3.25 }, { name: 'Sweet Garden Strawberries', quantity: 2, price: 4.75, total: 9.5 }] },
+  { id: '#LY1047', date: '02 Jun, 12:16', customer: 'Noah Taylor', email: 'noah.taylor@example.com', phone: '+1 555 0162', location: 'Queens, NY', total: 82.75, payment: 'Paid', delivery: 'Ready', items: 7, note: 'Pickup window: 5-6 PM.', lineItems: [{ name: 'Atlantic Salmon Fillet', quantity: 2, price: 14.5, total: 29 }, { name: 'Fresh Rigatoni Pasta', quantity: 2, price: 4.9, total: 9.8 }, { name: 'Artisan Sourdough Loaf', quantity: 1, price: 6.5, total: 6.5 }] },
+  { id: '#LY1046', date: '02 Jun, 10:04', customer: 'Ava Anderson', email: 'ava.anderson@example.com', phone: '+1 555 0138', location: 'Jersey City, NJ', total: 34.5, payment: 'Pending', delivery: 'Unfulfilled', items: 3, note: 'Call before delivery.', lineItems: [{ name: 'Free Range Brown Eggs', quantity: 1, price: 5.5, total: 5.5 }, { name: 'Sun-Kissed Navel Oranges', quantity: 2, price: 4.2, total: 8.4 }] },
+  { id: '#LY1045', date: '01 Jun, 18:32', customer: 'Liam Johnson', email: 'liam.johnson@example.com', phone: '+1 555 0119', location: 'Manhattan, NY', total: 96.4, payment: 'Paid', delivery: 'Delivered', items: 9, note: 'Delivered by local courier.', lineItems: [{ name: 'Atlantic Salmon Fillet', quantity: 3, price: 14.5, total: 43.5 }, { name: 'Organic Hass Avocados', quantity: 3, price: 5.9, total: 17.7 }] },
+  { id: '#LY1044', date: '01 Jun, 16:21', customer: 'Mia Brown', email: 'mia.brown@example.com', phone: '+1 555 0144', location: 'Hoboken, NJ', total: 41.85, payment: 'Refunded', delivery: 'Cancelled', items: 4, note: 'Customer requested cancellation.', lineItems: [{ name: 'Fresh Rigatoni Pasta', quantity: 2, price: 4.9, total: 9.8 }, { name: 'Artisan Sourdough Loaf', quantity: 2, price: 6.5, total: 13 }] },
+  { id: '#LY1043', date: '01 Jun, 14:47', customer: 'Oliver Davis', email: 'oliver.davis@example.com', phone: '+1 555 0157', location: 'Brooklyn, NY', total: 67.1, payment: 'Paid', delivery: 'Delivered', items: 6, note: 'No substitutions.', lineItems: [{ name: 'Sweet Garden Strawberries', quantity: 4, price: 4.75, total: 19 }, { name: 'Farm Fresh Whole Milk', quantity: 2, price: 3.25, total: 6.5 }] },
 ]
 
 const customers = [
@@ -359,6 +363,24 @@ function downloadCatalogPdf(products) {
   downloadBlob(new Blob([buildCatalogPdf(products)], { type: 'application/pdf' }), 'lyly-product-catalog.pdf')
 }
 
+function downloadOrdersCsv(orders) {
+  const headers = ['order_number', 'date', 'customer', 'email', 'phone', 'location', 'payment_status', 'delivery_status', 'items', 'total']
+  const rows = orders.map((order) => [
+    order.id,
+    order.date,
+    order.customer,
+    order.email || '',
+    order.phone || '',
+    order.location || '',
+    order.payment,
+    order.delivery,
+    order.items,
+    money(order.total),
+  ])
+  const csv = [headers, ...rows].map((row) => row.map(csvCell).join(',')).join('\n')
+  downloadBlob(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }), 'lyly-orders.csv')
+}
+
 function StatusPill({ children }) {
   return <span className={`admin-status ${String(children).toLowerCase().replaceAll(' ', '-')}`}>{children}</span>
 }
@@ -389,7 +411,7 @@ function EmptyHint({ icon: Icon, title, copy }) {
   return <div className="empty-hint"><Icon size={33} /><h3>{title}</h3><p>{copy}</p></div>
 }
 
-function Dashboard({ tasks, setTasks }) {
+function Dashboard({ tasks, setTasks, orders }) {
   const [assistantText, setAssistantText] = useState('')
   const [assistantReply, setAssistantReply] = useState('')
   const toggleTask = (id) => setTasks((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])
@@ -700,36 +722,177 @@ function CategoriesPage({ categories, products, onCreate, onEdit, onRemove, onTo
   )
 }
 
-function OrdersPage() {
+function OrdersPage({ orders, onUpdate, onBulkUpdate }) {
   const [query, setQuery] = useState('')
-  const [filter, setFilter] = useState('all')
+  const [tab, setTab] = useState('all')
+  const [deliveryFilter, setDeliveryFilter] = useState('all')
+  const [paymentFilter, setPaymentFilter] = useState('all')
+  const [sort, setSort] = useState('newest')
+  const [selected, setSelected] = useState([])
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [detailOrder, setDetailOrder] = useState(null)
+  const [notice, setNotice] = useState('')
   const visible = orders.filter((order) => {
-    const matchesQuery = `${order.id} ${order.customer}`.toLowerCase().includes(query.toLowerCase())
-    return matchesQuery && (filter === 'all' || order.delivery.toLowerCase() === filter)
+    const text = `${order.id} ${order.customer} ${order.email || ''} ${order.phone || ''} ${order.location || ''}`.toLowerCase()
+    const matchesQuery = text.includes(query.toLowerCase())
+    const matchesDelivery = deliveryFilter === 'all' || order.delivery.toLowerCase() === deliveryFilter
+    const matchesPayment = paymentFilter === 'all' || order.payment.toLowerCase() === paymentFilter
+    const matchesTab =
+      tab === 'all'
+      || (tab === 'open' && !['delivered', 'cancelled'].includes(order.delivery.toLowerCase()))
+      || (tab === 'unpaid' && order.payment.toLowerCase() === 'pending')
+      || (tab === 'fulfilled' && order.delivery.toLowerCase() === 'delivered')
+    return matchesQuery && matchesDelivery && matchesPayment && matchesTab
+  }).sort((a, b) => {
+    if (sort === 'total-desc') return b.total - a.total
+    if (sort === 'total-asc') return a.total - b.total
+    return String(b.createdAt || b.date).localeCompare(String(a.createdAt || a.date))
   })
+  const selectedOrders = visible.filter((order) => selected.includes(order.id))
+  const allSelected = visible.length > 0 && selected.length === visible.length
+  const openCount = orders.filter((order) => !['delivered', 'cancelled'].includes(order.delivery.toLowerCase())).length
+  const unpaidCount = orders.filter((order) => order.payment.toLowerCase() === 'pending').length
+  const deliveredCount = orders.filter((order) => order.delivery.toLowerCase() === 'delivered').length
+
+  const toggleAll = () => setSelected(allSelected ? [] : visible.map((order) => order.id))
+  const toggleSelected = (id) => setSelected((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])
+  const updateOrder = async (order, changes) => {
+    const updated = await onUpdate({ ...order, ...changes })
+    setDetailOrder((current) => current?.id === updated.id ? updated : current)
+    setNotice(`${updated.id} đã được cập nhật.`)
+  }
+  const bulkUpdate = async (changes) => {
+    if (!selectedOrders.length) return
+    await onBulkUpdate(selectedOrders.map((order) => ({ ...order, ...changes })))
+    setNotice(`Đã cập nhật ${selectedOrders.length} đơn hàng.`)
+    setSelected([])
+  }
+
   return (
     <>
-      <SectionTitle title="Đơn hàng" description={pageMeta.orders[1]} action="Xuất đơn hàng" icon={Download} />
+      <SectionTitle title="Đơn hàng" description={pageMeta.orders[1]} action="Xuất đơn hàng" onAction={() => downloadOrdersCsv(visible)} icon={Download} />
       <section className="metrics-grid">
-        <MetricCard label="Tổng đơn hôm nay" value="18" note="+12% so với hôm qua" />
-        <MetricCard label="Cần xử lý" value="3" note="2 đơn cần đóng gói" />
-        <MetricCard label="Doanh thu hôm nay" value={money(684.75)} note="+8.4% so với hôm qua" />
+        <MetricCard label="Tổng đơn" value={orders.length} note={`${openCount} đơn đang xử lý`} />
+        <MetricCard label="Cần thanh toán" value={unpaidCount} note="Theo dõi trước khi đóng gói" />
+        <MetricCard label="Doanh thu" value={money(orders.reduce((total, order) => total + order.total, 0))} note={`${deliveredCount} đơn đã giao`} />
       </section>
+      {notice && <div className="product-notice"><span>{notice}</span><button type="button" onClick={() => setNotice('')}><X size={14} /></button></div>}
       <section className="admin-panel data-panel">
-        <div className="data-tabs"><button className="active" type="button">Tất cả</button><button type="button">Chưa xử lý</button><button type="button">Chưa thanh toán</button><button type="button">Đã giao</button></div>
-        <div className="table-toolbar">
-          <label><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm kiếm đơn hàng" /></label>
-          <select value={filter} onChange={(event) => setFilter(event.target.value)}><option value="all">Tất cả giao hàng</option><option value="packing">Đang đóng gói</option><option value="ready">Sẵn sàng</option><option value="delivered">Đã giao</option><option value="cancelled">Đã hủy</option></select>
-          <button type="button"><Filter size={15} /> Bộ lọc</button>
+        <div className="data-tabs">
+          <button className={tab === 'all' ? 'active' : ''} type="button" onClick={() => setTab('all')}>Tất cả <em>{orders.length}</em></button>
+          <button className={tab === 'open' ? 'active' : ''} type="button" onClick={() => setTab('open')}>Đang xử lý <em>{openCount}</em></button>
+          <button className={tab === 'unpaid' ? 'active' : ''} type="button" onClick={() => setTab('unpaid')}>Chưa thanh toán <em>{unpaidCount}</em></button>
+          <button className={tab === 'fulfilled' ? 'active' : ''} type="button" onClick={() => setTab('fulfilled')}>Đã giao <em>{deliveredCount}</em></button>
         </div>
+        <div className="table-toolbar">
+          <label><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm theo mã đơn, khách hàng, email hoặc SĐT" /></label>
+          <select value={sort} onChange={(event) => setSort(event.target.value)}><option value="newest">Mới nhất</option><option value="total-desc">Tổng cao nhất</option><option value="total-asc">Tổng thấp nhất</option></select>
+          <button className={filterOpen ? 'filter-active' : ''} type="button" onClick={() => setFilterOpen(!filterOpen)}><Filter size={15} /> Bộ lọc</button>
+          <button type="button" onClick={() => downloadOrdersCsv(visible)}><Download size={15} /> Xuất</button>
+        </div>
+        {selected.length > 0 && (
+          <div className="order-bulk-bar">
+            <span>{selected.length} đơn đã chọn</span>
+            <button type="button" onClick={() => bulkUpdate({ payment: 'Paid' })}>Đã thanh toán</button>
+            <button type="button" onClick={() => bulkUpdate({ delivery: 'Packing' })}>Đóng gói</button>
+            <button type="button" onClick={() => bulkUpdate({ delivery: 'Ready' })}>Sẵn sàng giao</button>
+            <button type="button" onClick={() => bulkUpdate({ delivery: 'Delivered' })}>Đã giao</button>
+            <button className="danger-button" type="button" onClick={() => bulkUpdate({ delivery: 'Cancelled' })}>Hủy đơn</button>
+          </div>
+        )}
+        {filterOpen && (
+          <div className="order-filter-panel">
+            <label><span>Thanh toán</span><select value={paymentFilter} onChange={(event) => setPaymentFilter(event.target.value)}><option value="all">Tất cả</option><option value="pending">Pending</option><option value="paid">Paid</option><option value="refunded">Refunded</option></select></label>
+            <label><span>Giao hàng</span><select value={deliveryFilter} onChange={(event) => setDeliveryFilter(event.target.value)}><option value="all">Tất cả</option><option value="unfulfilled">Unfulfilled</option><option value="packing">Packing</option><option value="ready">Ready</option><option value="delivered">Delivered</option><option value="cancelled">Cancelled</option></select></label>
+            <div className="category-filter-actions"><button className="admin-secondary" type="button" onClick={() => { setPaymentFilter('all'); setDeliveryFilter('all') }}>Xóa lọc</button></div>
+          </div>
+        )}
         <div className="admin-table-wrap">
           <table className="admin-table">
-            <thead><tr><th><input type="checkbox" /></th><th>Đơn hàng</th><th>Ngày</th><th>Khách hàng</th><th>Thanh toán</th><th>Giao hàng</th><th>Số món</th><th>Tổng</th></tr></thead>
-            <tbody>{visible.map((order) => <tr key={order.id}><td><input type="checkbox" /></td><td><b>{order.id}</b></td><td>{order.date}</td><td>{order.customer}</td><td><StatusPill>{order.payment}</StatusPill></td><td><StatusPill>{order.delivery}</StatusPill></td><td>{order.items}</td><td><b>{money(order.total)}</b></td></tr>)}</tbody>
+            <thead><tr><th><input type="checkbox" checked={allSelected} onChange={toggleAll} /></th><th>Đơn hàng</th><th>Ngày</th><th>Khách hàng</th><th>Thanh toán</th><th>Giao hàng</th><th>Số món</th><th>Tổng</th><th></th></tr></thead>
+            <tbody>{visible.map((order) => (
+              <tr key={order.id}>
+                <td><input type="checkbox" checked={selected.includes(order.id)} onChange={() => toggleSelected(order.id)} /></td>
+                <td><button className="order-link" type="button" onClick={() => setDetailOrder(order)}>{order.id}</button></td>
+                <td>{order.date}</td>
+                <td><div className="customer-cell"><span>{order.customer.split(' ').map((part) => part[0]).join('').slice(0, 2)}</span><div><b>{order.customer}</b><small>{order.email || order.location}</small></div></div></td>
+                <td><StatusPill>{order.payment}</StatusPill></td>
+                <td><StatusPill>{order.delivery}</StatusPill></td>
+                <td>{order.items}</td>
+                <td><b>{money(order.total)}</b></td>
+                <td><div className="row-actions"><button className="row-icon" type="button" onClick={() => setDetailOrder(order)} title="Xem đơn"><Eye size={15} /></button><button className="row-icon" type="button" onClick={() => updateOrder(order, { delivery: 'Packing' })} title="Đóng gói"><Package size={15} /></button></div></td>
+              </tr>
+            ))}</tbody>
           </table>
+          {!visible.length && <EmptyHint icon={ShoppingCart} title="Không tìm thấy đơn hàng" copy="Thử đổi từ khóa, bộ lọc hoặc trạng thái đơn." />}
         </div>
       </section>
+      {detailOrder && <OrderDetailModal order={detailOrder} onClose={() => setDetailOrder(null)} onUpdate={updateOrder} />}
     </>
+  )
+}
+
+function OrderDetailModal({ order, onClose, onUpdate }) {
+  const [payment, setPayment] = useState(order.payment)
+  const [delivery, setDelivery] = useState(order.delivery)
+  const save = () => onUpdate(order, { payment, delivery })
+  const subtotal = order.lineItems?.reduce((total, item) => total + item.total, 0) || order.total
+
+  return (
+    <Modal wide title={`${order.id} · ${order.customer}`} onClose={onClose}>
+      <div className="order-detail">
+        <section className="order-detail-main">
+          <div className="order-card">
+            <div className="order-card-title"><h3>Items</h3><StatusPill>{delivery}</StatusPill></div>
+            <div className="order-line-list">
+              {(order.lineItems?.length ? order.lineItems : [{ name: 'Order items', quantity: order.items, price: order.total, total: order.total }]).map((item, index) => (
+                <div className="order-line-item" key={`${item.name}-${index}`}>
+                  <div><b>{item.name}</b><small>{item.quantity} x {money(item.price)}</small></div>
+                  <strong>{money(item.total)}</strong>
+                </div>
+              ))}
+            </div>
+            <div className="order-total-box">
+              <p><span>Subtotal</span><b>{money(subtotal)}</b></p>
+              <p><span>Shipping</span><b>Calculated</b></p>
+              <p><span>Total</span><strong>{money(order.total)}</strong></p>
+            </div>
+          </div>
+
+          <div className="order-card">
+            <div className="order-card-title"><h3>Timeline</h3><button className="admin-secondary" type="button">Add note</button></div>
+            <div className="order-timeline">
+              <p><CheckCircle2 size={15} /> Order created on {order.date}</p>
+              <p><Package size={15} /> Fulfillment status is {delivery}</p>
+              <p><ShoppingBag size={15} /> Payment status is {payment}</p>
+            </div>
+            {order.note && <div className="order-note"><b>Customer note</b><span>{order.note}</span></div>}
+          </div>
+        </section>
+
+        <aside className="order-detail-side">
+          <div className="order-card">
+            <h3>Actions</h3>
+            <label><span>Payment</span><select value={payment} onChange={(event) => setPayment(event.target.value)}><option>Pending</option><option>Paid</option><option>Refunded</option></select></label>
+            <label><span>Fulfillment</span><select value={delivery} onChange={(event) => setDelivery(event.target.value)}><option>Unfulfilled</option><option>Packing</option><option>Ready</option><option>Delivered</option><option>Cancelled</option></select></label>
+            <button className="admin-primary" type="button" onClick={save}><CheckCircle2 size={15} /> Save status</button>
+          </div>
+          <div className="order-card">
+            <h3>Customer</h3>
+            <div className="order-contact">
+              <b>{order.customer}</b>
+              {order.email && <a href={`mailto:${order.email}`}>{order.email}</a>}
+              {order.phone && <a href={`tel:${order.phone}`}>{order.phone}</a>}
+              {order.location && <span>{order.location}</span>}
+            </div>
+          </div>
+          <div className="order-card">
+            <h3>Fraud analysis</h3>
+            <p className="order-risk"><ShieldCheck size={16} /> Low risk · Billing and delivery details look consistent.</p>
+          </div>
+        </aside>
+      </div>
+    </Modal>
   )
 }
 
@@ -1064,6 +1227,7 @@ function AdminApp() {
   const [page, setPage] = useState(getPage)
   const [products, setProducts] = useState(initialProducts)
   const [categories, setCategories] = useState(initialCategories)
+  const [adminOrders, setAdminOrders] = useState(initialOrders)
   const [discounts, setDiscounts] = useState(initialDiscounts)
   const [productModal, setProductModal] = useState(false)
   const [productEditing, setProductEditing] = useState(null)
@@ -1081,10 +1245,10 @@ function AdminApp() {
     if (!globalSearch.trim()) return []
     return [
       ...products.slice(0, 3).map((product) => ({ type: 'Sản phẩm', label: product.name, page: 'products' })),
-      ...orders.slice(0, 2).map((order) => ({ type: 'Đơn hàng', label: `${order.id} · ${order.customer}`, page: 'orders' })),
+      ...adminOrders.slice(0, 2).map((order) => ({ type: 'Đơn hàng', label: `${order.id} · ${order.customer}`, page: 'orders' })),
       ...customers.slice(0, 2).map((customer) => ({ type: 'Khách hàng', label: customer.name, page: 'customers' })),
     ].filter((item) => `${item.type} ${item.label}`.toLowerCase().includes(globalSearch.toLowerCase()))
-  }, [globalSearch, products])
+  }, [globalSearch, products, adminOrders])
 
   useEffect(() => {
     const update = () => setPage(getPage())
@@ -1110,10 +1274,11 @@ function AdminApp() {
           return
         }
 
-        const [remoteProducts, remoteCategories] = await Promise.all([loadAdminProducts(), loadAdminCategories()])
+        const [remoteProducts, remoteCategories, remoteOrders] = await Promise.all([loadAdminProducts(), loadAdminCategories(), loadAdminOrders()])
         if (!ignore) {
           setProducts(remoteProducts)
           setCategories(remoteCategories)
+          setAdminOrders(remoteOrders || initialOrders)
           setAuthStatus('ready')
         }
       } catch (error) {
@@ -1148,9 +1313,10 @@ function AdminApp() {
         setAuthStatus('unauthorized')
         return
       }
-      const [remoteProducts, remoteCategories] = await Promise.all([loadAdminProducts(), loadAdminCategories()])
+      const [remoteProducts, remoteCategories, remoteOrders] = await Promise.all([loadAdminProducts(), loadAdminCategories(), loadAdminOrders()])
       setProducts(remoteProducts)
       setCategories(remoteCategories)
+      setAdminOrders(remoteOrders || initialOrders)
       setAuthStatus('ready')
     } catch (error) {
       console.error(error)
@@ -1283,11 +1449,37 @@ function AdminApp() {
     setDiscountModal(false)
   }
 
+  const saveOrder = async (order) => {
+    setAdminError('')
+    try {
+      const updatedOrder = await updateAdminOrder(order)
+      setAdminOrders((current) => current.map((item) => item.id === updatedOrder.id ? { ...item, ...updatedOrder } : item))
+      return updatedOrder
+    } catch (error) {
+      console.error(error)
+      setAdminError(error.message)
+      throw error
+    }
+  }
+
+  const bulkSaveOrders = async (updates) => {
+    setAdminError('')
+    try {
+      const updatedOrders = await updateAdminOrders(updates)
+      const updatedById = new Map(updatedOrders.map((order) => [order.id, order]))
+      setAdminOrders((current) => current.map((order) => updatedById.get(order.id) ? { ...order, ...updatedById.get(order.id) } : order))
+    } catch (error) {
+      console.error(error)
+      setAdminError(error.message)
+      throw error
+    }
+  }
+
   const renderPage = () => {
-    if (page === 'dashboard') return <Dashboard tasks={tasks} setTasks={setTasks} />
+    if (page === 'dashboard') return <Dashboard tasks={tasks} setTasks={setTasks} orders={adminOrders} />
     if (page === 'products') return <ProductsPage categories={categories} products={products} onBulkEdit={bulkEditProducts} onCreate={() => { setProductEditing(null); setProductModal(true) }} onEdit={(product) => { setProductEditing(product); setProductModal(true) }} onImport={importProducts} onRemove={removeProducts} />
     if (page === 'categories') return <CategoriesPage categories={categories} products={products} onCreate={() => { setCategoryEditing(null); setCategoryModal(true) }} onEdit={(category) => { setCategoryEditing(category); setCategoryModal(true) }} onRemove={removeCategory} onToggle={toggleCategory} />
-    if (page === 'orders') return <OrdersPage />
+    if (page === 'orders') return <OrdersPage orders={adminOrders} onUpdate={saveOrder} onBulkUpdate={bulkSaveOrders} />
     if (page === 'customers') return <CustomersPage />
     if (page === 'marketing') return <MarketingPage />
     if (page === 'discounts') return <DiscountsPage discounts={discounts} onCreate={() => setDiscountModal(true)} />
@@ -1295,7 +1487,7 @@ function AdminApp() {
     if (page === 'analytics') return <AnalyticsPage />
     if (page === 'locations') return <LocationsPage />
     if (page === 'settings') return <SettingsPage />
-    return <Dashboard tasks={tasks} setTasks={setTasks} />
+    return <Dashboard tasks={tasks} setTasks={setTasks} orders={adminOrders} />
   }
 
   if (authStatus === 'loading') return <div className="admin-auth-loading">Đang kết nối Supabase...</div>

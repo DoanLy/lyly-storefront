@@ -12,6 +12,16 @@ Deno.serve(async (request) => {
     const name = String(customer.name ?? '').trim()
     const email = String(customer.email ?? '').trim().toLowerCase()
     const phone = String(customer.phone ?? '').trim()
+    const location = [
+      customer.address,
+      customer.apartment,
+      customer.city,
+      customer.postalCode,
+    ].map((part) => String(part ?? '').trim()).filter(Boolean).join(', ')
+    const deliveryMethod = String(customer.deliveryMethod ?? 'local').trim()
+    const paymentMethod = String(customer.paymentMethod ?? 'cod').trim()
+    const notes = String(customer.notes ?? '').trim()
+    const totals = customer.totals ?? {}
 
     if (name.length < 2 || name.length > 120) {
       return jsonResponse({ error: 'Tên khách hàng không hợp lệ.' }, 400)
@@ -32,6 +42,11 @@ Deno.serve(async (request) => {
       p_customer_name: name,
       p_customer_email: email,
       p_customer_phone: phone || null,
+      p_customer_location: location || null,
+      p_delivery_method: deliveryMethod,
+      p_payment_method: paymentMethod,
+      p_notes: notes || null,
+      p_order_totals: totals,
       p_items: items,
     })
 

@@ -604,10 +604,27 @@ function CollectionsPage({ categories }) {
 }
 
 function CheckoutModal({ items, onClose, onComplete }) {
-  const [form, setForm] = useState({ name: '', email: '', phone: '' })
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    apartment: '',
+    city: '',
+    postalCode: '',
+    deliveryMethod: 'local',
+    paymentMethod: 'cod',
+    notes: '',
+    discountCode: '',
+  })
   const [status, setStatus] = useState('idle')
   const [message, setMessage] = useState('')
   const [order, setOrder] = useState(null)
+  const subtotal = items.reduce((total, item) => total + item.price * item.quantity, 0)
+  const discount = form.discountCode.trim().toUpperCase() === 'FRESH20' ? subtotal * 0.2 : 0
+  const deliveryFee = form.deliveryMethod === 'pickup' || subtotal - discount >= 75 ? 0 : 8
+  const tax = (subtotal - discount) * 0.0825
+  const total = subtotal - discount + deliveryFee + tax
   const change = (event) => setForm({ ...form, [event.target.name]: event.target.value })
 
   const submit = async (event) => {
@@ -616,7 +633,7 @@ function CheckoutModal({ items, onClose, onComplete }) {
     setMessage('')
 
     try {
-      const createdOrder = await createStorefrontOrder(form, items)
+      const createdOrder = await createStorefrontOrder({ ...form, totals: { subtotal, discount, deliveryFee, tax, total } }, items)
       setOrder(createdOrder)
       setStatus('success')
       onComplete()
@@ -631,7 +648,7 @@ function CheckoutModal({ items, onClose, onComplete }) {
     <div className="checkout-overlay" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <section className="checkout-modal">
         <div className="checkout-header">
-          <div><p>Secure checkout</p><h2>{order ? 'Order received' : 'Complete your order'}</h2></div>
+          <div><p>Secure checkout</p><h2>{order ? 'Order received' : 'Checkout'}</h2></div>
           <button type="button" onClick={onClose} aria-label="Close checkout"><X size={20} /></button>
         </div>
         {order ? (
@@ -643,13 +660,88 @@ function CheckoutModal({ items, onClose, onComplete }) {
           </div>
         ) : (
           <form className="checkout-form" onSubmit={submit}>
-            <label><span>Full name</span><input required name="name" value={form.name} onChange={change} /></label>
-            <label><span>Email</span><input required type="email" name="email" value={form.email} onChange={change} /></label>
-            <label><span>Phone</span><input name="phone" value={form.phone} onChange={change} /></label>
-            {message && <p className="checkout-error">{message}</p>}
-            <button type="submit" disabled={status === 'submitting'}>
-              {status === 'submitting' ? 'Placing order...' : 'Place order'} <ArrowRight size={17} />
-            </button>
+            <div className="checkout-main">
+              <div className="checkout-fields">
+                <div className="checkout-steps">
+                  <span className="active">Cart</span>
+                  <span className="active">Information</span>
+                  <span>Payment</span>
+                </div>
+
+                <fieldset>
+                  <legend>Contact</legend>
+                  <label><span>Email</span><input required type="email" name="email" value={form.email} onChange={change} placeholder="you@example.com" /></label>
+                  <div className="checkout-grid">
+                    <label><span>Full name</span><input required name="name" value={form.name} onChange={change} placeholder="Jane Smith" /></label>
+                    <label><span>Phone</span><input required name="phone" value={form.phone} onChange={change} placeholder="+1 555 0123" /></label>
+                  </div>
+                </fieldset>
+
+                <fieldset>
+                  <legend>Delivery</legend>
+                  <div className="checkout-choice-grid">
+                    <label className={form.deliveryMethod === 'local' ? 'selected' : ''}>
+                      <input type="radio" name="deliveryMethod" value="local" checked={form.deliveryMethod === 'local'} onChange={change} />
+                      <span><Truck size={18} /> Local delivery <b>{subtotal - discount >= 75 ? 'Free' : formatPrice(8)}</b></span>
+                    </label>
+                    <label className={form.deliveryMethod === 'pickup' ? 'selected' : ''}>
+                      <input type="radio" name="deliveryMethod" value="pickup" checked={form.deliveryMethod === 'pickup'} onChange={change} />
+                      <span><Store size={18} /> Store pickup <b>Free</b></span>
+                    </label>
+                  </div>
+                  {form.deliveryMethod === 'local' && (
+                    <>
+                      <label><span>Address</span><input required name="address" value={form.address} onChange={change} placeholder="Street address" /></label>
+                      <div className="checkout-grid">
+                        <label><span>Apt, suite</span><input name="apartment" value={form.apartment} onChange={change} placeholder="Optional" /></label>
+                        <label><span>City</span><input required name="city" value={form.city} onChange={change} placeholder="City" /></label>
+                      </div>
+                      <label><span>Postal code</span><input required name="postalCode" value={form.postalCode} onChange={change} placeholder="10001" /></label>
+                    </>
+                  )}
+                </fieldset>
+
+                <fieldset>
+                  <legend>Payment</legend>
+                  <div className="checkout-choice-grid">
+                    <label className={form.paymentMethod === 'cod' ? 'selected' : ''}>
+                      <input type="radio" name="paymentMethod" value="cod" checked={form.paymentMethod === 'cod'} onChange={change} />
+                      <span><Package size={18} /> Pay on delivery <b>Manual</b></span>
+                    </label>
+                    <label className={form.paymentMethod === 'transfer' ? 'selected' : ''}>
+                      <input type="radio" name="paymentMethod" value="transfer" checked={form.paymentMethod === 'transfer'} onChange={change} />
+                      <span><ShieldCheck size={18} /> Bank transfer <b>Pending</b></span>
+                    </label>
+                  </div>
+                  <label><span>Order notes</span><input name="notes" value={form.notes} onChange={change} placeholder="Delivery instructions or substitutions" /></label>
+                </fieldset>
+              </div>
+
+              <aside className="checkout-summary-panel">
+                <h3>Order summary</h3>
+                <div className="checkout-review-items">
+                  {items.map((item) => (
+                    <div className="checkout-review-item" key={item.id}>
+                      <img src={item.image} alt="" />
+                      <span><b>{item.name}</b><small>{item.quantity} x {formatPrice(item.price)}</small></span>
+                      <strong>{formatPrice(item.price * item.quantity)}</strong>
+                    </div>
+                  ))}
+                </div>
+                <label className="checkout-discount"><span>Discount code</span><div><input name="discountCode" value={form.discountCode} onChange={change} placeholder="FRESH20" /><b>Apply</b></div></label>
+                <div className="checkout-totals">
+                  <p><span>Subtotal</span><b>{formatPrice(subtotal)}</b></p>
+                  <p><span>Discount</span><b>-{formatPrice(discount)}</b></p>
+                  <p><span>Delivery</span><b>{deliveryFee ? formatPrice(deliveryFee) : 'Free'}</b></p>
+                  <p><span>Estimated tax</span><b>{formatPrice(tax)}</b></p>
+                  <p className="grand-total"><span>Total</span><b>{formatPrice(total)}</b></p>
+                </div>
+                {message && <p className="checkout-error">{message}</p>}
+                <button type="submit" disabled={status === 'submitting'}>
+                  {status === 'submitting' ? 'Placing order...' : 'Place order'} <ArrowRight size={17} />
+                </button>
+              </aside>
+            </div>
           </form>
         )}
       </section>
