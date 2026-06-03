@@ -269,7 +269,8 @@
 .modal-form > div:not(.upload-box):not(.modal-actions) { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .modal-form label { display: flex; flex-direction: column; gap: 5px; }
 .modal-form label span { color: #586b62; font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
-.modal-form input, .modal-form select { height: 37px; padding: 0 9px; border: 1px solid #d6e0d9; border-radius: 5px; outline-color: #6c927d; color: #42584f; background: white; font-size: 12px; }
+.modal-form input, .modal-form select, .modal-form textarea { height: 37px; padding: 0 9px; border: 1px solid #d6e0d9; border-radius: 5px; outline-color: #6c927d; color: #42584f; background: white; font-size: 12px; }
+.modal-form textarea { min-height: 78px; padding-block: 9px; resize: vertical; line-height: 1.45; }
 .sku-field { display: flex; flex-direction: column; gap: 5px; }
 .sku-field > span { color: #586b62; font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
 .sku-field div { height: 37px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 5px 0 9px; border: 1px solid #d6e0d9; border-radius: 5px; background: white; }
@@ -289,6 +290,17 @@
 .product-image-picker b { color: #365747; font-size: 12px; }
 .product-image-picker small { color: #81918a; font-size: 10px; line-height: 1.45; }
 .product-image-picker input { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; opacity: 0; cursor: pointer; }
+.modal-form .product-mode-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.product-mode-toggle button { height: 36px; border: 1px solid #d6e0d9; border-radius: 18px; color: #50665d; background: white; font-size: 11px; font-weight: 700; }
+.product-mode-toggle button.active { border-color: #274d3c; color: white; background: #274d3c; }
+.variant-editor { display: grid; gap: 10px; padding: 12px; border: 1px solid #dfe8e1; border-radius: 8px; background: #fbfdfb; }
+.variant-editor-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #365747; font-size: 12px; }
+.variant-editor-head button { height: 28px; display: inline-flex; align-items: center; gap: 5px; padding: 0 9px; border: 1px solid #cbd9cf; border-radius: 14px; color: #365747; background: white; font-size: 10px; font-weight: 700; }
+.modal-form .variant-row { display: grid; grid-template-columns: 1fr 1fr 32px; gap: 8px; align-items: end; }
+.variant-row > button { height: 37px; display: grid; place-items: center; border: 1px solid #efd2d2; border-radius: 5px; color: #a43a3a; background: white; }
+.variant-card { display: grid; gap: 8px; padding: 10px; border: 1px solid #e2eae5; border-radius: 7px; background: white; }
+.variant-card > div { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.variant-remove { justify-self: end; height: 29px; padding: 0 10px; border: 1px solid #efd2d2; border-radius: 15px; color: #a43a3a; background: white; font-size: 10px; font-weight: 700; }
 .modal-note { margin: 0; color: #73847c; font-size: 11px; line-height: 1.55; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 7px; margin-top: 2px; }
 .order-detail { display: grid; grid-template-columns: minmax(0, 1fr) 255px; gap: 13px; padding: 15px; background: #f7faf6; }

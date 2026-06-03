@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock3,
+  Eye,
   Filter,
   Heart,
   Leaf,
@@ -311,6 +312,51 @@ function formatPrice(value) {
   return `$${value.toFixed(2)}`
 }
 
+function productSlug(product) {
+  return `${product.id}-${product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`
+}
+
+function productDetailHref(product) {
+  return `/products/${productSlug(product)}`
+}
+
+function productImages(product) {
+  const images = [product.image, ...(Array.isArray(product.images) ? product.images : [])].filter(Boolean)
+  return [...new Set(images)]
+}
+
+function productHasVariants(product) {
+  return Array.isArray(product.variants) && product.variants.length > 0
+}
+
+function getDefaultVariant(product) {
+  return productHasVariants(product) ? product.variants[0] : null
+}
+
+function variantLabel(product, variant) {
+  if (!variant) return product.unit
+  if (variant.label) return variant.label
+  const optionValues = variant.optionValues || variant.options || {}
+  return Object.values(optionValues).filter(Boolean).join(' / ') || variant.unit || product.unit
+}
+
+function productSelection(product, variant = getDefaultVariant(product)) {
+  return {
+    productId: product.id,
+    variantId: variant?.id || null,
+    variantLabel: variantLabel(product, variant),
+    price: Number(variant?.price ?? product.price),
+    oldPrice: variant?.oldPrice ?? product.oldPrice,
+    stock: Number(variant?.stock ?? product.stock),
+    unit: variant?.unit || product.unit,
+    image: variant?.image || product.image,
+  }
+}
+
+function cartLineId(product, variant = null) {
+  return `${product.id}:${variant?.id || 'single'}`
+}
+
 function catalogHref(category = '') {
   return category ? `/products?category=${encodeURIComponent(category)}` : '/products'
 }
@@ -402,7 +448,8 @@ function Logo() {
 
 function ProductCard({ product, onAdd }) {
   const [liked, setLiked] = useState(false)
-  const soldOut = product.stock === 0
+  const selected = productSelection(product)
+  const soldOut = selected.stock === 0
 
   return (
     <article className="product-card">
@@ -416,20 +463,22 @@ function ProductCard({ product, onAdd }) {
         >
           <Heart size={17} fill={liked ? 'currentColor' : 'none'} />
         </button>
-        <img src={product.image} alt={product.name} />
+        <a href={productDetailHref(product)} aria-label={`View ${product.name}`}>
+          <img src={product.image} alt={product.name} />
+        </a>
         <button className="quick-add" type="button" disabled={soldOut} onClick={() => onAdd(product)}>
-          {!soldOut && <Plus size={16} />}
-          <span>{soldOut ? 'Sold out' : 'Add to cart'}</span>
+          {!soldOut && (productHasVariants(product) ? <Eye size={16} /> : <Plus size={16} />)}
+          <span>{soldOut ? 'Sold out' : productHasVariants(product) ? 'Choose options' : 'Add to cart'}</span>
         </button>
       </div>
       <div className="product-detail">
         <p className="product-category">{product.category}</p>
-        <h3>{product.name}</h3>
+        <h3><a href={productDetailHref(product)}>{product.name}</a></h3>
         <div className="product-meta">
-          <span>{product.unit}</span>
+          <span>{productHasVariants(product) ? `${product.variants.length} options` : product.unit}</span>
           <div>
-            {product.oldPrice && <del>{formatPrice(product.oldPrice)}</del>}
-            <strong>{formatPrice(product.price)}</strong>
+            {selected.oldPrice && <del>{formatPrice(Number(selected.oldPrice))}</del>}
+            <strong>{formatPrice(selected.price)}</strong>
           </div>
         </div>
       </div>
@@ -479,33 +528,34 @@ function FilterCheckbox({ checked, count, label, onChange }) {
 
 function CatalogProductCard({ product, onAdd }) {
   const meta = getCatalogMeta(product)
-  const soldOut = product.stock === 0
-  const sale = Boolean(product.oldPrice)
+  const selected = productSelection(product)
+  const soldOut = selected.stock === 0
+  const sale = Boolean(selected.oldPrice)
 
   return (
     <article className="catalog-product-card">
-      <div className="catalog-product-image">
+      <a className="catalog-product-image" href={productDetailHref(product)}>
         {(soldOut || sale || product.badge) && (
           <span className={`catalog-product-badge ${soldOut ? 'sold-out' : ''}`}>
             {soldOut ? 'Sold out' : sale ? 'On sale' : product.badge}
           </span>
         )}
         <img src={product.image} alt={product.name} />
-      </div>
+      </a>
       <div className="catalog-product-detail">
         <p className="catalog-price">
-          {sale && <del>{formatPrice(product.oldPrice)}</del>}
-          <strong>{formatPrice(product.price)}</strong>
-          <span>/ {product.unit}</span>
+          {sale && <del>{formatPrice(Number(selected.oldPrice))}</del>}
+          <strong>{formatPrice(selected.price)}</strong>
+          <span>/ {productHasVariants(product) ? 'from options' : selected.unit}</span>
         </p>
-        <h3>{product.name}</h3>
+        <h3><a href={productDetailHref(product)}>{product.name}</a></h3>
         <p className="catalog-description">{meta.description}</p>
         <div className="catalog-rating" aria-label={`${meta.rating} out of 5 stars, ${meta.reviews} reviews`}>
           <span>{Array.from({ length: 5 }, (_, index) => <Star key={index} size={13} fill={index < meta.rating ? 'currentColor' : 'none'} />)}</span>
           <small>({meta.reviews})</small>
         </div>
         <button type="button" disabled={soldOut} onClick={() => onAdd(product)}>
-          {soldOut ? 'Sold out' : 'Add to cart'}
+          {soldOut ? 'Sold out' : productHasVariants(product) ? 'Choose options' : 'Add to cart'}
         </button>
         <p className="catalog-availability"><i /> {soldOut ? 'Currently unavailable' : 'Available for local delivery'}</p>
       </div>
@@ -515,8 +565,14 @@ function CatalogProductCard({ product, onAdd }) {
 
 function QuickProductModal({ product, onAdd, onBuyNow, onClose }) {
   const [quantity, setQuantity] = useState(1)
+  const [selectedVariantId, setSelectedVariantId] = useState(getDefaultVariant(product)?.id || '')
+  const selectedVariant = product.variants?.find((variant) => variant.id === selectedVariantId) || getDefaultVariant(product)
+  const selected = productSelection(product, selectedVariant)
   const meta = getCatalogMeta(product)
-  const sale = Boolean(product.oldPrice)
+  const sale = Boolean(selected.oldPrice)
+  const options = Array.isArray(product.options) ? product.options : []
+  const images = productImages(product)
+  const [activeImage, setActiveImage] = useState(selected.image || images[0])
 
   return (
     <div className="quick-product-overlay" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
@@ -524,29 +580,41 @@ function QuickProductModal({ product, onAdd, onBuyNow, onClose }) {
         <button className="quick-product-close" type="button" onClick={onClose} aria-label="Close product preview"><X size={22} /></button>
         <div className="quick-product-media">
           {product.badge && <span>{product.badge}</span>}
-          <img src={product.image} alt={product.name} />
+          <img src={activeImage || product.image} alt={product.name} />
+          {images.length > 1 && (
+            <div className="quick-product-thumbs">
+              {images.map((image) => <button className={image === activeImage ? 'active' : ''} type="button" onClick={() => setActiveImage(image)} key={image}><img src={image} alt="" /></button>)}
+            </div>
+          )}
         </div>
         <div className="quick-product-info">
           <p className="quick-product-price">
-            <strong>{formatPrice(product.price)}</strong>
-            {sale && <del>{formatPrice(product.oldPrice)}</del>}
+            <strong>{formatPrice(selected.price)}</strong>
+            {sale && <del>{formatPrice(Number(selected.oldPrice))}</del>}
           </p>
           <h2>{product.name}</h2>
-          <p>{meta.description}. Selected for dependable quality, everyday freshness, and simple meal planning.</p>
-          <div className="quick-product-style">
-            <span>Style</span>
-            <button className="active" type="button">{product.unit}</button>
-            <button type="button">Family pack</button>
-          </div>
+          <p>{product.description || `${meta.description}. Selected for dependable quality, everyday freshness, and simple meal planning.`}</p>
+          {productHasVariants(product) ? (
+            <div className="quick-product-style">
+              <span>{options.map((option) => option.name).filter(Boolean).join(' / ') || 'Options'}</span>
+              {product.variants.map((variant) => {
+                const item = productSelection(product, variant)
+                return <button className={variant.id === selectedVariant?.id ? 'active' : ''} disabled={item.stock === 0} type="button" onClick={() => { setSelectedVariantId(variant.id); if (item.image) setActiveImage(item.image) }} key={variant.id}>{variantLabel(product, variant)}</button>
+              })}
+            </div>
+          ) : (
+            <div className="quick-product-style"><span>Unit</span><button className="active" type="button">{product.unit}</button></div>
+          )}
           <div className="quick-product-actions">
             <div className="quick-qty">
               <button type="button" onClick={() => setQuantity((value) => Math.max(1, value - 1))}><Minus size={16} /></button>
               <span>{quantity}</span>
               <button type="button" onClick={() => setQuantity((value) => value + 1)}><Plus size={16} /></button>
             </div>
-            <button className="quick-add-cart" type="button" onClick={() => onAdd(product, quantity)}>Add to cart</button>
+            <button className="quick-add-cart" type="button" disabled={selected.stock === 0} onClick={() => onAdd(product, quantity, true, selectedVariant)}>Add to cart</button>
           </div>
-          <button className="quick-buy-now" type="button" onClick={() => onBuyNow(product, quantity)}>Buy it now</button>
+          <button className="quick-buy-now" type="button" disabled={selected.stock === 0} onClick={() => onBuyNow(product, quantity, selectedVariant)}>Buy it now</button>
+          <a className="quick-view-details" href={productDetailHref(product)}>View full details</a>
         </div>
       </section>
     </div>
@@ -612,7 +680,7 @@ function CartPage({
 }) {
   const subtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0)
   const totals = CartTotals({ subtotal, discountCode: appliedDiscountCode })
-  const relatedProducts = products.filter((product) => !cart.some((item) => item.id === product.id) && product.stock !== 0).slice(0, 3)
+  const relatedProducts = products.filter((product) => !cart.some((item) => (item.productId || item.id) === product.id) && productSelection(product).stock !== 0).slice(0, 3)
   const [shippingEstimate, setShippingEstimate] = useState({ country: 'United States', postalCode: '', result: null, error: '' })
   const estimateShipping = (event) => {
     event.preventDefault()
@@ -646,7 +714,7 @@ function CartPage({
             {cart.length ? cart.map((item) => (
               <div className="cart-row" key={item.id}>
                 <img src={item.image} alt="" />
-                <div><p>{formatPrice(item.price)} {item.oldPrice && <del>{formatPrice(item.oldPrice)}</del>}</p><b>{item.name}</b><small>Style: {item.unit}</small></div>
+                <div><p>{formatPrice(item.price)} {item.oldPrice && <del>{formatPrice(item.oldPrice)}</del>}</p><b>{item.name}</b><small>Style: {item.variantLabel || item.unit}</small></div>
                 <div className="cart-row-qty"><button type="button" onClick={() => onQuantity(item.id, -1)}><Minus size={14} /></button><span>{item.quantity}</span><button type="button" onClick={() => onQuantity(item.id, 1)}><Plus size={14} /></button><button type="button" onClick={() => onQuantity(item.id, -item.quantity)}>Remove</button></div>
                 <strong>{formatPrice(item.price * item.quantity)} {item.oldPrice && <del>{formatPrice(item.oldPrice * item.quantity)}</del>}</strong>
               </div>
@@ -1363,6 +1431,82 @@ function ProductsPage({ categories, products, onAdd }) {
   )
 }
 
+function ProductDetailPage({ product, products, onAdd, onBuyNow }) {
+  const [selectedVariantId, setSelectedVariantId] = useState(getDefaultVariant(product)?.id || '')
+  const selectedVariant = product.variants?.find((variant) => variant.id === selectedVariantId) || getDefaultVariant(product)
+  const selected = productSelection(product, selectedVariant)
+  const images = productImages(product)
+  const [activeImage, setActiveImage] = useState(selected.image || images[0] || product.image)
+  const [quantity, setQuantity] = useState(1)
+  const meta = getCatalogMeta(product)
+  const sale = Boolean(selected.oldPrice)
+  const related = products.filter((item) => item.id !== product.id && item.category === product.category).slice(0, 4)
+
+  useEffect(() => {
+    document.title = `${product.name} | LyLy Fresh Market`
+  }, [product.name])
+
+  return (
+    <main className="product-detail-page">
+      <section className="product-detail-layout container">
+        <div className="breadcrumbs"><a href="/">Home</a><ChevronRight size={13} /><a href={catalogHref(product.category)}>{product.category}</a><ChevronRight size={13} /><b>{product.name}</b></div>
+        <div className="product-detail-gallery">
+          <div className="product-detail-main-image">
+            <img src={activeImage} alt={product.name} />
+          </div>
+          {images.length > 1 && (
+            <div className="product-detail-thumbs">
+              {images.map((image) => <button className={image === activeImage ? 'active' : ''} type="button" onClick={() => setActiveImage(image)} key={image}><img src={image} alt="" /></button>)}
+            </div>
+          )}
+        </div>
+        <article className="product-detail-panel">
+          <p className="quick-product-price">
+            <strong>{formatPrice(selected.price)}</strong>
+            {sale && <del>{formatPrice(Number(selected.oldPrice))}</del>}
+          </p>
+          <h1>{product.name}</h1>
+          <div className="catalog-rating" aria-label={`${meta.rating} out of 5 stars, ${meta.reviews} reviews`}>
+            <span>{Array.from({ length: 5 }, (_, index) => <Star key={index} size={14} fill={index < meta.rating ? 'currentColor' : 'none'} />)}</span>
+            <small>({meta.reviews})</small>
+          </div>
+          <p>{product.description || `${meta.description}. Selected for dependable quality, everyday freshness, and simple meal planning.`}</p>
+
+          {productHasVariants(product) ? (
+            <div className="quick-product-style detail-options">
+              <span>{product.options?.map((option) => option.name).filter(Boolean).join(' / ') || 'Options'}</span>
+              {product.variants.map((variant) => {
+                const item = productSelection(product, variant)
+                return <button className={variant.id === selectedVariant?.id ? 'active' : ''} disabled={item.stock === 0} type="button" onClick={() => { setSelectedVariantId(variant.id); if (item.image) setActiveImage(item.image) }} key={variant.id}>{variantLabel(product, variant)}</button>
+              })}
+            </div>
+          ) : (
+            <div className="quick-product-style detail-options"><span>Unit</span><button className="active" type="button">{product.unit}</button></div>
+          )}
+
+          <p className="product-detail-stock">{selected.stock > 0 ? `${selected.stock} in stock` : 'Currently unavailable'}</p>
+          <div className="quick-product-actions">
+            <div className="quick-qty">
+              <button type="button" onClick={() => setQuantity((value) => Math.max(1, value - 1))}><Minus size={16} /></button>
+              <span>{quantity}</span>
+              <button type="button" onClick={() => setQuantity((value) => value + 1)}><Plus size={16} /></button>
+            </div>
+            <button className="quick-add-cart" type="button" disabled={selected.stock === 0} onClick={() => onAdd(product, quantity, true, selectedVariant)}>Add to cart</button>
+          </div>
+          <button className="quick-buy-now" type="button" disabled={selected.stock === 0} onClick={() => onBuyNow(product, quantity, selectedVariant)}>Buy it now</button>
+        </article>
+      </section>
+
+      {related.length > 0 && (
+        <section className="section products-section">
+          <div className="container section-heading"><div><p className="eyebrow">Goes well with</p><h2>You may also like</h2></div><a href={catalogHref(product.category)}>View collection <ArrowRight size={17} /></a></div>
+          <div className="container product-grid">{related.map((item) => <ProductCard product={item} onAdd={onAdd} key={item.id} />)}</div>
+        </section>
+      )}
+    </main>
+  )
+}
+
 function CollectionsPage({ categories }) {
   const groups = useMemo(() => buildCollectionGroups(categories), [categories])
   const collectionCount = groups.reduce((total, group) => total + group.children.length, 0)
@@ -1551,7 +1695,7 @@ function CheckoutModal({ items, onClose, onComplete }) {
                   {items.map((item) => (
                     <div className="checkout-review-item" key={item.id}>
                       <img src={item.image} alt="" />
-                      <span><b>{item.name}</b><small>{item.quantity} x {formatPrice(item.price)}</small></span>
+                      <span><b>{item.name}</b><small>{item.variantLabel || item.unit} - {item.quantity} x {formatPrice(item.price)}</small></span>
                       <strong>{formatPrice(item.price * item.quantity)}</strong>
                     </div>
                   ))}
@@ -1594,7 +1738,8 @@ function CheckoutModal({ items, onClose, onComplete }) {
 
 function App() {
   const currentPath = window.location.pathname
-  const isProductsPage = currentPath.startsWith('/products')
+  const productDetailMatch = currentPath.match(/^\/products\/([^/]+)/)
+  const isProductsPage = currentPath === '/products'
   const isCollectionsPage = currentPath.startsWith('/collections')
   const isCartPage = currentPath.startsWith('/cart')
   const isAccountPage = currentPath.startsWith('/account')
@@ -1702,30 +1847,37 @@ function App() {
       .map((category) => ({ label: category.name, href: catalogHref(category.name) }))
     return managedItems.length ? [{ label: 'Shop all', href: '/products' }, ...managedItems] : fallbackMenuItems
   }, [categories])
+  const activeProduct = useMemo(() => {
+    if (!productDetailMatch) return null
+    const id = productDetailMatch[1].match(/^\d+/)?.[0]
+    return products.find((product) => String(product.id) === id) || null
+  }, [productDetailMatch, products])
 
-  const addToCart = (product, quantity = 1, openCart = true) => {
-    if (product.stock === 0) return
+  const addToCart = (product, quantity = 1, openCart = true, variant = getDefaultVariant(product)) => {
+    const selected = productSelection(product, variant)
+    if (selected.stock === 0) return
+    const lineId = cartLineId(product, variant)
 
     setCart((current) => {
-      const found = current.find((item) => item.id === product.id)
+      const found = current.find((item) => item.id === lineId)
       if (found) {
         return current.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item,
+          item.id === lineId ? { ...item, quantity: item.quantity + quantity } : item,
         )
       }
-      return [...current, { ...product, quantity }]
+      return [...current, { ...product, ...selected, id: lineId, productId: product.id, quantity }]
     })
     setQuickProduct(null)
     if (openCart) setCartOpen(true)
   }
 
   const openQuickProduct = (product) => {
-    if (product.stock === 0) return
+    if (productSelection(product).stock === 0) return
     setQuickProduct(product)
   }
 
-  const buyNow = (product, quantity = 1) => {
-    addToCart(product, quantity, false)
+  const buyNow = (product, quantity = 1, variant = getDefaultVariant(product)) => {
+    addToCart(product, quantity, false, variant)
     setCheckoutOpen(true)
   }
 
@@ -1934,7 +2086,9 @@ function App() {
         </div>
       </header>
 
-      {isProductsPage ? <ProductsPage categories={categories} products={products} onAdd={openQuickProduct} /> : isCollectionsPage ? <CollectionsPage categories={categories} /> : isStoresPage ? (
+      {activeProduct ? <ProductDetailPage product={activeProduct} products={products} onAdd={addToCart} onBuyNow={buyNow} /> : productDetailMatch ? (
+      <main className="catalog-page"><section className="catalog-empty container"><Search size={30} /><h2>Product not found</h2><p>This product is no longer available.</p><a href="/products">Back to products</a></section></main>
+      ) : isProductsPage ? <ProductsPage categories={categories} products={products} onAdd={openQuickProduct} /> : isCollectionsPage ? <CollectionsPage categories={categories} /> : isStoresPage ? (
       <OurStoresPage />
       ) : isDeliveryPage ? (
       <DeliveryPage onOpenPickup={() => setPickupOpen(true)} />
@@ -2148,7 +2302,7 @@ function App() {
               <div>
                 <p>{formatPrice(item.price)} {item.oldPrice && <del>{formatPrice(item.oldPrice)}</del>}</p>
                 <h3>{item.name}</h3>
-                <small>Style: {item.unit}</small>
+                <small>Style: {item.variantLabel || item.unit}</small>
                 <div className="quantity">
                   <button type="button" onClick={() => updateQuantity(item.id, -1)} aria-label="Decrease quantity"><Minus size={14} /></button>
                   <span>{item.quantity}</span>

@@ -1,8 +1,8 @@
 import { isSupabaseConfigured, supabase } from './supabase'
 
-const productColumns = 'id, name, category, sku, price, old_price, stock, status, unit, badge, image_url, manufacturer, vendor, warehouse, product_type'
+const productColumns = 'id, name, category, sku, price, old_price, stock, status, unit, badge, image_url, manufacturer, vendor, warehouse, product_type, description, images, options, variants'
 const categoryColumns = 'id, parent_id, name, slug, description, image_url, active, show_on_home, include_in_menu, display_order, home_display_order'
-const orderColumns = 'id, order_number, total, payment_status, delivery_status, created_at, customers(full_name, email, phone, location), order_items(product_name, unit_price, quantity, line_total)'
+const orderColumns = 'id, order_number, total, payment_status, delivery_status, created_at, customers(full_name, email, phone, location), order_items(product_name, unit_price, quantity, line_total, variant_label)'
 
 function mapProduct(product) {
   return {
@@ -21,6 +21,10 @@ function mapProduct(product) {
     vendor: product.vendor || 'LyLy Market',
     warehouse: product.warehouse || 'Main Store',
     productType: product.product_type || 'Grocery',
+    description: product.description || '',
+    images: Array.isArray(product.images) ? product.images : [],
+    options: Array.isArray(product.options) ? product.options : [],
+    variants: Array.isArray(product.variants) ? product.variants : [],
   }
 }
 
@@ -41,6 +45,10 @@ function productPayload(product) {
     vendor: product.vendor || 'LyLy Market',
     warehouse: product.warehouse || 'Main Store',
     product_type: product.productType || 'Grocery',
+    description: product.description || null,
+    images: product.images?.length ? product.images : [],
+    options: product.options?.length ? product.options : [],
+    variants: product.variants?.length ? product.variants : [],
   }
 }
 
@@ -94,7 +102,7 @@ function mapOrder(order) {
     items: lineItems.reduce((total, item) => total + Number(item.quantity || 0), 0),
     note: '',
     lineItems: lineItems.map((item) => ({
-      name: item.product_name,
+      name: item.variant_label ? `${item.product_name} (${item.variant_label})` : item.product_name,
       quantity: Number(item.quantity),
       price: Number(item.unit_price),
       total: Number(item.line_total),
@@ -356,7 +364,13 @@ export async function createStorefrontOrder(customer, items) {
   const { data, error } = await supabase.functions.invoke('create-order', {
     body: {
       customer,
-      items: items.map((item) => ({ productId: item.id, quantity: item.quantity })),
+      items: items.map((item) => ({
+        productId: item.productId || item.id,
+        quantity: item.quantity,
+        variantId: item.variantId || null,
+        variantLabel: item.variantLabel || '',
+        unitPrice: item.price,
+      })),
     },
   })
 

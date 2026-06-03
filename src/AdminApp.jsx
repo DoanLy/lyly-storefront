@@ -306,7 +306,7 @@ function money(value) {
 }
 
 const defaultProductImage = 'https://images.unsplash.com/photo-1610348725531-843dff563e2c?auto=format&fit=crop&w=700&q=85'
-const productCsvColumns = ['sku', 'name', 'category', 'price', 'old_price', 'stock', 'status', 'unit', 'badge', 'image_url', 'manufacturer', 'vendor', 'warehouse', 'product_type']
+const productCsvColumns = ['sku', 'name', 'category', 'price', 'old_price', 'stock', 'status', 'unit', 'badge', 'image_url', 'manufacturer', 'vendor', 'warehouse', 'product_type', 'description', 'images', 'options', 'variants']
 
 function downloadBlob(blob, fileName) {
   const url = URL.createObjectURL(blob)
@@ -340,6 +340,10 @@ function downloadProductsCsv(products) {
     product.vendor,
     product.warehouse,
     product.productType,
+    product.description || '',
+    (product.images || []).join('|'),
+    JSON.stringify(product.options || []),
+    JSON.stringify(product.variants || []),
   ])
   const csv = [productCsvColumns, ...rows].map((row) => row.map(csvCell).join(',')).join('\r\n')
   downloadBlob(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }), 'lyly-products.csv')
@@ -423,6 +427,10 @@ function productsFromCsv(text, categories, products) {
       vendor: field(row, 'vendor') || existing?.vendor || 'LyLy Market',
       warehouse: field(row, 'warehouse') || existing?.warehouse || 'Main Store',
       productType: field(row, 'product_type') || existing?.productType || 'Grocery',
+      description: field(row, 'description') || existing?.description || '',
+      images: field(row, 'images') ? field(row, 'images').split('|').map((image) => image.trim()).filter(Boolean) : existing?.images || [],
+      options: field(row, 'options') ? JSON.parse(field(row, 'options')) : existing?.options || [],
+      variants: field(row, 'variants') ? JSON.parse(field(row, 'variants')) : existing?.variants || [],
     }
   })
 }
@@ -760,7 +768,7 @@ function ProductsPage({ meta, categories, products, onBulkEdit, onCreate, onEdit
               {visible.map((product) => (
                 <tr key={product.id}>
                   <td><input type="checkbox" checked={selected.includes(product.id)} onChange={() => toggle(product.id)} /></td>
-                  <td><div className="product-cell"><img src={product.image} alt="" /><span><b>{product.name}</b><small>{product.sku} · {product.unit}</small></span></div></td>
+                  <td><div className="product-cell"><img src={product.image} alt="" /><span><b>{product.name}</b><small>{product.sku} · {product.variants?.length ? `${product.variants.length} biến thể` : product.unit}</small></span></div></td>
                   <td><StatusPill>{product.status === 'active' ? 'Active' : 'Draft'}</StatusPill></td>
                   <td><span className={product.stock < 10 ? 'low-stock' : ''}>{product.stock} in stock</span></td>
                   <td>{product.category}</td>
@@ -1268,9 +1276,31 @@ function CategoryModal({ categories, category, onClose, onSubmit }) {
   )
 }
 
+function blankProductOption() {
+  return { name: '', values: '' }
+}
+
+function blankProductVariant(product = {}, index = 1) {
+  return {
+    id: globalThis.crypto?.randomUUID?.() || `${Date.now()}-${index}`,
+    label: '',
+    sku: product.sku ? `${product.sku}-${index}` : '',
+    price: product.price || '',
+    oldPrice: product.oldPrice || '',
+    stock: product.stock || '',
+    unit: product.unit || '',
+    image: product.image || '',
+  }
+}
+
+function parseImagesText(text) {
+  return text.split('\n').map((line) => line.trim()).filter(Boolean)
+}
+
 function ProductModal({ categories, products, product, onClose, onSubmit, copy }) {
   const activeCategories = categories.filter((category) => category.active)
   const initialCategory = product?.category || activeCategories[0]?.name || ''
+  const hasExistingVariants = product?.variants?.length > 0
   const [form, setForm] = useState(product || {
     name: '',
     category: initialCategory,
@@ -1286,7 +1316,22 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy }
     vendor: 'LyLy Market',
     warehouse: 'Main Store',
     productType: 'Grocery',
+    description: '',
+    images: [],
+    options: [],
+    variants: [],
   })
+  const [productMode, setProductMode] = useState(hasExistingVariants ? 'variants' : 'single')
+  const [imagesText, setImagesText] = useState((product?.images || []).join('\n'))
+  const [options, setOptions] = useState(product?.options?.length ? product.options.map((option) => ({ ...option, values: Array.isArray(option.values) ? option.values.join(', ') : option.values || '' })) : [blankProductOption()])
+  const [variants, setVariants] = useState(product?.variants?.length ? product.variants.map((variant) => ({
+    ...variant,
+    price: variant.price ?? '',
+    oldPrice: variant.oldPrice ?? '',
+    stock: variant.stock ?? '',
+    unit: variant.unit ?? '',
+    image: variant.image ?? '',
+  })) : [blankProductVariant(product || {}, 1)])
   const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState(form.image || defaultProductImage)
   const change = (event) => {
@@ -1305,9 +1350,34 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy }
     reader.onload = () => setImagePreview(reader.result)
     reader.readAsDataURL(file)
   }
+  const changeOption = (index, name, value) => setOptions((current) => current.map((option, optionIndex) => optionIndex === index ? { ...option, [name]: value } : option))
+  const changeVariant = (index, name, value) => setVariants((current) => current.map((variant, variantIndex) => variantIndex === index ? { ...variant, [name]: value } : variant))
+  const addOption = () => setOptions((current) => [...current, blankProductOption()])
+  const addVariant = () => setVariants((current) => [...current, blankProductVariant(form, current.length + 1)])
+  const removeOption = (index) => setOptions((current) => current.filter((_, optionIndex) => optionIndex !== index))
+  const removeVariant = (index) => setVariants((current) => current.filter((_, variantIndex) => variantIndex !== index))
   const regenerateSku = () => setForm((current) => ({ ...current, sku: generateProductSku(current.category, products, product?.id, current.sku) }))
   const submit = (event) => {
     event.preventDefault()
+    const normalizedOptions = productMode === 'variants'
+      ? options
+        .map((option) => ({ name: option.name.trim(), values: option.values.split(',').map((value) => value.trim()).filter(Boolean) }))
+        .filter((option) => option.name && option.values.length)
+      : []
+    const normalizedVariants = productMode === 'variants'
+      ? variants
+        .map((variant, index) => ({
+          id: variant.id || `${form.sku}-${index + 1}`,
+          label: variant.label.trim(),
+          sku: variant.sku.trim() || `${form.sku}-${index + 1}`,
+          price: Number(variant.price || form.price),
+          oldPrice: variant.oldPrice ? Number(variant.oldPrice) : undefined,
+          stock: Number(variant.stock || 0),
+          unit: variant.unit.trim() || form.unit,
+          image: variant.image.trim() || form.image || imagePreview || defaultProductImage,
+        }))
+        .filter((variant) => variant.label && Number.isFinite(variant.price))
+      : []
     onSubmit({
       ...form,
       sku: ensureUniqueSku(form, products).sku,
@@ -1315,6 +1385,10 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy }
       oldPrice: form.oldPrice ? Number(form.oldPrice) : undefined,
       stock: Number(form.stock),
       image: form.image || imagePreview || defaultProductImage,
+      description: form.description || '',
+      images: parseImagesText(imagesText),
+      options: normalizedOptions,
+      variants: normalizedVariants,
       imageFile,
     })
   }
@@ -1322,6 +1396,7 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy }
     <Modal wide title={product ? copy.edit : copy.create} onClose={onClose}>
       <form className="modal-form" onSubmit={submit}>
         <label><span>{copy.name}</span><input required name="name" value={form.name} onChange={change} placeholder={copy.namePlaceholder} /></label>
+        <label><span>Mô tả chi tiết</span><textarea name="description" value={form.description || ''} onChange={change} placeholder="Nội dung sẽ hiển thị ở trang chi tiết sản phẩm" /></label>
         <div>
           <label><span>{copy.category}</span><select required name="category" value={form.category} onChange={change}>{activeCategories.map((category) => <option key={category.id}>{category.name}</option>)}</select></label>
           <div className="sku-field"><span>SKU</span><div><strong>{form.sku}</strong><button type="button" onClick={regenerateSku}>{copy.regenerate}</button></div></div>
@@ -1337,6 +1412,33 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy }
             <input accept="image/*" type="file" onChange={chooseImage} />
           </div>
         </label>
+        <label><span>Ảnh phụ (mỗi URL một dòng)</span><textarea value={imagesText} onChange={(event) => setImagesText(event.target.value)} placeholder="https://..." /></label>
+        <div className="product-mode-toggle">
+          <button className={productMode === 'single' ? 'active' : ''} type="button" onClick={() => setProductMode('single')}>Sản phẩm đơn</button>
+          <button className={productMode === 'variants' ? 'active' : ''} type="button" onClick={() => setProductMode('variants')}>Có nhiều lựa chọn</button>
+        </div>
+        {productMode === 'variants' && (
+          <section className="variant-editor">
+            <div className="variant-editor-head"><b>Tùy chọn</b><button type="button" onClick={addOption}><Plus size={13} /> Thêm tùy chọn</button></div>
+            {options.map((option, index) => (
+              <div className="variant-row" key={index}>
+                <label><span>Tên tùy chọn</span><input value={option.name} onChange={(event) => changeOption(index, 'name', event.target.value)} placeholder="Ví dụ: Kích thước, Màu sắc, Khối lượng" /></label>
+                <label><span>Giá trị</span><input value={option.values} onChange={(event) => changeOption(index, 'values', event.target.value)} placeholder="Ví dụ: 250g, 500g, 1kg" /></label>
+                <button type="button" onClick={() => removeOption(index)}><Trash2 size={13} /></button>
+              </div>
+            ))}
+            <div className="variant-editor-head"><b>Biến thể bán hàng</b><button type="button" onClick={addVariant}><Plus size={13} /> Thêm biến thể</button></div>
+            {variants.map((variant, index) => (
+              <div className="variant-card" key={variant.id || index}>
+                <label><span>Tên hiển thị</span><input required value={variant.label} onChange={(event) => changeVariant(index, 'label', event.target.value)} placeholder="Ví dụ: 500g / Đỏ" /></label>
+                <div><label><span>SKU</span><input value={variant.sku} onChange={(event) => changeVariant(index, 'sku', event.target.value)} /></label><label><span>Quy cách</span><input value={variant.unit} onChange={(event) => changeVariant(index, 'unit', event.target.value)} placeholder={form.unit || '500g'} /></label></div>
+                <div><label><span>Giá</span><input required min="0" step=".01" type="number" value={variant.price} onChange={(event) => changeVariant(index, 'price', event.target.value)} /></label><label><span>Tồn kho</span><input required min="0" type="number" value={variant.stock} onChange={(event) => changeVariant(index, 'stock', event.target.value)} /></label></div>
+                <label><span>Ảnh biến thể</span><input value={variant.image} onChange={(event) => changeVariant(index, 'image', event.target.value)} placeholder="Để trống sẽ dùng ảnh chính" /></label>
+                <button className="variant-remove" type="button" onClick={() => removeVariant(index)}>Xóa biến thể</button>
+              </div>
+            ))}
+          </section>
+        )}
         <div><label><span>{copy.manufacturer}</span><input required name="manufacturer" value={form.manufacturer} onChange={change} /></label><label><span>{copy.vendor}</span><input required name="vendor" value={form.vendor} onChange={change} /></label></div>
         <div><label><span>{copy.warehouse}</span><input required name="warehouse" value={form.warehouse} onChange={change} /></label><label><span>{copy.productType}</span><input required name="productType" value={form.productType} onChange={change} /></label></div>
         <div className="modal-actions"><button className="admin-secondary" type="button" onClick={onClose}>{copy.cancel}</button><button className="admin-primary" type="submit">{product ? copy.save : copy.add}</button></div>
