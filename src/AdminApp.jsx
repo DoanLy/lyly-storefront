@@ -1309,7 +1309,7 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy }
         <label><span>{copy.name}</span><input required name="name" value={form.name} onChange={change} placeholder={copy.namePlaceholder} /></label>
         <div>
           <label><span>{copy.category}</span><select required name="category" value={form.category} onChange={change}>{activeCategories.map((category) => <option key={category.id}>{category.name}</option>)}</select></label>
-          <div className="sku-field"><span>SKU</span><strong>{form.sku}</strong><button className="admin-secondary" type="button" onClick={regenerateSku}>{copy.regenerate}</button></div>
+          <div className="sku-field"><span>SKU</span><div><strong>{form.sku}</strong><button type="button" onClick={regenerateSku}>{copy.regenerate}</button></div></div>
         </div>
         <div><label><span>{copy.price}</span><input required min="0" step=".01" type="number" name="price" value={form.price} onChange={change} placeholder="0.00" /></label><label><span>{copy.oldPrice}</span><input min={form.price || 0} step=".01" type="number" name="oldPrice" value={form.oldPrice || ''} onChange={change} placeholder={copy.oldPricePlaceholder} /></label></div>
         <div><label><span>{copy.stock}</span><input required min="0" type="number" name="stock" value={form.stock} onChange={change} placeholder="0" /></label><label><span>{copy.status}</span><select name="status" value={form.status} onChange={change}><option value="active">{copy.active}</option><option value="draft">{copy.draft}</option></select></label></div>

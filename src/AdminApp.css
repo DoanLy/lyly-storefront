@@ -270,10 +270,12 @@
 .modal-form label { display: flex; flex-direction: column; gap: 5px; }
 .modal-form label span { color: #586b62; font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
 .modal-form input, .modal-form select { height: 37px; padding: 0 9px; border: 1px solid #d6e0d9; border-radius: 5px; outline-color: #6c927d; color: #42584f; background: white; font-size: 12px; }
-.sku-field { min-height: 61px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 6px 10px; padding: 8px 10px; border: 1px solid #d6e0d9; border-radius: 5px; background: #fbfdfb; }
-.sku-field > span { grid-column: 1/-1; color: #586b62; font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
-.sku-field strong { color: #294d3e; font-size: 16px; letter-spacing: .06em; }
-.sku-field .admin-secondary { min-height: 31px; padding-inline: 10px; }
+.sku-field { display: flex; flex-direction: column; gap: 5px; }
+.sku-field > span { color: #586b62; font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.sku-field div { height: 37px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 5px 0 9px; border: 1px solid #d6e0d9; border-radius: 5px; background: white; }
+.sku-field strong { color: #294d3e; font-size: 12px; letter-spacing: .05em; }
+.sku-field button { height: 27px; padding: 0 9px; border: 1px solid #d6e0d9; border-radius: 4px; color: #405a4e; background: #f8faf8; font-size: 10px; font-weight: 700; }
+.sku-field button:hover { border-color: #adc1b4; background: #eef5ee; }
 .modal-form .modal-check-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
 .modal-check-grid label { display: flex; flex-direction: row; align-items: center; gap: 6px; color: #586b62; font-size: 10px; font-weight: 700; }
 .modal-check-grid input { width: 15px; height: 15px; accent-color: var(--admin-green); }
