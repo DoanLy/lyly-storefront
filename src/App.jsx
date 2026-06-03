@@ -2227,7 +2227,6 @@ function App() {
             <div className="simple-nav-menu">
               <a href="/about-us">About us <ChevronDown size={15} /></a>
               <div>
-                <a href="/about-us">About us</a>
                 <a href="/our-stores">Our stores</a>
                 <a href="/faq">FAQ</a>
               </div>
