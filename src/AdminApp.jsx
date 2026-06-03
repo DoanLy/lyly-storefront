@@ -58,10 +58,12 @@ import {
   loadAdminOrders,
   loadAdminProducts,
   removeAdminCategories,
+  removeAdminDiscounts,
   removeAdminProducts,
   signInAdmin,
   signOutAdmin,
   updateAdminCategory,
+  updateAdminDiscount,
   updateAdminOrder,
   updateAdminOrders,
   updateAdminProduct,
@@ -1061,6 +1063,7 @@ function MarketingPage({ meta }) {
   )
 }
 
+// eslint-disable-next-line no-unused-vars
 function DiscountsPage({ meta, discounts, onCreate }) {
   return (
     <>
@@ -1077,6 +1080,51 @@ function DiscountsPage({ meta, discounts, onCreate }) {
             <thead><tr><th>Mã</th><th>Loại</th><th>Giá trị</th><th>Trạng thái</th><th>Lượt dùng</th><th>Kết thúc</th><th></th></tr></thead>
             <tbody>{discounts.map((discount) => <tr key={discount.code}><td><b className="discount-code"><Tag size={14} />{discount.code}</b></td><td>{discount.type}</td><td>{discount.value}</td><td><StatusPill>{discount.status}</StatusPill></td><td>{discount.uses}</td><td>{discount.ends}</td><td><button className="row-icon" type="button"><MoreHorizontal size={17} /></button></td></tr>)}</tbody>
           </table>
+        </div>
+      </section>
+    </>
+  )
+}
+
+function DiscountsManagePage({ meta, discounts, onCreate, onEdit, onView, onRemove }) {
+  const [query, setQuery] = useState('')
+  const [statusTab, setStatusTab] = useState('all')
+  const normalizedQuery = query.trim().toLowerCase()
+  const visibleDiscounts = discounts.filter((discount) => {
+    const matchesQuery = !normalizedQuery || `${discount.code} ${discount.title} ${discount.type} ${discount.value}`.toLowerCase().includes(normalizedQuery)
+    const matchesStatus = statusTab === 'all'
+      || (statusTab === 'active' && discount.status === 'Active')
+      || (statusTab === 'scheduled' && discount.status === 'Scheduled')
+      || (statusTab === 'expired' && discount.status === 'Expired')
+      || (statusTab === 'draft' && discount.status === 'Draft')
+    return matchesQuery && matchesStatus
+  })
+
+  return (
+    <>
+      <SectionTitle title={meta.discounts[0]} description={meta.discounts[1]} action="Tạo mã giảm giá" onAction={onCreate} />
+      <section className="metrics-grid">
+        <MetricCard label="Doanh số từ ưu đãi" value={money(1438)} note="Trong 30 ngày qua" />
+        <MetricCard label="Mã đang hoạt động" value={String(discounts.filter((item) => item.status === 'Active').length)} note={`${discounts.length} mã đã tạo`} />
+        <MetricCard label="Lượt sử dụng" value={String(discounts.reduce((total, discount) => total + Number(discount.uses || 0), 0))} note="Tổng lượt ghi nhận" />
+      </section>
+      <section className="admin-panel data-panel">
+        <div className="data-tabs">
+          <button className={statusTab === 'all' ? 'active' : ''} type="button" onClick={() => setStatusTab('all')}>Tất cả</button>
+          <button className={statusTab === 'active' ? 'active' : ''} type="button" onClick={() => setStatusTab('active')}>Đang hoạt động</button>
+          <button className={statusTab === 'scheduled' ? 'active' : ''} type="button" onClick={() => setStatusTab('scheduled')}>Đã lên lịch</button>
+          <button className={statusTab === 'expired' ? 'active' : ''} type="button" onClick={() => setStatusTab('expired')}>Đã hết hạn</button>
+          <button className={statusTab === 'draft' ? 'active' : ''} type="button" onClick={() => setStatusTab('draft')}>Bản nháp</button>
+        </div>
+        <div className="table-toolbar">
+          <label><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm kiếm mã giảm giá" /></label>
+        </div>
+        <div className="admin-table-wrap">
+          <table className="admin-table">
+            <thead><tr><th>Mã</th><th>Loại</th><th>Giá trị</th><th>Trạng thái</th><th>Lượt dùng</th><th>Kết thúc</th><th></th></tr></thead>
+            <tbody>{visibleDiscounts.map((discount) => <tr key={discount.id || discount.code}><td><b className="discount-code"><Tag size={14} />{discount.code || discount.title}</b></td><td>{discount.type}</td><td>{discount.value}</td><td><StatusPill>{discount.status}</StatusPill></td><td>{discount.uses}</td><td>{discount.ends}</td><td><div className="row-actions"><button className="row-icon" type="button" onClick={() => onView(discount)} title="Xem chi tiết"><Eye size={15} /></button><button className="row-icon" type="button" onClick={() => onEdit(discount)} title="Sửa"><Pencil size={15} /></button><button className="row-icon" type="button" onClick={() => onRemove(discount.id)} title="Xóa"><Trash2 size={15} /></button></div></td></tr>)}</tbody>
+          </table>
+          {!visibleDiscounts.length && <EmptyHint icon={BadgePercent} title="Không tìm thấy mã giảm giá" copy="Thử đổi từ khóa tìm kiếm hoặc tạo mã mới." />}
         </div>
       </section>
     </>
@@ -1505,27 +1553,28 @@ function generateDiscountCode() {
   return `LYLY${Math.random().toString(36).slice(2, 8).toUpperCase()}`
 }
 
-function DiscountBuilderModal({ onClose, onSubmit }) {
-  const [selectedType, setSelectedType] = useState('')
+function DiscountBuilderModal({ discount, onClose, onSubmit }) {
+  const [selectedType, setSelectedType] = useState(discount?.discountType || '')
   const [form, setForm] = useState({
-    method: 'code',
-    code: '',
-    title: '',
-    valueType: 'percentage',
-    valueAmount: '',
-    appliesToType: 'all',
-    appliesToSearch: '',
-    minimumType: 'none',
-    minimumValue: '',
-    usageLimitEnabled: false,
-    usageLimit: '',
-    oncePerCustomer: false,
-    combinesProduct: false,
-    combinesOrder: false,
-    combinesShipping: false,
-    startsAt: new Date().toISOString().slice(0, 10),
-    endsEnabled: false,
-    endsAt: '',
+    method: discount?.method || 'code',
+    code: discount?.code || '',
+    title: discount?.title || '',
+    valueType: discount?.valueType || 'percentage',
+    valueAmount: discount?.valueAmount ?? '',
+    appliesToType: discount?.appliesTo?.type || 'all',
+    appliesToSearch: discount?.appliesTo?.query || '',
+    minimumType: discount?.minimumType || 'none',
+    minimumValue: discount?.minimumValue || '',
+    usageLimitEnabled: Boolean(discount?.usageLimit),
+    usageLimit: discount?.usageLimit || '',
+    oncePerCustomer: Boolean(discount?.oncePerCustomer),
+    combinesProduct: Boolean(discount?.combines?.product),
+    combinesOrder: Boolean(discount?.combines?.order),
+    combinesShipping: Boolean(discount?.combines?.shipping),
+    startsAt: discount?.startsAt ? new Date(discount.startsAt).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
+    endsEnabled: Boolean(discount?.endsAt),
+    endsAt: discount?.endsAt ? new Date(discount.endsAt).toISOString().slice(0, 10) : '',
+    active: discount?.active ?? true,
   })
   const selected = discountTypeOptions.find((item) => item.id === selectedType)
   const change = (event) => {
@@ -1535,6 +1584,7 @@ function DiscountBuilderModal({ onClose, onSubmit }) {
   const submit = (event) => {
     event.preventDefault()
     onSubmit({
+      id: discount?.id,
       code: form.method === 'code' ? form.code.trim().toUpperCase() : '',
       title: form.method === 'automatic' ? form.title.trim() : form.code.trim().toUpperCase(),
       method: form.method,
@@ -1549,7 +1599,7 @@ function DiscountBuilderModal({ onClose, onSubmit }) {
       combines: { product: form.combinesProduct, order: form.combinesOrder, shipping: form.combinesShipping },
       startsAt: form.startsAt ? new Date(`${form.startsAt}T00:00:00`).toISOString() : new Date().toISOString(),
       endsAt: form.endsEnabled && form.endsAt ? new Date(`${form.endsAt}T23:59:59`).toISOString() : null,
-      active: true,
+      active: form.active,
     })
   }
 
@@ -1629,6 +1679,35 @@ function DiscountBuilderModal({ onClose, onSubmit }) {
   )
 }
 
+function DiscountDetailModal({ discount, onClose, onEdit, onRemove }) {
+  const rows = [
+    ['Mã/Tiêu đề', discount.code || discount.title],
+    ['Loại', discount.type],
+    ['Giá trị', discount.value],
+    ['Trạng thái', discount.status],
+    ['Phương thức', discount.method === 'automatic' ? 'Tự động' : 'Mã giảm giá'],
+    ['Yêu cầu tối thiểu', discount.minimumType === 'amount' ? `Tối thiểu ${money(discount.minimumValue)}` : discount.minimumType === 'quantity' ? `Tối thiểu ${discount.minimumValue} sản phẩm` : 'Không có'],
+    ['Áp dụng cho', discount.appliesTo?.query || 'Tất cả'],
+    ['Giới hạn sử dụng', discount.usageLimit || 'Không giới hạn'],
+    ['Mỗi khách hàng một lần', discount.oncePerCustomer ? 'Có' : 'Không'],
+    ['Bắt đầu', discount.startsAt ? new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(new Date(discount.startsAt)) : 'Ngay bây giờ'],
+    ['Kết thúc', discount.ends],
+  ]
+
+  return (
+    <Modal title="Chi tiết mã giảm giá" onClose={onClose}>
+      <div className="discount-detail">
+        {rows.map(([label, value]) => <p key={label}><span>{label}</span><b>{value}</b></p>)}
+      </div>
+      <div className="modal-actions discount-type-actions">
+        <button className="admin-secondary" type="button" onClick={onClose}>Đóng</button>
+        <button className="admin-secondary" type="button" onClick={() => onEdit(discount)}><Pencil size={14} /> Sửa</button>
+        <button className="product-danger" type="button" onClick={() => onRemove(discount.id)}><Trash2 size={14} /> Xóa</button>
+      </div>
+    </Modal>
+  )
+}
+
 function Modal({ title, children, onClose, wide = false }) {
   return (
     <div className="modal-overlay" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
@@ -1681,6 +1760,8 @@ function AdminApp() {
   const [categoryModal, setCategoryModal] = useState(false)
   const [categoryEditing, setCategoryEditing] = useState(null)
   const [discountModal, setDiscountModal] = useState(false)
+  const [discountEditing, setDiscountEditing] = useState(null)
+  const [discountDetail, setDiscountDetail] = useState(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [tasks, setTasks] = useState(['name'])
@@ -1911,8 +1992,35 @@ function AdminApp() {
   const addDiscount = async (discount) => {
     setAdminError('')
     try {
-      const createdDiscount = await createAdminDiscount(discount)
-      setDiscounts((current) => [createdDiscount, ...current])
+      if (discount.id) {
+        const updatedDiscount = await updateAdminDiscount(discount)
+        setDiscounts((current) => current.map((item) => item.id === updatedDiscount.id ? updatedDiscount : item))
+      } else {
+        const createdDiscount = await createAdminDiscount(discount)
+        setDiscounts((current) => [createdDiscount, ...current])
+      }
+      setDiscountEditing(null)
+      setDiscountModal(false)
+    } catch (error) {
+      console.error(error)
+      setAdminError(error.message)
+    }
+  }
+
+  const editDiscount = (discount) => {
+    setDiscountDetail(null)
+    setDiscountEditing(discount)
+    setDiscountModal(true)
+  }
+
+  const removeDiscount = async (id) => {
+    if (!id) return
+    setAdminError('')
+    try {
+      await removeAdminDiscounts([id])
+      setDiscounts((current) => current.filter((discount) => discount.id !== id))
+      setDiscountDetail(null)
+      setDiscountEditing(null)
       setDiscountModal(false)
     } catch (error) {
       console.error(error)
@@ -1953,7 +2061,7 @@ function AdminApp() {
     if (page === 'orders') return <OrdersPage meta={localizedMeta} orders={adminOrders} onUpdate={saveOrder} onBulkUpdate={bulkSaveOrders} />
     if (page === 'customers') return <CustomersPage meta={localizedMeta} />
     if (page === 'marketing') return <MarketingPage meta={localizedMeta} />
-    if (page === 'discounts') return <DiscountsPage meta={localizedMeta} discounts={discounts} onCreate={() => setDiscountModal(true)} />
+    if (page === 'discounts') return <DiscountsManagePage meta={localizedMeta} discounts={discounts} onCreate={() => { setDiscountEditing(null); setDiscountModal(true) }} onEdit={editDiscount} onView={setDiscountDetail} onRemove={removeDiscount} />
     if (page === 'content') return <ContentPage meta={localizedMeta} />
     if (page === 'analytics') return <AnalyticsPage meta={localizedMeta} />
     if (page === 'locations') return <LocationsPage meta={localizedMeta} />
@@ -2012,7 +2120,8 @@ function AdminApp() {
       </main>
       {productModal && <ProductModal categories={categories} products={products} product={productEditing} copy={adminCopy.product} onClose={() => { setProductEditing(null); setProductModal(false) }} onSubmit={saveProduct} />}
       {categoryModal && <CategoryModal categories={categories} category={categoryEditing} onClose={() => { setCategoryEditing(null); setCategoryModal(false) }} onSubmit={saveCategory} />}
-      {discountModal && <DiscountBuilderModal onClose={() => setDiscountModal(false)} onSubmit={addDiscount} />}
+      {discountModal && <DiscountBuilderModal discount={discountEditing} onClose={() => { setDiscountEditing(null); setDiscountModal(false) }} onSubmit={addDiscount} />}
+      {discountDetail && <DiscountDetailModal discount={discountDetail} onClose={() => setDiscountDetail(null)} onEdit={editDiscount} onRemove={removeDiscount} />}
     </div>
   )
 }

@@ -402,6 +402,34 @@ export async function createAdminDiscount(discount) {
   return mapDiscount(data)
 }
 
+export async function updateAdminDiscount(discount) {
+  if (!supabase) return {
+    ...discount,
+    type: discount.discountType === 'shipping' ? 'Free shipping' : discount.discountType === 'buy_x_get_y' ? 'Buy X get Y' : discount.discountType === 'product' ? 'Product discount' : 'Order discount',
+    value: discount.discountType === 'shipping' ? 'Free shipping' : discount.valueType === 'percentage' ? `${discount.valueAmount}%` : discount.valueType === 'free' ? 'Free' : `$${Number(discount.valueAmount || 0).toFixed(2)}`,
+    status: discount.active === false ? 'Draft' : 'Active',
+    uses: discount.uses || 0,
+    ends: discount.endsAt || 'No end date',
+  }
+
+  const { data, error } = await supabase
+    .from('discounts')
+    .update(discountPayload(discount))
+    .eq('id', discount.id)
+    .select(discountColumns)
+    .single()
+
+  if (error) throw error
+  return mapDiscount(data)
+}
+
+export async function removeAdminDiscounts(ids) {
+  if (!supabase || !ids.length) return
+
+  const { error } = await supabase.from('discounts').delete().in('id', ids)
+  if (error) throw error
+}
+
 function fileToDataUrl(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
