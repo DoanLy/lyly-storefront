@@ -178,7 +178,7 @@ const navGroups = [
       { id: 'marketing', label: 'Tiếp thị', icon: Megaphone },
       { id: 'discounts', label: 'Giảm giá', icon: BadgePercent },
       { id: 'content', label: 'Nội dung', icon: FileText },
-      { id: 'analytics', label: 'Phân tích', icon: BarChart3 },
+      { id: 'analytics', label: 'Phân tích', icon: BarChart3, children: [{ id: 'analytics-reports', label: 'Báo cáo' }] },
     ],
   },
   {
@@ -199,6 +199,7 @@ const pageMeta = {
   discounts: ['Giảm giá', 'Quản lý mã ưu đãi và chương trình khuyến mại.'],
   content: ['Nội dung', 'Quản lý bài viết và nội dung hiển thị trên storefront.'],
   analytics: ['Phân tích', 'Theo dõi hiệu quả bán hàng và hành vi khách hàng.'],
+  'analytics-reports': ['Báo cáo', 'Phân tích các báo cáo quan trọng cho vận hành thương mại điện tử.'],
   locations: ['Điểm bán hàng', 'Cấu hình địa điểm lấy hàng và khu vực giao hàng.'],
   settings: ['Cài đặt', 'Cấu hình vận hành chung cho cửa hàng LyLy.'],
 }
@@ -221,6 +222,7 @@ const adminI18n = {
       discounts: 'Giảm giá',
       content: 'Nội dung',
       analytics: 'Phân tích',
+      'analytics-reports': 'Báo cáo',
       'online-store': 'Cửa hàng trực tuyến',
       locations: 'Điểm bán hàng',
     },
@@ -273,6 +275,7 @@ const adminI18n = {
       discounts: 'Discounts',
       content: 'Content',
       analytics: 'Analytics',
+      'analytics-reports': 'Reports',
       'online-store': 'Online store',
       locations: 'Locations',
     },
@@ -286,6 +289,7 @@ const adminI18n = {
       discounts: ['Discounts', 'Manage promotion codes and discount programs.'],
       content: ['Content', 'Manage articles and content displayed on the storefront.'],
       analytics: ['Analytics', 'Track sales performance and customer behavior.'],
+      'analytics-reports': ['Reports', 'Review essential ecommerce reports for sales, products, customers and operations.'],
       locations: ['Locations', 'Configure pickup points and delivery zones.'],
       settings: ['Settings', 'Configure general operations for LyLy store.'],
     },
@@ -1297,6 +1301,101 @@ function ArticleDetailModal({ article, onClose, onEdit, onRemove }) {
       </div>
       <div className="modal-actions discount-type-actions"><button className="admin-secondary" type="button" onClick={onClose}>Đóng</button><button className="admin-secondary" type="button" onClick={() => onEdit(article)}><Pencil size={14} /> Sửa</button><button className="product-danger" type="button" onClick={() => onRemove(article.id)}><Trash2 size={14} /> Xóa</button></div>
     </Modal>
+  )
+}
+
+function ReportsPage({ meta, orders, products, customers, discounts }) {
+  const [activeReportId, setActiveReportId] = useState('sales')
+  const [query, setQuery] = useState('')
+  const paidOrders = orders.filter((order) => order.payment === 'Paid')
+  const totalRevenue = paidOrders.reduce((total, order) => total + Number(order.total || 0), 0)
+  const lineItems = orders.flatMap((order) => (order.lineItems || []).map((item) => ({ ...item, orderId: order.id, orderStatus: order.delivery, orderTotal: order.total })))
+  const productRows = products.map((product) => {
+    const matchingItems = lineItems.filter((item) => item.name.includes(product.name))
+    const quantity = matchingItems.reduce((total, item) => total + Number(item.quantity || 0), 0)
+    const revenue = matchingItems.reduce((total, item) => total + Number(item.total || 0), 0)
+    return { name: product.name, category: product.category, sku: product.sku || product.id, quantity, revenue, stock: product.stock }
+  }).sort((a, b) => b.revenue - a.revenue)
+  const returningCustomers = customers.filter((customer) => customer.orders > 1)
+  const statusRows = ['Unfulfilled', 'Packing', 'Ready', 'Delivered', 'Cancelled'].map((status) => {
+    const matching = orders.filter((order) => order.delivery === status)
+    return { status, orders: matching.length, revenue: matching.reduce((total, order) => total + Number(order.total || 0), 0) }
+  })
+  const reports = [
+    {
+      id: 'sales',
+      title: 'Doanh thu và đơn hàng',
+      description: 'Theo dõi tổng doanh thu, AOV và trạng thái thanh toán.',
+      kpis: [['Doanh thu', money(totalRevenue)], ['Đơn đã thanh toán', paidOrders.length], ['AOV', money(paidOrders.length ? totalRevenue / paidOrders.length : 0)]],
+      columns: ['Mã đơn', 'Khách hàng', 'Thanh toán', 'Fulfillment', 'Tổng tiền'],
+      rows: orders.map((order) => ({ search: `${order.id} ${order.customer} ${order.payment} ${order.delivery}`, cells: [order.id, order.customer, order.payment, order.delivery, money(order.total)] })),
+    },
+    {
+      id: 'products',
+      title: 'Hiệu suất sản phẩm',
+      description: 'Xếp hạng sản phẩm theo doanh thu, số lượng bán và tồn kho.',
+      kpis: [['Sản phẩm', products.length], ['Đã bán', productRows.reduce((total, row) => total + row.quantity, 0)], ['Doanh thu SP', money(productRows.reduce((total, row) => total + row.revenue, 0))]],
+      columns: ['Sản phẩm', 'Danh mục', 'SKU', 'Đã bán', 'Doanh thu', 'Tồn kho'],
+      rows: productRows.map((row) => ({ search: `${row.name} ${row.category} ${row.sku}`, cells: [row.name, row.category, row.sku, row.quantity, money(row.revenue), row.stock] })),
+    },
+    {
+      id: 'customers',
+      title: 'Khách hàng',
+      description: 'Nhận diện khách quay lại, tổng chi tiêu và số đơn theo khách.',
+      kpis: [['Khách hàng', customers.length], ['Khách quay lại', returningCustomers.length], ['Tỷ lệ quay lại', `${customers.length ? ((returningCustomers.length / customers.length) * 100).toFixed(1) : '0.0'}%`]],
+      columns: ['Khách hàng', 'Email', 'Địa điểm', 'Đơn hàng', 'Đã chi tiêu'],
+      rows: customers.map((customer) => ({ search: `${customer.name} ${customer.email} ${customer.location}`, cells: [customer.name, customer.email, customer.location || 'Chưa có', customer.orders, money(customer.spent)] })),
+    },
+    {
+      id: 'discounts',
+      title: 'Khuyến mãi',
+      description: 'Kiểm tra mã giảm giá đang chạy, lượt dùng và ngày kết thúc.',
+      kpis: [['Mã giảm giá', discounts.length], ['Đang hoạt động', discounts.filter((discount) => discount.status === 'Active').length], ['Lượt dùng', discounts.reduce((total, discount) => total + Number(discount.uses || 0), 0)]],
+      columns: ['Mã/Tiêu đề', 'Loại', 'Giá trị', 'Trạng thái', 'Lượt dùng', 'Kết thúc'],
+      rows: discounts.map((discount) => ({ search: `${discount.code} ${discount.title} ${discount.type} ${discount.status}`, cells: [discount.code || discount.title, discount.type, discount.value, discount.status, discount.uses || 0, discount.ends] })),
+    },
+    {
+      id: 'fulfillment',
+      title: 'Fulfillment',
+      description: 'Theo dõi số đơn theo trạng thái xử lý để ưu tiên vận hành.',
+      kpis: [['Tổng đơn', orders.length], ['Đã giao', orders.filter((order) => order.delivery === 'Delivered').length], ['Cần xử lý', orders.filter((order) => !['Delivered', 'Cancelled'].includes(order.delivery)).length]],
+      columns: ['Trạng thái', 'Số đơn', 'Doanh thu liên quan'],
+      rows: statusRows.map((row) => ({ search: row.status, cells: [row.status, row.orders, money(row.revenue)] })),
+    },
+  ]
+  const activeReport = reports.find((report) => report.id === activeReportId) || reports[0]
+  const visibleRows = activeReport.rows.filter((row) => row.search.toLowerCase().includes(query.toLowerCase()))
+  const exportCsv = () => {
+    const csv = [activeReport.columns, ...visibleRows.map((row) => row.cells)].map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(',')).join('\n')
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${activeReport.id}-report.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
+  return (
+    <>
+      <SectionTitle title={meta['analytics-reports'][0]} description={meta['analytics-reports'][1]} action="Xuất CSV" icon={Download} onAction={exportCsv} />
+      <section className="reports-layout">
+        <aside className="admin-panel report-list">
+          {reports.map((report) => <button className={activeReport.id === report.id ? 'active' : ''} type="button" onClick={() => { setActiveReportId(report.id); setQuery('') }} key={report.id}><b>{report.title}</b><span>{report.description}</span></button>)}
+        </aside>
+        <section className="admin-panel report-detail">
+          <div className="report-head"><div><p className="admin-eyebrow">Báo cáo</p><h2>{activeReport.title}</h2><span>{activeReport.description}</span></div><button className="admin-secondary" type="button" onClick={exportCsv}><Download size={14} /> Xuất CSV</button></div>
+          <div className="report-kpis">{activeReport.kpis.map(([label, value]) => <article key={label}><span>{label}</span><b>{value}</b></article>)}</div>
+          <div className="table-toolbar"><label><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm trong báo cáo" /></label></div>
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead><tr>{activeReport.columns.map((column) => <th key={column}>{column}</th>)}</tr></thead>
+              <tbody>{visibleRows.map((row, index) => <tr key={`${activeReport.id}-${index}`}>{row.cells.map((cell, cellIndex) => <td key={cellIndex}>{cell}</td>)}</tr>)}</tbody>
+            </table>
+            {!visibleRows.length && <EmptyHint icon={BarChart3} title="Không có dữ liệu báo cáo" copy="Thử đổi từ khóa hoặc kiểm tra dữ liệu đơn hàng." />}
+          </div>
+        </section>
+      </section>
+    </>
   )
 }
 
@@ -2357,6 +2456,7 @@ function AdminApp() {
     if (page === 'discounts') return <DiscountsManagePage meta={localizedMeta} discounts={discounts} onCreate={() => { setDiscountEditing(null); setDiscountModal(true) }} onEdit={editDiscount} onView={setDiscountDetail} onRemove={removeDiscount} />
     if (page === 'content') return <ContentManagePage meta={localizedMeta} articles={adminArticles} onCreate={() => { setArticleEditing(null); setArticleModal(true) }} onEdit={(article) => { setArticleDetail(null); setArticleEditing(article); setArticleModal(true) }} onView={setArticleDetail} onRemove={removeArticle} />
     if (page === 'analytics') return <AnalyticsPage meta={localizedMeta} orders={adminOrders} products={products} customers={adminCustomers} />
+    if (page === 'analytics-reports') return <ReportsPage meta={localizedMeta} orders={adminOrders} products={products} customers={adminCustomers} discounts={discounts} />
     if (page === 'locations') return <LocationsPage meta={localizedMeta} />
     if (page === 'settings') return <SettingsManagePage meta={localizedMeta} settings={storeSettings} onSave={saveSettings} />
     return <Dashboard tasks={tasks} setTasks={setTasks} orders={adminOrders} />
@@ -2396,7 +2496,13 @@ function AdminApp() {
               {group.title && <p>{adminCopy.navGroup.salesChannels}<ChevronRight size={13} /></p>}
               {group.items.map((item) => {
                 const Icon = item.icon
-                return <button className={page === item.id ? 'active' : ''} type="button" onClick={() => navigate(item.id)} key={item.id}><Icon size={17} /><span>{adminCopy.nav[item.id] || item.label}</span>{item.count && <em>{item.count}</em>}</button>
+                const parentActive = page === item.id || item.children?.some((child) => child.id === page)
+                return (
+                  <div className="nav-item-block" key={item.id}>
+                    <button className={parentActive ? 'active' : ''} type="button" onClick={() => navigate(item.id)}><Icon size={17} /><span>{adminCopy.nav[item.id] || item.label}</span>{item.count && <em>{item.count}</em>}</button>
+                    {item.children?.map((child) => <button className={`sub-nav ${page === child.id ? 'active' : ''}`} type="button" onClick={() => navigate(child.id)} key={child.id}><ChevronRight size={13} /><span>{adminCopy.nav[child.id] || child.label}</span></button>)}
+                  </div>
+                )
               })}
             </div>
           ))}
