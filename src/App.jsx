@@ -299,6 +299,29 @@ function formatPrice(value) {
   return `$${value.toFixed(2)}`
 }
 
+function getProductDetailDescription(product, meta) {
+  const fallback = `${meta.description}. Selected for dependable quality, everyday freshness, and simple meal planning.`
+  const lines = String(product.description || fallback).split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
+
+  if (lines.length <= 1) return { body: lines }
+
+  return {
+    title: lines[0],
+    body: lines.slice(1),
+  }
+}
+
+function ProductDetailDescription({ detail }) {
+  if (!detail.body.length) return null
+
+  return (
+    <div className="product-detail-description">
+      {detail.title && <h2>{detail.title}</h2>}
+      {detail.body.map((line, index) => <p key={`${line}-${index}`}>{line}</p>)}
+    </div>
+  )
+}
+
 function productSlug(product) {
   return `${product.id}-${product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`
 }
@@ -1483,6 +1506,7 @@ function ProductDetailPage({ product, products, onAdd, onBuyNow }) {
   const [activeImage, setActiveImage] = useState(selected.image || images[0] || product.image)
   const [quantity, setQuantity] = useState(1)
   const meta = getCatalogMeta(product)
+  const detailDescription = getProductDetailDescription(product, meta)
   const sale = Boolean(selected.oldPrice)
   const related = products.filter((item) => item.id !== product.id && item.category === product.category).slice(0, 4)
 
@@ -1514,7 +1538,7 @@ function ProductDetailPage({ product, products, onAdd, onBuyNow }) {
             <span>{Array.from({ length: 5 }, (_, index) => <Star key={index} size={14} fill={index < meta.rating ? 'currentColor' : 'none'} />)}</span>
             <small>({meta.reviews})</small>
           </div>
-          <p>{product.description || `${meta.description}. Selected for dependable quality, everyday freshness, and simple meal planning.`}</p>
+          <ProductDetailDescription detail={detailDescription} />
 
           {productHasVariants(product) ? (
             <div className="quick-product-style detail-options">

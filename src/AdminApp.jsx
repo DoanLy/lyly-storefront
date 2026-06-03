@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowRight,
   ArrowUpRight,
@@ -9,6 +9,7 @@ import {
   CalendarDays,
   CheckCircle2,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   Circle,
   CircleHelp,
@@ -563,6 +564,28 @@ function EmptyHint({ icon: Icon, title, copy }) {
   return <div className="empty-hint"><Icon size={33} /><h3>{title}</h3><p>{copy}</p></div>
 }
 
+function ConfirmDeleteModal({ title, message, confirmLabel = 'Xóa', onCancel, onConfirm }) {
+  const [submitting, setSubmitting] = useState(false)
+  const confirm = async () => {
+    setSubmitting(true)
+    await onConfirm()
+    setSubmitting(false)
+  }
+
+  return (
+    <Modal title={title} onClose={onCancel}>
+      <div className="confirm-delete">
+        <Trash2 size={34} />
+        <p>{message}</p>
+        <div className="modal-actions">
+          <button className="admin-secondary" type="button" disabled={submitting} onClick={onCancel}>Hủy</button>
+          <button className="product-danger" type="button" disabled={submitting} onClick={confirm}>{submitting ? 'Đang xóa...' : confirmLabel}</button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
 function Dashboard({ tasks, setTasks, orders }) {
   const [assistantText, setAssistantText] = useState('')
   const [assistantReply, setAssistantReply] = useState('')
@@ -665,6 +688,8 @@ function ProductsPage({ meta, categories, products, onBulkEdit, onCreate, onEdit
   const [selected, setSelected] = useState([])
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [bulkOpen, setBulkOpen] = useState(false)
+  const [deleteRequest, setDeleteRequest] = useState(null)
+  const [selectionWarning, setSelectionWarning] = useState(false)
   const [sku, setSku] = useState('')
   const [notice, setNotice] = useState('')
   const [filters, setFilters] = useState({
@@ -710,14 +735,24 @@ function ProductsPage({ meta, categories, products, onBulkEdit, onCreate, onEdit
       && (filters.warehouse === 'all' || product.warehouse === filters.warehouse)
       && (filters.productType === 'all' || product.productType === filters.productType)
   })
-  const removeProduct = (id) => onRemove([id])
+  const removeProduct = (product) => setDeleteRequest({ ids: [product.id], names: [product.name] })
   const visibleIds = visible.map((product) => product.id)
   const allVisibleSelected = visible.length > 0 && visibleIds.every((id) => selected.includes(id))
   const toggleAll = () => setSelected((current) => allVisibleSelected ? current.filter((id) => !visibleIds.includes(id)) : [...new Set([...current, ...visibleIds])])
   const toggle = (id) => setSelected((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])
-  const removeSelected = async () => {
-    await onRemove(selected)
+  const removeSelected = () => {
+    if (!selected.length) {
+      setSelectionWarning(true)
+      return
+    }
+    const names = products.filter((product) => selected.includes(product.id)).map((product) => product.name)
+    setDeleteRequest({ ids: selected, names })
+  }
+  const confirmRemove = async () => {
+    if (!deleteRequest?.ids.length) return
+    await onRemove(deleteRequest.ids)
     setSelected([])
+    setDeleteRequest(null)
   }
   const setFilter = (name, value) => setFilters((current) => ({ ...current, [name]: value }))
   const resetFilters = () => setFilters({
@@ -762,7 +797,7 @@ function ProductsPage({ meta, categories, products, onBulkEdit, onCreate, onEdit
         <button className="admin-secondary" type="button" onClick={() => downloadCatalogPdf(visible)}><FileText size={15} /> Tải catalog PDF</button>
         <button className="admin-secondary" type="button" onClick={() => downloadProductsCsv(visible)}><Download size={15} /> Xuất CSV</button>
         <button className="admin-secondary" type="button" onClick={() => importInput.current?.click()}><Upload size={15} /> Nhập CSV</button>
-        <button className="product-danger" type="button" disabled={!selected.length} onClick={removeSelected}><Trash2 size={15} /> Xóa đã chọn{selected.length ? ` (${selected.length})` : ''}</button>
+        <button className="product-danger" type="button" onClick={removeSelected}><Trash2 size={15} /> Xóa đã chọn{selected.length ? ` (${selected.length})` : ''}</button>
         <input ref={importInput} type="file" accept=".csv,text/csv" hidden onChange={importCsv} />
       </div>
       {notice && <div className="product-notice"><span>{notice}</span><button type="button" onClick={() => setNotice('')}><X size={14} /></button></div>}
@@ -798,7 +833,7 @@ function ProductsPage({ meta, categories, products, onBulkEdit, onCreate, onEdit
                   <td><span className={product.stock < 10 ? 'low-stock' : ''}>{product.stock} in stock</span></td>
                   <td>{product.category}</td>
                   <td><b>{money(product.price)}</b></td>
-                  <td><div className="row-actions"><button className="row-icon" type="button" onClick={() => onEdit(product)} title="Sửa sản phẩm"><Pencil size={15} /></button><button className="row-icon" type="button" onClick={() => removeProduct(product.id)} aria-label={`Delete ${product.name}`}><Trash2 size={15} /></button></div></td>
+                  <td><div className="row-actions"><button className="row-icon" type="button" onClick={() => onEdit(product)} title="Sửa sản phẩm"><Pencil size={15} /></button><button className="row-icon" type="button" onClick={() => removeProduct(product)} aria-label={`Delete ${product.name}`}><Trash2 size={15} /></button></div></td>
                 </tr>
               ))}
             </tbody>
@@ -806,7 +841,29 @@ function ProductsPage({ meta, categories, products, onBulkEdit, onCreate, onEdit
           {!visible.length && <EmptyHint icon={ShoppingBag} title="Không tìm thấy sản phẩm" copy="Thử thay đổi từ khóa hoặc thêm sản phẩm mới." />}
         </div>
       </section>
-      {bulkOpen && <BulkProductModal categories={categories} count={selected.length} onClose={() => setBulkOpen(false)} onSubmit={async (changes) => { await onBulkEdit(selected, changes); setSelected([]); setBulkOpen(false) }} />}
+      {deleteRequest && (
+        <ConfirmDeleteModal
+          title={deleteRequest.ids.length > 1 ? 'Xóa sản phẩm đã chọn?' : 'Xóa sản phẩm?'}
+          message={deleteRequest.ids.length > 1
+            ? `Bạn có chắc muốn xóa ${deleteRequest.ids.length} sản phẩm đã chọn? Hành động này không thể hoàn tác.`
+            : `Bạn có chắc muốn xóa "${deleteRequest.names[0]}"? Hành động này không thể hoàn tác.`}
+          confirmLabel={deleteRequest.ids.length > 1 ? 'Xóa đã chọn' : 'Xóa sản phẩm'}
+          onCancel={() => setDeleteRequest(null)}
+          onConfirm={confirmRemove}
+        />
+      )}
+      {selectionWarning && (
+        <Modal title="Chưa chọn sản phẩm" onClose={() => setSelectionWarning(false)}>
+          <div className="confirm-delete">
+            <Trash2 size={34} />
+            <p>Hãy chọn ít nhất một sản phẩm trong danh sách trước khi dùng nút Xóa đã chọn.</p>
+            <div className="modal-actions">
+              <button className="admin-primary" type="button" onClick={() => setSelectionWarning(false)}>Đã hiểu</button>
+            </div>
+          </div>
+        </Modal>
+      )}
+      {bulkOpen && <BulkProductEditor categories={categories} products={products.filter((product) => selected.includes(product.id))} onClose={() => setBulkOpen(false)} onSubmit={async (updates) => { await onBulkEdit(updates); setSelected([]); setBulkOpen(false) }} />}
     </>
   )
 }
@@ -1770,14 +1827,32 @@ function blankProductVariant(product = {}, index = 1) {
   }
 }
 
-function parseImagesText(text) {
-  return text.split('\n').map((line) => line.trim()).filter(Boolean)
+function parseProductDescriptionFields(description = '') {
+  const lines = String(description).split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
+
+  if (lines.length <= 1) return { title: '', body: lines[0] || '' }
+
+  return {
+    title: lines[0],
+    body: lines.slice(1).join('\n'),
+  }
+}
+
+function buildProductDescription(title, body) {
+  return [title, body].map((value) => value.trim()).filter(Boolean).join('\n')
+}
+
+function imageFilePreview(file, callback) {
+  const reader = new FileReader()
+  reader.onload = () => callback(reader.result)
+  reader.readAsDataURL(file)
 }
 
 function ProductModal({ categories, products, product, onClose, onSubmit, copy }) {
   const activeCategories = categories.filter((category) => category.active)
   const initialCategory = product?.category || activeCategories[0]?.name || ''
   const hasExistingVariants = product?.variants?.length > 0
+  const initialDescription = parseProductDescriptionFields(product?.description)
   const [form, setForm] = useState(product || {
     name: '',
     category: initialCategory,
@@ -1798,8 +1873,16 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy }
     options: [],
     variants: [],
   })
+  const [descriptionTitle, setDescriptionTitle] = useState(initialDescription.title)
+  const [descriptionBody, setDescriptionBody] = useState(initialDescription.body)
   const [productMode, setProductMode] = useState(hasExistingVariants ? 'variants' : 'single')
-  const [imagesText, setImagesText] = useState((product?.images || []).join('\n'))
+  const [galleryImages, setGalleryImages] = useState(
+    Array.from({ length: 5 }, (_, index) => ({
+      url: product?.images?.[index] || '',
+      preview: product?.images?.[index] || '',
+      file: null,
+    })),
+  )
   const [options, setOptions] = useState(product?.options?.length ? product.options.map((option) => ({ ...option, values: Array.isArray(option.values) ? option.values.join(', ') : option.values || '' })) : [blankProductOption()])
   const [variants, setVariants] = useState(product?.variants?.length ? product.variants.map((variant) => ({
     ...variant,
@@ -1808,6 +1891,8 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy }
     stock: variant.stock ?? '',
     unit: variant.unit ?? '',
     image: variant.image ?? '',
+    imagePreview: variant.image ?? '',
+    imageFile: null,
   })) : [blankProductVariant(product || {}, 1)])
   const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState(form.image || defaultProductImage)
@@ -1823,12 +1908,30 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy }
     const file = event.target.files?.[0]
     if (!file) return
     setImageFile(file)
-    const reader = new FileReader()
-    reader.onload = () => setImagePreview(reader.result)
-    reader.readAsDataURL(file)
+    imageFilePreview(file, setImagePreview)
+  }
+  const chooseGalleryImage = (index, event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    imageFilePreview(file, (preview) => {
+      setGalleryImages((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, file, preview, url: item.url } : item))
+    })
+  }
+  const removeGalleryImage = (index) => {
+    setGalleryImages((current) => current.map((item, itemIndex) => itemIndex === index ? { url: '', preview: '', file: null } : item))
   }
   const changeOption = (index, name, value) => setOptions((current) => current.map((option, optionIndex) => optionIndex === index ? { ...option, [name]: value } : option))
   const changeVariant = (index, name, value) => setVariants((current) => current.map((variant, variantIndex) => variantIndex === index ? { ...variant, [name]: value } : variant))
+  const chooseVariantImage = (index, event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    imageFilePreview(file, (preview) => {
+      setVariants((current) => current.map((variant, variantIndex) => variantIndex === index ? { ...variant, imageFile: file, imagePreview: preview } : variant))
+    })
+  }
+  const removeVariantImage = (index) => {
+    setVariants((current) => current.map((variant, variantIndex) => variantIndex === index ? { ...variant, image: '', imageFile: null, imagePreview: '' } : variant))
+  }
   const addOption = () => setOptions((current) => [...current, blankProductOption()])
   const addVariant = () => setVariants((current) => [...current, blankProductVariant(form, current.length + 1)])
   const removeOption = (index) => setOptions((current) => current.filter((_, optionIndex) => optionIndex !== index))
@@ -1851,7 +1954,8 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy }
           oldPrice: variant.oldPrice ? Number(variant.oldPrice) : undefined,
           stock: Number(variant.stock || 0),
           unit: variant.unit.trim() || form.unit,
-          image: variant.image.trim() || form.image || imagePreview || defaultProductImage,
+          image: variant.image.trim() || '',
+          imageFile: variant.imageFile || null,
         }))
         .filter((variant) => variant.label && Number.isFinite(variant.price))
       : []
@@ -1862,8 +1966,9 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy }
       oldPrice: form.oldPrice ? Number(form.oldPrice) : undefined,
       stock: Number(form.stock),
       image: form.image || imagePreview || defaultProductImage,
-      description: form.description || '',
-      images: parseImagesText(imagesText),
+      description: buildProductDescription(descriptionTitle, descriptionBody),
+      images: galleryImages.map((item) => item.url).filter(Boolean),
+      imageFiles: galleryImages.map((item, index) => ({ index, file: item.file })).filter((item) => item.file),
       options: normalizedOptions,
       variants: normalizedVariants,
       imageFile,
@@ -1873,7 +1978,8 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy }
     <Modal wide title={product ? copy.edit : copy.create} onClose={onClose}>
       <form className="modal-form" onSubmit={submit}>
         <label><span>{copy.name}</span><input required name="name" value={form.name} onChange={change} placeholder={copy.namePlaceholder} /></label>
-        <label><span>Mô tả chi tiết</span><textarea name="description" value={form.description || ''} onChange={change} placeholder="Nội dung sẽ hiển thị ở trang chi tiết sản phẩm" /></label>
+        <label><span>Tiêu đề mô tả</span><input value={descriptionTitle} onChange={(event) => setDescriptionTitle(event.target.value)} placeholder="Ví dụ: Rich, smooth texture" /></label>
+        <label><span>Nội dung mô tả</span><textarea value={descriptionBody} onChange={(event) => setDescriptionBody(event.target.value)} placeholder="Nội dung sẽ hiển thị dưới tiêu đề ở trang chi tiết sản phẩm" /></label>
         <div>
           <label><span>{copy.category}</span><select required name="category" value={form.category} onChange={change}>{activeCategories.map((category) => <option key={category.id}>{category.name}</option>)}</select></label>
           <div className="sku-field"><span>SKU</span><div><strong>{form.sku}</strong><button type="button" onClick={regenerateSku}>{copy.regenerate}</button></div></div>
@@ -1882,14 +1988,27 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy }
         <div><label><span>{copy.stock}</span><input required min="0" type="number" name="stock" value={form.stock} onChange={change} placeholder="0" /></label><label><span>{copy.status}</span><select name="status" value={form.status} onChange={change}><option value="active">{copy.active}</option><option value="draft">{copy.draft}</option></select></label></div>
         <div><label><span>{copy.unit}</span><input required name="unit" value={form.unit} onChange={change} placeholder={copy.unitPlaceholder} /></label><label><span>{copy.badge}</span><input name="badge" value={form.badge || ''} onChange={change} placeholder={copy.badgePlaceholder} /></label></div>
         <label className="product-upload-field">
-          <span>{copy.image}</span>
+          <span>Ảnh chính</span>
           <div className="product-image-picker">
             <img src={imagePreview || defaultProductImage} alt="" />
             <div><Upload size={21} /><b>{imageFile ? imageFile.name : copy.chooseImage}</b><small>{copy.imageHelp}</small></div>
             <input accept="image/*" type="file" onChange={chooseImage} />
           </div>
         </label>
-        <label><span>Ảnh phụ (mỗi URL một dòng)</span><textarea value={imagesText} onChange={(event) => setImagesText(event.target.value)} placeholder="https://..." /></label>
+        <section className="product-gallery-picker">
+          <div className="variant-editor-head"><b>Ảnh phụ</b><small>Tối đa 5 ảnh, dùng cho gallery sản phẩm</small></div>
+          <div className="product-gallery-grid">
+            {galleryImages.map((item, index) => (
+              <label className={item.preview ? 'gallery-upload-slot has-image' : 'gallery-upload-slot'} key={index}>
+                <span>Ảnh phụ {index + 1}</span>
+                {item.preview ? <img src={item.preview} alt="" /> : <Upload size={20} />}
+                <b>{item.file?.name || (item.preview ? 'Đổi ảnh' : 'Chọn ảnh')}</b>
+                {item.preview && <button type="button" onClick={(event) => { event.preventDefault(); removeGalleryImage(index) }}>Xóa</button>}
+                <input accept="image/*" type="file" onChange={(event) => chooseGalleryImage(index, event)} />
+              </label>
+            ))}
+          </div>
+        </section>
         <div className="product-mode-toggle">
           <button className={productMode === 'single' ? 'active' : ''} type="button" onClick={() => setProductMode('single')}>Sản phẩm đơn</button>
           <button className={productMode === 'variants' ? 'active' : ''} type="button" onClick={() => setProductMode('variants')}>Có nhiều lựa chọn</button>
@@ -1910,7 +2029,16 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy }
                 <label><span>Tên hiển thị</span><input required value={variant.label} onChange={(event) => changeVariant(index, 'label', event.target.value)} placeholder="Ví dụ: 500g / Đỏ" /></label>
                 <div><label><span>SKU</span><input value={variant.sku} onChange={(event) => changeVariant(index, 'sku', event.target.value)} /></label><label><span>Quy cách</span><input value={variant.unit} onChange={(event) => changeVariant(index, 'unit', event.target.value)} placeholder={form.unit || '500g'} /></label></div>
                 <div><label><span>Giá</span><input required min="0" step=".01" type="number" value={variant.price} onChange={(event) => changeVariant(index, 'price', event.target.value)} /></label><label><span>Tồn kho</span><input required min="0" type="number" value={variant.stock} onChange={(event) => changeVariant(index, 'stock', event.target.value)} /></label></div>
-                <label><span>Ảnh biến thể</span><input value={variant.image} onChange={(event) => changeVariant(index, 'image', event.target.value)} placeholder="Để trống sẽ dùng ảnh chính" /></label>
+                <label className="variant-image-upload">
+                  <span>Ảnh biến thể</span>
+                  <div>
+                    <img src={variant.imagePreview || imagePreview || defaultProductImage} alt="" />
+                    <strong>{variant.imageFile?.name || (variant.imagePreview ? 'Đổi ảnh biến thể' : 'Chọn ảnh biến thể')}</strong>
+                    <small>Để trống sẽ dùng ảnh chính</small>
+                    {variant.imagePreview && <button type="button" onClick={(event) => { event.preventDefault(); removeVariantImage(index) }}>Xóa ảnh</button>}
+                    <input accept="image/*" type="file" onChange={(event) => chooseVariantImage(index, event)} />
+                  </div>
+                </label>
                 <button className="variant-remove" type="button" onClick={() => removeVariant(index)}>Xóa biến thể</button>
               </div>
             ))}
@@ -1924,6 +2052,7 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy }
   )
 }
 
+// eslint-disable-next-line no-unused-vars
 function BulkProductModal({ categories, count, onClose, onSubmit }) {
   const [form, setForm] = useState({ category: '', status: '', stockAdjustment: '', manufacturer: '', vendor: '', warehouse: '', productType: '' })
   const change = (event) => setForm({ ...form, [event.target.name]: event.target.value })
@@ -1946,6 +2075,103 @@ function BulkProductModal({ categories, count, onClose, onSubmit }) {
         <div className="modal-actions"><button className="admin-secondary" type="button" onClick={onClose}>Hủy</button><button className="admin-primary" type="submit">Áp dụng thay đổi</button></div>
       </form>
     </Modal>
+  )
+}
+
+function BulkProductEditor({ categories, products, onClose, onSubmit }) {
+  const [rows, setRows] = useState(products.map((product) => ({
+    ...product,
+    price: String(product.price ?? ''),
+    stock: String(product.stock ?? ''),
+    variants: (product.variants || []).map((variant, index) => ({
+      ...variant,
+      _bulkKey: variant.id || `${product.id}-variant-${index}`,
+      price: String(variant.price ?? product.price ?? ''),
+      stock: String(variant.stock ?? ''),
+    })),
+  })))
+  const activeCategories = categories.filter((category) => category.active)
+  const changeProduct = (id, name, value) => setRows((current) => current.map((product) => product.id === id ? { ...product, [name]: value } : product))
+  const changeVariant = (productId, variantId, name, value) => setRows((current) => current.map((product) => (
+    product.id === productId
+      ? { ...product, variants: product.variants.map((variant) => variant._bulkKey === variantId ? { ...variant, [name]: value } : variant) }
+      : product
+  )))
+  const submit = (event) => {
+    event.preventDefault()
+    onSubmit(rows.map((product) => ({
+      ...product,
+      price: Number(product.price || 0),
+      stock: Number(product.stock || 0),
+      variants: product.variants.map((variant) => {
+        const variantFields = { ...variant }
+        delete variantFields._bulkKey
+        return {
+          ...variantFields,
+          price: Number(variant.price || product.price || 0),
+          stock: Number(variant.stock || 0),
+        }
+      }),
+    })))
+  }
+
+  return (
+    <div className="modal-overlay bulk-editor-overlay">
+      <form className="bulk-editor" onSubmit={submit}>
+        <header className="bulk-editor-head">
+          <button className="admin-secondary" type="button" onClick={onClose}><ChevronLeft size={16} /> Quay lại</button>
+          <strong>Đang sửa {rows.length} sản phẩm</strong>
+          <span></span>
+          <button className="admin-primary" type="submit">Lưu</button>
+        </header>
+        <div className="bulk-editor-table-wrap">
+          <table className="bulk-editor-table">
+            <thead>
+              <tr>
+                <th>Tên sản phẩm</th>
+                <th>Trạng thái</th>
+                <th>Danh mục sản phẩm</th>
+                <th>Nhà cung cấp</th>
+                <th>Giá cơ sở</th>
+                <th>Số lượng sẵn sàng</th>
+                <th>Số lượng còn trong kho</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((product) => (
+                <Fragment key={product.id}>
+                  <tr>
+                    <td>
+                      <div className="bulk-product-name">
+                        <img src={product.image} alt="" />
+                        <input value={product.name} onChange={(event) => changeProduct(product.id, 'name', event.target.value)} />
+                      </div>
+                    </td>
+                    <td><select value={product.status} onChange={(event) => changeProduct(product.id, 'status', event.target.value)}><option value="active">Đang hoạt động</option><option value="draft">Bản nháp</option></select></td>
+                    <td><select value={product.category} onChange={(event) => changeProduct(product.id, 'category', event.target.value)}>{activeCategories.map((category) => <option key={category.id}>{category.name}</option>)}</select></td>
+                    <td><input value={product.vendor || ''} onChange={(event) => changeProduct(product.id, 'vendor', event.target.value)} /></td>
+                    <td><input min="0" step=".01" type="number" value={product.price} onChange={(event) => changeProduct(product.id, 'price', event.target.value)} /></td>
+                    <td><input min="0" type="number" value={product.stock} onChange={(event) => changeProduct(product.id, 'stock', event.target.value)} /></td>
+                    <td><input min="0" type="number" value={product.stock} onChange={(event) => changeProduct(product.id, 'stock', event.target.value)} /></td>
+                  </tr>
+                  {product.variants.map((variant) => (
+                    <tr className="bulk-variant-row" key={variant._bulkKey}>
+                      <td><span>{variant.label || variant.unit || product.unit}</span></td>
+                      <td></td>
+                      <td></td>
+                      <td></td>
+                      <td><input min="0" step=".01" type="number" value={variant.price} onChange={(event) => changeVariant(product.id, variant._bulkKey, 'price', event.target.value)} /></td>
+                      <td><input min="0" type="number" value={variant.stock} onChange={(event) => changeVariant(product.id, variant._bulkKey, 'stock', event.target.value)} /></td>
+                      <td><input min="0" type="number" value={variant.stock} onChange={(event) => changeVariant(product.id, variant._bulkKey, 'stock', event.target.value)} /></td>
+                    </tr>
+                  ))}
+                </Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </form>
+    </div>
   )
 }
 
@@ -2367,9 +2593,32 @@ function AdminApp() {
   const saveProduct = async (product) => {
     setAdminError('')
     try {
-      const { imageFile, ...productFields } = ensureUniqueSku(product, products)
+      const { imageFile, imageFiles = [], ...productFields } = ensureUniqueSku(product, products)
       const image = imageFile ? await uploadAdminProductImage(imageFile, productFields.sku) : productFields.image
-      const payload = { ...productFields, image: image || defaultProductImage }
+      const images = [...(productFields.images || [])]
+
+      for (const item of imageFiles) {
+        images[item.index] = await uploadAdminProductImage(item.file, `${productFields.sku}-gallery-${item.index + 1}`)
+      }
+
+      const variants = []
+      for (const variant of productFields.variants || []) {
+        const variantFields = { ...variant }
+        const variantImageFile = variantFields.imageFile
+        delete variantFields.imageFile
+        delete variantFields.imagePreview
+        const variantImage = variantImageFile
+          ? await uploadAdminProductImage(variantImageFile, variantFields.sku || `${productFields.sku}-variant`)
+          : variantFields.image
+        variants.push({ ...variantFields, image: variantImage || image || defaultProductImage })
+      }
+
+      const payload = {
+        ...productFields,
+        image: image || defaultProductImage,
+        images: images.filter(Boolean).slice(0, 5),
+        variants,
+      }
 
       if (payload.id) {
         const updatedProduct = await updateAdminProduct(payload)
@@ -2386,16 +2635,9 @@ function AdminApp() {
     }
   }
 
-  const bulkEditProducts = async (ids, changes) => {
+  const bulkEditProducts = async (updates) => {
     setAdminError('')
     try {
-      const updates = products
-        .filter((product) => ids.includes(product.id))
-        .map((product) => ({
-          ...product,
-          ...Object.fromEntries(Object.entries(changes).filter(([name, value]) => name !== 'stockAdjustment' && value !== '')),
-          stock: Math.max(0, product.stock + changes.stockAdjustment),
-        }))
       const updatedProducts = await updateAdminProducts(updates)
       const updatedById = new Map(updatedProducts.map((product) => [product.id, product]))
       setProducts((current) => current.map((product) => updatedById.get(product.id) || product))

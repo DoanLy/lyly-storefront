@@ -333,6 +333,15 @@
 .product-image-picker b { color: #365747; font-size: 12px; }
 .product-image-picker small { color: #81918a; font-size: 10px; line-height: 1.45; }
 .product-image-picker input { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; opacity: 0; cursor: pointer; }
+.product-gallery-picker { display: grid; gap: 10px; padding: 12px; border: 1px solid #dfe8e1; border-radius: 8px; background: #fbfdfb; }
+.product-gallery-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.gallery-upload-slot { min-height: 132px; position: relative; display: grid; align-content: center; justify-items: center; gap: 6px; padding: 9px; border: 1px dashed #b8c9be; border-radius: 7px; color: #60786d; background: white; text-align: center; overflow: hidden; cursor: pointer; }
+.gallery-upload-slot:hover { border-color: #71957f; background: #f7fbf5; }
+.gallery-upload-slot span { font-size: 9px; }
+.gallery-upload-slot img { width: 100%; aspect-ratio: 1; object-fit: cover; border: 1px solid #dfe8e1; border-radius: 5px; }
+.gallery-upload-slot b { max-width: 100%; overflow: hidden; color: #365747; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.gallery-upload-slot button { position: relative; z-index: 2; height: 24px; padding: 0 8px; border: 1px solid #efd2d2; border-radius: 12px; color: #a43a3a; background: white; font-size: 9px; font-weight: 700; }
+.gallery-upload-slot input, .variant-image-upload input { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; opacity: 0; cursor: pointer; }
 .modal-form .product-mode-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .product-mode-toggle button { height: 36px; border: 1px solid #d6e0d9; border-radius: 18px; color: #50665d; background: white; font-size: 11px; font-weight: 700; }
 .product-mode-toggle button.active { border-color: #274d3c; color: white; background: #274d3c; }
@@ -343,9 +352,33 @@
 .variant-row > button { height: 37px; display: grid; place-items: center; border: 1px solid #efd2d2; border-radius: 5px; color: #a43a3a; background: white; }
 .variant-card { display: grid; gap: 8px; padding: 10px; border: 1px solid #e2eae5; border-radius: 7px; background: white; }
 .variant-card > div { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.variant-image-upload > div { min-height: 96px; position: relative; display: grid; grid-template-columns: 76px 1fr; gap: 8px 11px; align-items: center; padding: 9px; border: 1px dashed #b8c9be; border-radius: 7px; background: #fbfdfb; overflow: hidden; cursor: pointer; }
+.variant-image-upload img { grid-row: span 3; width: 76px; height: 76px; object-fit: cover; border: 1px solid #dfe8e1; border-radius: 5px; background: white; }
+.variant-image-upload strong { min-width: 0; overflow: hidden; color: #365747; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.variant-image-upload small { color: #81918a; font-size: 10px; }
+.variant-image-upload button { position: relative; z-index: 2; justify-self: start; height: 25px; padding: 0 9px; border: 1px solid #efd2d2; border-radius: 13px; color: #a43a3a; background: white; font-size: 9px; font-weight: 700; }
 .variant-remove { justify-self: end; height: 29px; padding: 0 10px; border: 1px solid #efd2d2; border-radius: 15px; color: #a43a3a; background: white; font-size: 10px; font-weight: 700; }
 .modal-note { margin: 0; color: #73847c; font-size: 11px; line-height: 1.55; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 7px; margin-top: 2px; }
+.confirm-delete { display: grid; gap: 13px; padding: 18px; }
+.confirm-delete > svg { color: #a94f46; }
+.confirm-delete p { margin: 0; color: #465850; font-size: 13px; line-height: 1.55; }
+.bulk-editor-overlay { display: block; padding: 0; background: #f6f8f5; backdrop-filter: none; }
+.bulk-editor { height: 100vh; display: grid; grid-template-rows: 58px minmax(0, 1fr); background: #f6f8f5; }
+.bulk-editor-head { display: grid; grid-template-columns: 120px 1fr auto 88px; align-items: center; gap: 12px; padding: 0 18px; border-bottom: 1px solid #d8e2dc; background: white; box-shadow: 0 1px 8px #1d30250f; }
+.bulk-editor-head strong { color: #2c4038; font-size: 14px; }
+.bulk-editor-head .admin-primary, .bulk-editor-head .admin-secondary { height: 35px; }
+.bulk-editor-table-wrap { overflow: auto; }
+.bulk-editor-table { width: max(100%, 1420px); border-collapse: collapse; background: white; }
+.bulk-editor-table th { position: sticky; top: 0; z-index: 1; height: 37px; padding: 0 13px; border: 1px solid #dbe3df; color: #2d3e37; background: #fbfcfb; font-size: 12px; font-weight: 700; text-align: left; }
+.bulk-editor-table td { height: 40px; padding: 0 10px; border: 1px solid #e5ebe8; color: #2e3d37; background: white; }
+.bulk-editor-table input, .bulk-editor-table select { width: 100%; height: 30px; border: 0; outline: 2px solid transparent; color: #2e3d37; background: transparent; font-size: 12px; }
+.bulk-editor-table input:focus, .bulk-editor-table select:focus { outline-color: #1f6fff; background: white; }
+.bulk-product-name { display: grid; grid-template-columns: 28px 1fr; align-items: center; gap: 8px; }
+.bulk-product-name img { width: 25px; height: 25px; object-fit: cover; border-radius: 4px; background: #edf1ee; }
+.bulk-product-name input { font-weight: 700; }
+.bulk-variant-row td { height: 34px; background: #fafafa; color: #66736d; }
+.bulk-variant-row td:first-child span { display: block; padding-left: 48px; font-size: 12px; }
 .admin-form { display: grid; gap: 12px; padding: 15px; }
 .admin-form label { display: grid; gap: 6px; color: #60736b; font-size: 11px; font-weight: 700; }
 .admin-form input, .admin-form select, .admin-form textarea { width: 100%; min-height: 37px; padding: 8px 10px; border: 1px solid #d6e0d8; border-radius: 5px; outline-color: #5f8970; color: #2f463b; background: white; font-size: 12px; }
@@ -463,6 +496,9 @@
   .product-filter-panel { grid-template-columns: 1fr 1fr; }
   .product-sku-jump, .product-filter-actions { grid-column: 1/-1; }
   .product-filter-actions { justify-content: flex-end; }
+  .product-gallery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .variant-image-upload > div { grid-template-columns: 64px 1fr; }
+  .variant-image-upload img { width: 64px; height: 64px; }
   .order-filter-panel { grid-template-columns: 1fr; }
   .order-bulk-bar span { width: 100%; margin-right: 0; }
   .order-detail { grid-template-columns: 1fr; padding: 10px; }
