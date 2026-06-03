@@ -179,7 +179,7 @@ const navGroups = [
       { id: 'customers', label: 'Khách hàng', icon: Users },
       { id: 'marketing', label: 'Tiếp thị', icon: Megaphone },
       { id: 'discounts', label: 'Giảm giá', icon: BadgePercent },
-      { id: 'content', label: 'Nội dung', icon: FileText },
+      { id: 'content', label: 'Nội dung', icon: FileText, children: [{ id: 'content-recipes', label: 'Recipes' }, { id: 'content-blog', label: 'Blog' }] },
       { id: 'analytics', label: 'Phân tích', icon: BarChart3, children: [{ id: 'analytics-reports', label: 'Báo cáo' }] },
     ],
   },
@@ -200,6 +200,8 @@ const pageMeta = {
   marketing: ['Tiếp thị', 'Tạo chiến dịch để khách hàng quay lại với LyLy.'],
   discounts: ['Giảm giá', 'Quản lý mã ưu đãi và chương trình khuyến mại.'],
   content: ['Nội dung', 'Quản lý bài viết và nội dung hiển thị trên storefront.'],
+  'content-recipes': ['Recipes', 'Tạo và quản lý bài viết công thức trên storefront.'],
+  'content-blog': ['Blog', 'Tạo và quản lý bài viết blog/news trên storefront.'],
   analytics: ['Phân tích', 'Theo dõi hiệu quả bán hàng và hành vi khách hàng.'],
   'analytics-reports': ['Báo cáo', 'Phân tích các báo cáo quan trọng cho vận hành thương mại điện tử.'],
   locations: ['Điểm bán hàng', 'Cấu hình địa điểm lấy hàng và khu vực giao hàng.'],
@@ -223,6 +225,8 @@ const adminI18n = {
       marketing: 'Tiếp thị',
       discounts: 'Giảm giá',
       content: 'Nội dung',
+      'content-recipes': 'Recipes',
+      'content-blog': 'Blog',
       analytics: 'Phân tích',
       'analytics-reports': 'Báo cáo',
       'online-store': 'Cửa hàng trực tuyến',
@@ -276,6 +280,8 @@ const adminI18n = {
       marketing: 'Marketing',
       discounts: 'Discounts',
       content: 'Content',
+      'content-recipes': 'Recipes',
+      'content-blog': 'Blog',
       analytics: 'Analytics',
       'analytics-reports': 'Reports',
       'online-store': 'Online store',
@@ -290,6 +296,8 @@ const adminI18n = {
       marketing: ['Marketing', 'Create campaigns that bring customers back to LyLy.'],
       discounts: ['Discounts', 'Manage promotion codes and discount programs.'],
       content: ['Content', 'Manage articles and content displayed on the storefront.'],
+      'content-recipes': ['Recipes', 'Create and manage recipe articles for the storefront.'],
+      'content-blog': ['Blog', 'Create and manage blog/news articles for the storefront.'],
       analytics: ['Analytics', 'Track sales performance and customer behavior.'],
       'analytics-reports': ['Reports', 'Review essential ecommerce reports for sales, products, customers and operations.'],
       locations: ['Locations', 'Configure pickup points and delivery zones.'],
@@ -1334,17 +1342,19 @@ function ContentPage({ meta }) {
   )
 }
 
-function ContentManagePage({ meta, articles, onCreate, onEdit, onView, onRemove }) {
+function ContentManagePage({ meta, articles, type = 'all', onCreate, onEdit, onView, onRemove }) {
   const [query, setQuery] = useState('')
   const [tab, setTab] = useState('all')
   const visible = articles.filter((article) => {
     const matchesQuery = `${article.title} ${article.author} ${article.category} ${article.tags?.join(' ')}`.toLowerCase().includes(query.toLowerCase())
     const matchesTab = tab === 'all' || article.status.toLowerCase() === tab
-    return matchesQuery && matchesTab
+    const matchesType = type === 'all' || article.type === type
+    return matchesQuery && matchesTab && matchesType
   })
+  const createLabel = type === 'recipe' ? 'Tạo recipe mới' : type === 'news' ? 'Tạo bài blog mới' : 'Viết bài mới'
   return (
     <>
-      <SectionTitle title={meta.content[0]} description={meta.content[1]} action="Viết bài mới" onAction={onCreate} />
+      <SectionTitle title={meta[0]} description={meta[1]} action={createLabel} onAction={onCreate} />
       <section className="admin-panel data-panel">
         <div className="data-tabs"><button className={tab === 'all' ? 'active' : ''} type="button" onClick={() => setTab('all')}>Tất cả</button><button className={tab === 'published' ? 'active' : ''} type="button" onClick={() => setTab('published')}>Hiển thị</button><button className={tab === 'draft' ? 'active' : ''} type="button" onClick={() => setTab('draft')}>Đã ẩn</button></div>
         <div className="table-toolbar"><label><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm bài viết, tác giả, thẻ" /></label></div>
@@ -1355,19 +1365,19 @@ function ContentManagePage({ meta, articles, onCreate, onEdit, onView, onRemove 
               <div><StatusPill>{article.status}</StatusPill><h3>{article.title}</h3><p>{article.author} · {article.date}</p><div><button className="admin-secondary" type="button" onClick={() => onEdit(article)}><Pencil size={14} /> Sửa</button><button className="row-icon" type="button" onClick={() => onView(article)}><Eye size={16} /></button><button className="row-icon" type="button" onClick={() => onRemove(article.id)}><Trash2 size={16} /></button></div></div>
             </article>
           ))}
-          <button className="new-content-card" type="button" onClick={onCreate}><Plus size={24} /><span>Tạo bài viết mới</span></button>
+          <button className="new-content-card" type="button" onClick={onCreate}><Plus size={24} /><span>{createLabel}</span></button>
         </div>
       </section>
     </>
   )
 }
 
-function ArticleModal({ article, onClose, onSubmit }) {
+function ArticleModal({ article, defaultType = 'news', onClose, onSubmit }) {
   const [form, setForm] = useState({
     title: article?.title || '',
     slug: article?.slug || '',
-    type: article?.type || 'news',
-    category: article?.category || 'News',
+    type: article?.type || defaultType,
+    category: article?.category || (defaultType === 'recipe' ? 'Recipes' : 'News'),
     excerpt: article?.excerpt || '',
     content: article?.content || '',
     image: article?.image || '',
@@ -1377,7 +1387,12 @@ function ArticleModal({ article, onClose, onSubmit }) {
   })
   const change = (event) => {
     const { name, value } = event.target
-    setForm((current) => ({ ...current, [name]: value, ...(name === 'title' && !article ? { slug: slugify(value) } : {}) }))
+    setForm((current) => ({
+      ...current,
+      [name]: value,
+      ...(name === 'type' ? { category: value === 'recipe' ? 'Recipes' : 'News' } : {}),
+      ...(name === 'title' && !article ? { slug: slugify(value) } : {}),
+    }))
   }
   const submit = (event) => {
     event.preventDefault()
@@ -2471,6 +2486,7 @@ function AdminApp() {
   const [customerDetail, setCustomerDetail] = useState(null)
   const [articleModal, setArticleModal] = useState(false)
   const [articleEditing, setArticleEditing] = useState(null)
+  const [articleDefaultType, setArticleDefaultType] = useState('news')
   const [articleDetail, setArticleDetail] = useState(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
@@ -2918,7 +2934,10 @@ function AdminApp() {
     if (page === 'customers') return <CustomersManagePage meta={localizedMeta} customers={adminCustomers} onCreate={() => { setCustomerEditing(null); setCustomerModal(true) }} onEdit={(customer) => { setCustomerDetail(null); setCustomerEditing(customer); setCustomerModal(true) }} onView={setCustomerDetail} onRemove={removeCustomer} />
     if (page === 'marketing') return <MarketingPage meta={localizedMeta} />
     if (page === 'discounts') return <DiscountsManagePage meta={localizedMeta} discounts={discounts} onCreate={() => { setDiscountEditing(null); setDiscountModal(true) }} onEdit={editDiscount} onView={setDiscountDetail} onRemove={removeDiscount} />
-    if (page === 'content') return <ContentManagePage meta={localizedMeta} articles={adminArticles} onCreate={() => { setArticleEditing(null); setArticleModal(true) }} onEdit={(article) => { setArticleDetail(null); setArticleEditing(article); setArticleModal(true) }} onView={setArticleDetail} onRemove={removeArticle} />
+    if (page === 'content' || page === 'content-recipes' || page === 'content-blog') {
+      const type = page === 'content-recipes' ? 'recipe' : page === 'content-blog' ? 'news' : 'all'
+      return <ContentManagePage meta={localizedMeta[page] || localizedMeta.content} articles={adminArticles} type={type} onCreate={() => { setArticleDefaultType(type === 'recipe' ? 'recipe' : 'news'); setArticleEditing(null); setArticleModal(true) }} onEdit={(article) => { setArticleDefaultType(article.type || 'news'); setArticleDetail(null); setArticleEditing(article); setArticleModal(true) }} onView={setArticleDetail} onRemove={removeArticle} />
+    }
     if (page === 'analytics') return <AnalyticsPage meta={localizedMeta} orders={adminOrders} products={products} customers={adminCustomers} />
     if (page === 'analytics-reports') return <ReportsPage meta={localizedMeta} orders={adminOrders} products={products} customers={adminCustomers} discounts={discounts} />
     if (page === 'locations') return <LocationsPage meta={localizedMeta} />
@@ -2987,7 +3006,7 @@ function AdminApp() {
       {discountDetail && <DiscountDetailModal discount={discountDetail} onClose={() => setDiscountDetail(null)} onEdit={editDiscount} onRemove={removeDiscount} />}
       {customerModal && <CustomerModal customer={customerEditing} onClose={() => { setCustomerEditing(null); setCustomerModal(false) }} onSubmit={saveCustomer} />}
       {customerDetail && <CustomerDetailModal customer={customerDetail} onClose={() => setCustomerDetail(null)} onEdit={(customer) => { setCustomerDetail(null); setCustomerEditing(customer); setCustomerModal(true) }} onRemove={removeCustomer} />}
-      {articleModal && <ArticleModal article={articleEditing} onClose={() => { setArticleEditing(null); setArticleModal(false) }} onSubmit={saveArticle} />}
+      {articleModal && <ArticleModal article={articleEditing} defaultType={articleDefaultType} onClose={() => { setArticleEditing(null); setArticleModal(false) }} onSubmit={saveArticle} />}
       {articleDetail && <ArticleDetailModal article={articleDetail} onClose={() => setArticleDetail(null)} onEdit={(article) => { setArticleDetail(null); setArticleEditing(article); setArticleModal(true) }} onRemove={removeArticle} />}
     </div>
   )

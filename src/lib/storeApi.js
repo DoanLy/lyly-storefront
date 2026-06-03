@@ -225,12 +225,16 @@ function customerPayload(customer) {
 
 function mapArticle(article) {
   const publishedAt = article.published_at || article.created_at
+  const tags = Array.isArray(article.tags) ? article.tags : []
+  const normalizedCategory = String(article.category || '').toLowerCase()
+  const normalizedType = String(article.type || '').toLowerCase()
+  const type = normalizedType === 'recipe' || normalizedCategory === 'recipes' || tags.some((tag) => String(tag).toLowerCase() === 'recipe') ? 'recipe' : 'news'
   return {
     id: article.id,
     title: article.title,
     slug: article.slug,
     category: article.category,
-    type: article.type || (article.category === 'Recipes' ? 'recipe' : 'news'),
+    type,
     excerpt: article.excerpt || '',
     content: article.content || '',
     image: article.image_url,
@@ -238,7 +242,7 @@ function mapArticle(article) {
     author: article.author || 'LyLy Editorial',
     date: publishedAt ? new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(new Date(publishedAt)) : '',
     publishedAt,
-    tags: Array.isArray(article.tags) ? article.tags : [],
+    tags,
     ingredients: [],
   }
 }

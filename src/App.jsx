@@ -1239,14 +1239,14 @@ function BlogIndexPage({ type, articles }) {
       <div className="breadcrumbs"><a href="/">Home</a><ChevronRight size={13} /><b>{isRecipes ? 'Recipes' : 'News'}</b></div>
       <h1>{isRecipes ? 'Recipes' : 'News'}</h1>
       <section className="article-grid-page">
-        {list.map((article) => (
+        {list.length ? list.map((article) => (
           <a className="article-list-card" href={isRecipes ? `/blogs/recipes/${article.slug}` : `/blogs/news/${article.slug}`} key={article.slug}>
             <img src={article.image} alt="" />
             <h2>{article.title}</h2>
             <small>{article.date}</small>
             <p>{article.excerpt}</p>
           </a>
-        ))}
+        )) : <p className="article-empty">No {isRecipes ? 'recipes' : 'articles'} are published yet.</p>}
       </section>
     </main>
   )
@@ -1939,7 +1939,16 @@ function App() {
       .then((data) => data?.length && setDiscounts(data))
       .catch((error) => console.error('Unable to load discounts from Supabase.', error))
     loadPublicArticles()
-      .then((data) => data?.length && setStoreArticles(data))
+      .then((data) => {
+        if (!data?.length) return
+        const hasRecipes = data.some((article) => article.type === 'recipe')
+        const hasNews = data.some((article) => article.type === 'news')
+        setStoreArticles([
+          ...data,
+          ...(!hasRecipes ? editorialArticles.filter((article) => article.type === 'recipe') : []),
+          ...(!hasNews ? editorialArticles.filter((article) => article.type === 'news') : []),
+        ])
+      })
       .catch((error) => console.error('Unable to load articles from Supabase.', error))
     loadStoreSettings()
       .then((data) => data && setStoreSettings(data))
@@ -2215,7 +2224,14 @@ function App() {
                 </div>
               </div>
             </div>
-            <a href="/about-us">About us</a>
+            <div className="simple-nav-menu">
+              <a href="/about-us">About us <ChevronDown size={15} /></a>
+              <div>
+                <a href="/about-us">About us</a>
+                <a href="/our-stores">Our stores</a>
+                <a href="/faq">FAQ</a>
+              </div>
+            </div>
             <a href="/recipes">Recipes</a>
             <a href="/blog">Blog</a>
           </nav>

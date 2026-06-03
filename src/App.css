@@ -51,6 +51,11 @@ header { background: #fff; position: relative; z-index: 10; border-bottom: 1px s
 .header-nav { min-height: 67px; padding: 0 4.1%; display: flex; align-items: center; justify-content: space-between; }
 .header-nav nav { display: flex; align-self: stretch; align-items: center; gap: 38px; font-size: 14px; font-weight: 600; }
 .header-nav nav a, .service-links a, .service-links button, .service-links span { display: flex; align-items: center; gap: 6px; }
+.simple-nav-menu { position: relative; display: flex; align-self: stretch; align-items: center; }
+.simple-nav-menu > div { min-width: 180px; position: absolute; z-index: 35; top: 100%; left: -18px; visibility: hidden; display: grid; gap: 2px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: white; box-shadow: 0 18px 32px #1f352714; opacity: 0; transform: translateY(-8px); transition: opacity .18s ease, transform .18s ease, visibility .18s; }
+.simple-nav-menu:hover > div, .simple-nav-menu:focus-within > div { visibility: visible; opacity: 1; transform: translateY(0); }
+.simple-nav-menu > div a { padding: 9px 10px; border-radius: 5px; color: #324f42; white-space: nowrap; }
+.simple-nav-menu > div a:hover { background: #f5faf3; }
 .categories-menu { display: flex; align-self: stretch; align-items: center; }
 .categories-trigger { display: flex; align-items: center; gap: 6px; padding: 0; border: 0; color: #568a61; background: transparent; font-size: 14px; font-weight: 700; }
 .categories-trigger svg { transition: transform .2s ease; }
@@ -72,6 +77,7 @@ header { background: #fff; position: relative; z-index: 10; border-bottom: 1px s
 .mega-menu-promo p { margin: 0 0 10px; font-size: 13px; font-weight: 600; }
 .mega-menu-promo h3 { margin: 0 0 24px; color: #20382c; font-family: 'Libre Baskerville', Georgia, serif; font-size: 28px; font-weight: 400; letter-spacing: -.06em; }
 .mega-menu-promo span { width: 174px; height: 47px; display: inline-flex; align-items: center; justify-content: center; border-radius: 25px; color: white; background: #1e211f; font-size: 13px; font-weight: 700; }
+.article-empty { grid-column: 1/-1; margin: 0; color: var(--muted); font-size: 16px; }
 .service-links { display: flex; gap: 33px; }
 .service-links a, .service-links button { gap: 10px; border: 0; color: var(--ink); background: transparent; font-size: 13px; text-align: left; }
 .service-links span { align-items: flex-start; flex-direction: column; gap: 2px; font-weight: 600; }
