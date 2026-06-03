@@ -159,6 +159,7 @@ const initialStoreSettings = {
   general: { storeName: 'LyLy Fresh Market', contactEmail: 'lydoan.king@gmail.com', phone: '', country: 'Vietnam', currency: 'VND', timezone: 'Asia/Bangkok', orderPrefix: 'LY' },
   shipping: { pickupEnabled: true, deliveryEnabled: true, freeShippingThreshold: 75, localDeliveryFee: 0, domesticShippingFee: 8, expressShippingFee: 18, promise: 'Usually ready in 2 hrs' },
   notifications: { senderEmail: 'lydoan.king@gmail.com', customerNotifications: true, staffNotifications: true, webhooks: false },
+  users: [{ id: 'owner', name: 'Doan Thi Truc Ly', email: 'lydoan.king@gmail.com', role: 'Owner', status: 'Active', twoFactor: true }],
 }
 
 const campaigns = [
@@ -1472,6 +1473,7 @@ function SettingsPage({ meta }) {
   )
 }
 
+// eslint-disable-next-line no-unused-vars
 function SettingsManagePage({ meta, settings, onSave }) {
   const [form, setForm] = useState(settings)
   const setGroupValue = (group, name, value) => setForm((current) => ({ ...current, [group]: { ...current[group], [name]: value } }))
@@ -1487,6 +1489,156 @@ function SettingsManagePage({ meta, settings, onSave }) {
         <section className="admin-panel"><h3>Vận chuyển và giao hàng</h3><label className="discount-check"><input type="checkbox" checked={form.shipping.pickupEnabled} onChange={(event) => setGroupValue('shipping', 'pickupEnabled', event.target.checked)} /> Cho phép nhận hàng tại cửa hàng</label><label className="discount-check"><input type="checkbox" checked={form.shipping.deliveryEnabled} onChange={(event) => setGroupValue('shipping', 'deliveryEnabled', event.target.checked)} /> Cho phép giao hàng tận nơi</label><div className="settings-two"><label><span>Miễn phí từ</span><input type="number" value={form.shipping.freeShippingThreshold} onChange={(event) => setGroupValue('shipping', 'freeShippingThreshold', Number(event.target.value))} /></label><label><span>Phí giao nội địa</span><input type="number" value={form.shipping.domesticShippingFee} onChange={(event) => setGroupValue('shipping', 'domesticShippingFee', Number(event.target.value))} /></label></div><label><span>Cam kết giao/nhận</span><input value={form.shipping.promise} onChange={(event) => setGroupValue('shipping', 'promise', event.target.value)} /></label></section>
         <section className="admin-panel"><h3>Thông báo</h3><label><span>Email người gửi</span><input type="email" value={form.notifications.senderEmail} onChange={(event) => setGroupValue('notifications', 'senderEmail', event.target.value)} /></label><label className="discount-check"><input type="checkbox" checked={form.notifications.customerNotifications} onChange={(event) => setGroupValue('notifications', 'customerNotifications', event.target.checked)} /> Gửi thông báo cho khách hàng</label><label className="discount-check"><input type="checkbox" checked={form.notifications.staffNotifications} onChange={(event) => setGroupValue('notifications', 'staffNotifications', event.target.checked)} /> Gửi thông báo cho nhân viên</label><label className="discount-check"><input type="checkbox" checked={form.notifications.webhooks} onChange={(event) => setGroupValue('notifications', 'webhooks', event.target.checked)} /> Bật webhook</label></section>
         <div className="settings-save"><button className="admin-primary" type="submit">Lưu cài đặt</button></div>
+      </form>
+    </>
+  )
+}
+
+function SettingsWorkspacePage({ meta, settings, orders, onSave }) {
+  const [section, setSection] = useState('general')
+  const [form, setForm] = useState(settings)
+  const [newUser, setNewUser] = useState({ name: '', email: '', role: 'Staff', status: 'Invited', twoFactor: false })
+  const users = form.users || []
+  const openOrders = orders.filter((order) => !['Delivered', 'Cancelled'].includes(order.delivery)).slice(0, 5)
+  const settingsNav = [
+    { id: 'general', icon: Store, title: 'Chung', text: 'Thông tin cửa hàng, tiền tệ, múi giờ và định dạng đơn hàng.' },
+    { id: 'users', icon: Users, title: 'Người dùng & phân quyền', text: 'Quản lý tài khoản nội bộ, vai trò và trạng thái truy cập.' },
+    { id: 'shipping', icon: Truck, title: 'Vận chuyển và giao hàng', text: 'Bật tắt nhận hàng, giao hàng và cấu hình phí vận chuyển.' },
+    { id: 'notifications', icon: Bell, title: 'Thông báo', text: 'Cấu hình email gửi, thông báo nhân viên và webhook.' },
+  ]
+  const roleOptions = ['Owner', 'Admin', 'Staff', 'Fulfillment', 'Viewer']
+  const statusOptions = ['Active', 'Invited', 'Disabled']
+  const setGroupValue = (group, name, value) => setForm((current) => ({ ...current, [group]: { ...(current[group] || {}), [name]: value } }))
+  const addUser = () => {
+    if (!newUser.name.trim() || !newUser.email.trim()) return
+    setForm((current) => ({ ...current, users: [{ ...newUser, id: `user-${Date.now()}` }, ...(current.users || [])] }))
+    setNewUser({ name: '', email: '', role: 'Staff', status: 'Invited', twoFactor: false })
+  }
+  const updateUser = (id, field, value) => setForm((current) => ({ ...current, users: (current.users || []).map((user) => user.id === id ? { ...user, [field]: value } : user) }))
+  const removeUser = (id) => setForm((current) => ({ ...current, users: (current.users || []).filter((user) => user.id !== id) }))
+  const submit = (event) => {
+    event.preventDefault()
+    onSave(form)
+  }
+
+  return (
+    <>
+      <SectionTitle title={meta.settings[0]} description={meta.settings[1]} />
+      <form className="settings-workspace" onSubmit={submit}>
+        <aside className="admin-panel settings-menu">
+          {settingsNav.map((item) => {
+            const Icon = item.icon
+            return (
+              <button className={section === item.id ? 'active' : ''} key={item.id} type="button" onClick={() => setSection(item.id)}>
+                <Icon size={18} />
+                <span><b>{item.title}</b><small>{item.text}</small></span>
+              </button>
+            )
+          })}
+        </aside>
+
+        <div className="settings-page-panel">
+          {section === 'general' && (
+            <>
+              <section className="admin-panel settings-section-card">
+                <h3>Thông tin doanh nghiệp</h3>
+                <p>Dữ liệu này được dùng trên admin, email, thông báo đơn hàng và các phần hiển thị công khai của cửa hàng.</p>
+                <div className="settings-two">
+                  <label>Tên cửa hàng<input value={form.general?.storeName || ''} onChange={(event) => setGroupValue('general', 'storeName', event.target.value)} /></label>
+                  <label>Email liên hệ<input type="email" value={form.general?.contactEmail || ''} onChange={(event) => setGroupValue('general', 'contactEmail', event.target.value)} /></label>
+                </div>
+                <div className="settings-two">
+                  <label>Số điện thoại<input value={form.general?.phone || ''} onChange={(event) => setGroupValue('general', 'phone', event.target.value)} /></label>
+                  <label>Quốc gia<input value={form.general?.country || ''} onChange={(event) => setGroupValue('general', 'country', event.target.value)} /></label>
+                </div>
+              </section>
+              <section className="admin-panel settings-section-card">
+                <h3>Mặc định cửa hàng</h3>
+                <div className="settings-two">
+                  <label>Tiền tệ<select value={form.general?.currency || 'VND'} onChange={(event) => setGroupValue('general', 'currency', event.target.value)}><option>VND</option><option>USD</option><option>EUR</option></select></label>
+                  <label>Múi giờ<select value={form.general?.timezone || 'Asia/Bangkok'} onChange={(event) => setGroupValue('general', 'timezone', event.target.value)}><option>Asia/Bangkok</option><option>Asia/Ho_Chi_Minh</option><option>UTC</option></select></label>
+                </div>
+                <div className="settings-two">
+                  <label>Tiền tố đơn hàng<input value={form.general?.orderPrefix || ''} onChange={(event) => setGroupValue('general', 'orderPrefix', event.target.value)} /></label>
+                  <label>Hậu tố đơn hàng<input value={form.general?.orderSuffix || ''} onChange={(event) => setGroupValue('general', 'orderSuffix', event.target.value)} /></label>
+                </div>
+              </section>
+            </>
+          )}
+
+          {section === 'users' && (
+            <>
+              <section className="admin-panel settings-section-card">
+                <h3>Thêm người dùng</h3>
+                <div className="settings-two">
+                  <label>Tên<input value={newUser.name} onChange={(event) => setNewUser((current) => ({ ...current, name: event.target.value }))} /></label>
+                  <label>Email<input type="email" value={newUser.email} onChange={(event) => setNewUser((current) => ({ ...current, email: event.target.value }))} /></label>
+                </div>
+                <div className="settings-two">
+                  <label>Vai trò<select value={newUser.role} onChange={(event) => setNewUser((current) => ({ ...current, role: event.target.value }))}>{roleOptions.map((role) => <option key={role}>{role}</option>)}</select></label>
+                  <label>Trạng thái<select value={newUser.status} onChange={(event) => setNewUser((current) => ({ ...current, status: event.target.value }))}>{statusOptions.map((status) => <option key={status}>{status}</option>)}</select></label>
+                </div>
+                <button className="admin-secondary" type="button" onClick={addUser}><Plus size={15} /> Thêm người dùng</button>
+              </section>
+              <section className="admin-panel managed-content-grid">
+                <div className="admin-table settings-user-table">
+                  <div className="admin-table-row head"><span>Người dùng</span><span>Vai trò</span><span>Trạng thái</span><span>2FA</span><span>Thao tác</span></div>
+                  {users.map((user) => (
+                    <div className="admin-table-row" key={user.id}>
+                      <span><b>{user.name}</b><small>{user.email}</small></span>
+                      <span><select value={user.role} onChange={(event) => updateUser(user.id, 'role', event.target.value)}>{roleOptions.map((role) => <option key={role}>{role}</option>)}</select></span>
+                      <span><select value={user.status} onChange={(event) => updateUser(user.id, 'status', event.target.value)}>{statusOptions.map((status) => <option key={status}>{status}</option>)}</select></span>
+                      <span><label className="settings-inline-check"><input type="checkbox" checked={Boolean(user.twoFactor)} onChange={(event) => updateUser(user.id, 'twoFactor', event.target.checked)} /> Bật</label></span>
+                      <span><button className="icon-danger" type="button" onClick={() => removeUser(user.id)} disabled={user.role === 'Owner'}><Trash2 size={15} /></button></span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </>
+          )}
+
+          {section === 'shipping' && (
+            <>
+              <section className="admin-panel settings-section-card">
+                <h3>Phương thức giao hàng</h3>
+                <label className="settings-inline-check"><input type="checkbox" checked={Boolean(form.shipping?.pickupEnabled)} onChange={(event) => setGroupValue('shipping', 'pickupEnabled', event.target.checked)} /> Cho phép nhận hàng tại cửa hàng</label>
+                <label className="settings-inline-check"><input type="checkbox" checked={Boolean(form.shipping?.deliveryEnabled)} onChange={(event) => setGroupValue('shipping', 'deliveryEnabled', event.target.checked)} /> Cho phép giao hàng tận nơi</label>
+                <div className="settings-two">
+                  <label>Ngưỡng miễn phí giao hàng<input type="number" value={form.shipping?.freeShippingThreshold || 0} onChange={(event) => setGroupValue('shipping', 'freeShippingThreshold', Number(event.target.value))} /></label>
+                  <label>Cam kết xử lý<input value={form.shipping?.promise || ''} onChange={(event) => setGroupValue('shipping', 'promise', event.target.value)} /></label>
+                </div>
+              </section>
+              <section className="admin-panel settings-section-card">
+                <h3>Phí vận chuyển</h3>
+                <div className="settings-two">
+                  <label>Phí nội thành<input type="number" value={form.shipping?.localDeliveryFee || 0} onChange={(event) => setGroupValue('shipping', 'localDeliveryFee', Number(event.target.value))} /></label>
+                  <label>Phí tiêu chuẩn<input type="number" value={form.shipping?.domesticShippingFee || 0} onChange={(event) => setGroupValue('shipping', 'domesticShippingFee', Number(event.target.value))} /></label>
+                </div>
+                <label>Phí nhanh<input type="number" value={form.shipping?.expressShippingFee || 0} onChange={(event) => setGroupValue('shipping', 'expressShippingFee', Number(event.target.value))} /></label>
+              </section>
+            </>
+          )}
+
+          {section === 'notifications' && (
+            <>
+              <section className="admin-panel settings-section-card">
+                <h3>Email người gửi</h3>
+                <p>Email này dùng cho các thông báo đơn hàng và cập nhật trạng thái.</p>
+                <label>Email gửi<input type="email" value={form.notifications?.senderEmail || ''} onChange={(event) => setGroupValue('notifications', 'senderEmail', event.target.value)} /></label>
+                <label className="settings-inline-check"><input type="checkbox" checked={Boolean(form.notifications?.customerNotifications)} onChange={(event) => setGroupValue('notifications', 'customerNotifications', event.target.checked)} /> Gửi thông báo cho khách hàng</label>
+                <label className="settings-inline-check"><input type="checkbox" checked={Boolean(form.notifications?.staffNotifications)} onChange={(event) => setGroupValue('notifications', 'staffNotifications', event.target.checked)} /> Báo cho nhân viên khi có đơn hàng cần xử lý</label>
+                <label className="settings-inline-check"><input type="checkbox" checked={Boolean(form.notifications?.webhooks)} onChange={(event) => setGroupValue('notifications', 'webhooks', event.target.checked)} /> Bật webhook sự kiện đơn hàng</label>
+              </section>
+              <section className="admin-panel settings-section-card">
+                <h3>Thông báo đơn hàng hiện tại</h3>
+                <div className="settings-event-list">
+                  {openOrders.length ? openOrders.map((order) => <p key={order.id}><ShoppingCart size={16} /><span>{order.id} - {order.customer} - {money(order.total)} - {order.delivery}</span></p>) : <p><CheckCircle2 size={16} /><span>Không có đơn hàng mới cần xử lý.</span></p>}
+                </div>
+              </section>
+            </>
+          )}
+          <div className="settings-save"><button className="admin-primary" type="submit">Lưu cài đặt</button></div>
+        </div>
       </form>
     </>
   )
@@ -2081,6 +2233,19 @@ function AdminApp() {
     ].filter((item) => `${item.type} ${item.label}`.toLowerCase().includes(globalSearch.toLowerCase()))
   }, [globalSearch, products, adminOrders])
 
+  const adminNotifications = useMemo(() => {
+    if (!storeSettings.notifications?.staffNotifications) return []
+    return adminOrders
+      .filter((order) => !['Delivered', 'Cancelled'].includes(order.delivery))
+      .slice(0, 8)
+      .map((order) => ({
+        id: order.id,
+        title: `Đơn hàng ${order.id} cần xử lý`,
+        message: `${order.customer} · ${money(order.total)} · ${order.delivery}`,
+        page: 'orders',
+      }))
+  }, [adminOrders, storeSettings.notifications?.staffNotifications])
+
   useEffect(() => {
     const update = () => setPage(getPage())
     window.addEventListener('popstate', update)
@@ -2136,6 +2301,15 @@ function AdminApp() {
     bootstrap()
     return () => { ignore = true }
   }, [])
+
+  useEffect(() => {
+    if (authStatus !== 'ready' || !isSupabaseConfigured) return undefined
+    const timer = window.setInterval(async () => {
+      const remoteOrders = await safeLoad(loadAdminOrders, null)
+      if (remoteOrders) setAdminOrders(remoteOrders)
+    }, 20000)
+    return () => window.clearInterval(timer)
+  }, [authStatus])
 
   const navigate = (nextPage) => {
     if (nextPage === 'online-store') {
@@ -2458,7 +2632,7 @@ function AdminApp() {
     if (page === 'analytics') return <AnalyticsPage meta={localizedMeta} orders={adminOrders} products={products} customers={adminCustomers} />
     if (page === 'analytics-reports') return <ReportsPage meta={localizedMeta} orders={adminOrders} products={products} customers={adminCustomers} discounts={discounts} />
     if (page === 'locations') return <LocationsPage meta={localizedMeta} />
-    if (page === 'settings') return <SettingsManagePage meta={localizedMeta} settings={storeSettings} onSave={saveSettings} />
+    if (page === 'settings') return <SettingsWorkspacePage meta={localizedMeta} settings={storeSettings} orders={adminOrders} onSave={saveSettings} />
     return <Dashboard tasks={tasks} setTasks={setTasks} orders={adminOrders} />
   }
 
@@ -2481,11 +2655,11 @@ function AdminApp() {
         <div className="topbar-actions">
           <button className="language-toggle" type="button" onClick={toggleLanguage} title="Switch language">{adminCopy.code}</button>
           <button type="button"><CircleHelp size={18} /></button>
-          <button type="button" onClick={() => setNotificationsOpen(!notificationsOpen)}><Bell size={18} /><i></i></button>
+          <button type="button" onClick={() => setNotificationsOpen(!notificationsOpen)}><Bell size={18} />{adminNotifications.length > 0 && <i>{adminNotifications.length > 9 ? '9+' : adminNotifications.length}</i>}</button>
           {isSupabaseConfigured && <button type="button" onClick={logout} title="Đăng xuất"><LogOut size={18} /></button>}
           <button className="store-switcher" type="button"><span>LY</span><b>LyLy Market</b><ChevronDown size={14} /></button>
         </div>
-        {notificationsOpen && <div className="notification-popover"><div><b>{adminCopy.notifications}</b><button type="button" onClick={() => setNotificationsOpen(false)}><X size={14} /></button></div><p><Truck size={16} /> Có 3 đơn hàng mới cần xử lý.</p><p><Package size={16} /> Atlantic Salmon Fillet sắp hết hàng.</p></div>}
+        {notificationsOpen && <div className="notification-popover"><div><b>{adminCopy.notifications}</b><button type="button" onClick={() => setNotificationsOpen(false)}><X size={14} /></button></div>{adminNotifications.length ? adminNotifications.map((item) => <button className="notification-item" type="button" key={item.id} onClick={() => { navigate(item.page); setNotificationsOpen(false) }}><ShoppingCart size={16} /><span><b>{item.title}</b><small>{item.message}</small></span></button>) : <p><CheckCircle2 size={16} /> Không có thông báo mới.</p>}</div>}
       </header>
 
       <aside className={`admin-sidebar ${menuOpen ? 'open' : ''}`}>

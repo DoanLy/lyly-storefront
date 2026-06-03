@@ -46,7 +46,7 @@
 .topbar-actions > button:not(.store-switcher) { width: 37px; height: 37px; position: relative; display: grid; place-items: center; border: 0; border-radius: 6px; color: #dbe9e1; background: transparent; }
 .topbar-actions > button:hover { background: #ffffff12; }
 .topbar-actions .language-toggle { width: auto !important; min-width: 42px; padding: 0 10px; border: 1px solid #ffffff24 !important; color: #f2f8f4 !important; font-size: 11px; font-weight: 800; letter-spacing: .07em; }
-.topbar-actions i { width: 6px; height: 6px; position: absolute; top: 7px; right: 8px; border: 1px solid #17342b; border-radius: 50%; background: #cbe478; }
+.topbar-actions i { min-width: 16px; height: 16px; position: absolute; top: 4px; right: 4px; display: grid; place-items: center; padding: 0 4px; border: 1px solid #17342b; border-radius: 999px; color: #183429; background: #cbe478; font-size: 8px; font-style: normal; font-weight: 900; line-height: 1; }
 .store-switcher { height: 42px; display: flex; align-items: center; gap: 8px; padding: 0 8px; border: 0; border-radius: 7px; color: white; background: transparent; }
 .store-switcher span { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; color: #213d31; background: #b8d36c; font-size: 10px; font-weight: 700; }
 .store-switcher b { font-size: 12px; }
@@ -55,6 +55,11 @@
 .notification-popover button { border: 0; color: var(--admin-muted); background: transparent; }
 .notification-popover p { display: flex; gap: 8px; margin: 0; padding: 11px 2px; border-bottom: 1px solid var(--admin-line); color: #52655c; font-size: 11px; line-height: 1.45; }
 .notification-popover p:last-child { border-bottom: 0; }
+.notification-item { width: 100%; display: flex; align-items: flex-start; gap: 9px; padding: 11px 2px; border-bottom: 1px solid var(--admin-line) !important; color: #52655c !important; text-align: left; }
+.notification-item:last-child { border-bottom: 0 !important; }
+.notification-item span { display: grid; gap: 3px; }
+.notification-item b { color: #314b3f; font-size: 11px; }
+.notification-item small { color: #74847d; font-size: 10px; line-height: 1.4; }
 .admin-mobile-menu { display: none; }
 
 .admin-sidebar { width: 250px; position: fixed; z-index: 35; top: 64px; bottom: 0; left: 0; display: flex; flex-direction: column; padding: 14px 12px; border-right: 1px solid var(--admin-line); background: #edf2ec; }
@@ -360,6 +365,27 @@
 .settings-editor input, .settings-editor select { min-height: 37px; padding: 0 10px; border: 1px solid #d6e0d8; border-radius: 5px; outline-color: #5f8970; color: #2f463b; background: white; font-size: 12px; }
 .settings-two { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
 .settings-save { grid-column: 1 / -1; display: flex; justify-content: flex-end; }
+.settings-workspace { display: grid; grid-template-columns: 310px minmax(0, 1fr); gap: 13px; align-items: start; }
+.settings-menu { display: grid; align-content: start; overflow: hidden; }
+.settings-menu button { display: grid; grid-template-columns: 24px 1fr; gap: 10px; align-items: start; padding: 13px 14px; border: 0; border-bottom: 1px solid var(--admin-line); color: #52665d; background: white; text-align: left; }
+.settings-menu button:last-child { border-bottom: 0; }
+.settings-menu button.active, .settings-menu button:hover { color: #24483a; background: #f5faf3; }
+.settings-menu span { display: grid; gap: 4px; }
+.settings-menu b { color: #344f43; font-size: 12px; }
+.settings-menu small { color: #7b8a83; font-size: 10px; line-height: 1.4; }
+.settings-page-panel { display: grid; gap: 13px; align-content: start; }
+.settings-section-card { display: grid; gap: 12px; padding: 15px; }
+.settings-section-card h3 { margin: 0; color: #344f43; font-size: 14px; }
+.settings-section-card p { margin: 0; color: #6f8078; font-size: 11px; line-height: 1.55; }
+.settings-section-card label { display: grid; gap: 6px; color: #60736b; font-size: 11px; font-weight: 700; }
+.settings-section-card input, .settings-section-card select, .settings-user-table select { min-height: 37px; padding: 0 10px; border: 1px solid #d6e0d8; border-radius: 5px; outline-color: #5f8970; color: #2f463b; background: white; font-size: 12px; }
+.settings-section-card .admin-secondary { justify-self: start; }
+.settings-inline-check { display: inline-flex !important; grid-template-columns: auto 1fr; align-items: center; gap: 8px !important; color: #52655c !important; font-size: 11px !important; font-weight: 700 !important; }
+.settings-inline-check input { width: 16px; min-height: 16px; padding: 0; }
+.settings-user-table .admin-table-row { grid-template-columns: minmax(170px, 1.2fr) minmax(110px, .75fr) minmax(110px, .75fr) 72px 60px; }
+.settings-user-table span small { display: block; margin-top: 3px; color: #7a8981; font-size: 10px; }
+.settings-event-list { display: grid; gap: 8px; }
+.settings-event-list p { display: flex; align-items: center; gap: 8px; padding: 9px 10px; border: 1px solid #e0e8e2; border-radius: 6px; background: #fbfdfb; }
 .order-detail { display: grid; grid-template-columns: minmax(0, 1fr) 255px; gap: 13px; padding: 15px; background: #f7faf6; }
 .order-detail-main, .order-detail-side { display: grid; gap: 13px; align-content: start; }
 .order-card { display: grid; gap: 12px; padding: 14px; border: 1px solid var(--admin-line); border-radius: 8px; background: white; }
@@ -421,7 +447,7 @@
   .dashboard-hero:after { background: linear-gradient(0deg, #244c3df2 0%, #244c3d9c 62%, #244c3d28 100%); }
   .dashboard-hero h2 { font-size: 25px; }
   .dashboard-hero p { line-height: 1.55; }
-  .setup-grid, .dashboard-lower-grid, .metrics-grid, .analytics-metrics, .analytics-grid, .reports-layout, .report-kpis, .location-grid, .settings-grid { grid-template-columns: 1fr; }
+  .setup-grid, .dashboard-lower-grid, .metrics-grid, .analytics-metrics, .analytics-grid, .reports-layout, .report-kpis, .location-grid, .settings-grid, .settings-workspace, .settings-two { grid-template-columns: 1fr; }
   .setup-card, .setup-card.wide { min-height: 220px; }
   .compact-order { grid-template-columns: 1fr 60px 76px; }
   .sales-summary { min-height: 190px; }
