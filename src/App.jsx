@@ -1685,17 +1685,38 @@ function CollectionsPage({ categories }) {
   )
 }
 
-function CheckoutModal({ items, discounts, initialDiscountCode = '', onClose, onComplete }) {
+const PAYMENT_METHODS = [
+  { id: 'momo', label: 'MoMo', icon: '💜', promo: 'Giảm 10.000đ cho đơn từ 40.000đ', color: '#a50064' },
+  { id: 'zalopay', label: 'ZaloPay', icon: '💙', promo: 'Đồng giá ship 5.000đ khi thanh toán qua ZaloPay', color: '#0068ff' },
+  { id: 'shopeepay', label: 'ShopeePay', icon: '🧡', promo: 'Hoàn 5% cho lần đầu thanh toán qua ShopeePay', color: '#ee4d2d' },
+  { id: 'vnpay', label: 'VNPAY-QR', icon: '🏦', promo: 'Quét mã QR bằng mọi app ngân hàng', color: '#1a56a4' },
+  { id: 'cod', label: 'Thanh toán khi nhận hàng (COD)', icon: '📦', promo: null, color: null },
+  { id: 'transfer', label: 'Chuyển khoản ngân hàng', icon: '🔁', promo: 'Thông tin tài khoản hiển thị sau khi đặt hàng', color: null },
+]
+
+const DELIVERY_SLOTS = [
+  'Sớm nhất có thể (30–60 phút)',
+  'Khung 10:00 – 12:00',
+  'Khung 12:00 – 14:00',
+  'Khung 14:00 – 16:00',
+  'Khung 16:00 – 18:00',
+  'Khung 18:00 – 20:00',
+]
+
+const VN_CITIES = [
+  'TP. Hồ Chí Minh', 'Hà Nội', 'Đà Nẵng', 'Cần Thơ', 'Hải Phòng',
+  'Biên Hòa', 'Thủ Đức', 'Nha Trang', 'Huế', 'Vũng Tàu',
+  'Quy Nhơn', 'Đà Lạt', 'Buôn Ma Thuột', 'Pleiku', 'Vinh',
+  'Hạ Long', 'Thái Nguyên', 'Nam Định', 'Thanh Hóa', 'Khác',
+]
+
+function CheckoutModal({ items, discounts, initialDiscountCode = '', onClose, onComplete, onUpdateQuantity }) {
   const [form, setForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-    apartment: '',
-    city: '',
-    postalCode: '',
-    deliveryMethod: 'local',
-    paymentMethod: 'cod',
+    name: '', email: '', phone: '',
+    address: '', apartment: '', city: '', postalCode: '',
+    deliveryMethod: 'local', deliverySlot: DELIVERY_SLOTS[0],
+    pickupStoreId: storeLocations[0].id,
+    paymentMethod: 'momo',
     notes: '',
   })
   const [checkoutDiscountDraft, setCheckoutDiscountDraft] = useState('')
@@ -1704,6 +1725,8 @@ function CheckoutModal({ items, discounts, initialDiscountCode = '', onClose, on
   const [status, setStatus] = useState('idle')
   const [message, setMessage] = useState('')
   const [order, setOrder] = useState(null)
+  const [confirmClose, setConfirmClose] = useState(false)
+
   const subtotal = items.reduce((total, item) => total + item.price * item.quantity, 0)
   const baseDeliveryFee = form.deliveryMethod === 'pickup' || subtotal >= 75 ? 0 : 8
   const totals = CartTotals({ subtotal, discountCode: checkoutDiscountCode, discounts, items, deliveryFee: baseDeliveryFee })
@@ -1711,26 +1734,27 @@ function CheckoutModal({ items, discounts, initialDiscountCode = '', onClose, on
   const deliveryFee = Math.max(0, baseDeliveryFee - totals.shippingDiscount)
   const tax = (subtotal - discount) * 0.0825
   const total = subtotal - discount + deliveryFee + tax
-  const checkoutDiscountHint = discounts.find((discountItem) => discountItem.method !== 'automatic' && isDiscountActive(discountItem))?.code
-    ? `Use code ${discounts.find((discountItem) => discountItem.method !== 'automatic' && isDiscountActive(discountItem)).code} for a fresh discount`
+  const checkoutDiscountHint = discounts.find((d) => d.method !== 'automatic' && isDiscountActive(d))?.code
+    ? `Use code ${discounts.find((d) => d.method !== 'automatic' && isDiscountActive(d)).code} for a fresh discount`
     : ''
+  const selectedStore = storeLocations.find((s) => s.id === form.pickupStoreId) || storeLocations[0]
+
   const change = (event) => setForm({ ...form, [event.target.name]: event.target.value })
   const applyCheckoutDiscount = () => {
     const normalized = checkoutDiscountDraft.trim().toUpperCase()
     const result = CartTotals({ subtotal, discountCode: normalized, discounts, items, deliveryFee: baseDeliveryFee })
-    if (!result.discountObject) {
-      setCheckoutDiscountError('This discount code is not available.')
-      return
-    }
+    if (!result.discountObject) { setCheckoutDiscountError('This discount code is not available.'); return }
     setCheckoutDiscountCode(normalized)
     setCheckoutDiscountError('')
   }
-
+  const handleClose = () => {
+    if (order) { onClose(); return }
+    setConfirmClose(true)
+  }
   const submit = async (event) => {
     event.preventDefault()
     setStatus('submitting')
     setMessage('')
-
     try {
       const createdOrder = await createStorefrontOrder({ ...form, discountCode: checkoutDiscountCode, totals: { subtotal, discount, deliveryFee, tax, total } }, items)
       setOrder(createdOrder)
@@ -1744,11 +1768,23 @@ function CheckoutModal({ items, discounts, initialDiscountCode = '', onClose, on
   }
 
   return (
-    <div className="checkout-overlay" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+    <div className="checkout-overlay" onMouseDown={(event) => event.target === event.currentTarget && handleClose()}>
       <section className="checkout-modal">
+        {confirmClose && (
+          <div className="checkout-confirm-close">
+            <div className="checkout-confirm-box">
+              <h3>Rời trang thanh toán?</h3>
+              <p>Thông tin bạn đã nhập sẽ không được lưu lại.</p>
+              <div>
+                <button type="button" className="checkout-confirm-stay" onClick={() => setConfirmClose(false)}>Tiếp tục thanh toán</button>
+                <button type="button" className="checkout-confirm-leave" onClick={onClose}>Rời khỏi</button>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="checkout-header">
           <div><p>Secure checkout</p><h2>{order ? 'Order received' : 'Checkout'}</h2></div>
-          <button type="button" onClick={onClose} aria-label="Close checkout"><X size={20} /></button>
+          <button type="button" onClick={handleClose} aria-label="Close checkout"><X size={20} /></button>
         </div>
         {order ? (
           <div className="checkout-success">
@@ -1768,94 +1804,153 @@ function CheckoutModal({ items, discounts, initialDiscountCode = '', onClose, on
                 </div>
 
                 <fieldset>
-                  <legend>Contact</legend>
-                  <label><span>Email</span><input required type="email" name="email" value={form.email} onChange={change} placeholder="you@example.com" /></label>
+                  <legend>Thông tin liên hệ</legend>
+                  <p className="checkout-login-hint">
+                    Đã có tài khoản? <button type="button" onClick={() => {}} className="checkout-login-link">Đăng nhập để tự động điền</button>
+                  </p>
+                  <label><span>Email *</span><input required type="email" name="email" value={form.email} onChange={change} placeholder="you@example.com" /></label>
                   <div className="checkout-grid">
-                    <label><span>Full name</span><input required name="name" value={form.name} onChange={change} placeholder="Jane Smith" /></label>
-                    <label><span>Phone</span><input required name="phone" value={form.phone} onChange={change} placeholder="+1 555 0123" /></label>
+                    <label><span>Họ và tên *</span><input required name="name" value={form.name} onChange={change} placeholder="Nguyễn Văn A" /></label>
+                    <label><span>Số điện thoại *</span><input required name="phone" value={form.phone} onChange={change} placeholder="+84 xxx xxx xxx" /></label>
                   </div>
                 </fieldset>
 
                 <fieldset>
-                  <legend>Delivery</legend>
+                  <legend>Giao hàng</legend>
                   <div className="checkout-choice-grid">
                     <label className={form.deliveryMethod === 'local' ? 'selected' : ''}>
                       <input type="radio" name="deliveryMethod" value="local" checked={form.deliveryMethod === 'local'} onChange={change} />
-                      <span><Truck size={18} /> Local delivery <b>{subtotal - discount >= 75 ? 'Free' : formatPrice(8)}</b></span>
+                      <span><Truck size={18} /> Giao tận nơi <b>{subtotal - discount >= 75 ? 'Miễn phí' : formatPrice(8)}</b></span>
                     </label>
                     <label className={form.deliveryMethod === 'pickup' ? 'selected' : ''}>
                       <input type="radio" name="deliveryMethod" value="pickup" checked={form.deliveryMethod === 'pickup'} onChange={change} />
-                      <span><Store size={18} /> Store pickup <b>Free</b></span>
+                      <span><Store size={18} /> Nhận tại cửa hàng <b>Miễn phí</b></span>
                     </label>
                   </div>
+
                   {form.deliveryMethod === 'local' && (
                     <>
-                      <label><span>Address</span><input required name="address" value={form.address} onChange={change} placeholder="Street address" /></label>
-                      <div className="checkout-grid">
-                        <label><span>Apt, suite</span><input name="apartment" value={form.apartment} onChange={change} placeholder="Optional" /></label>
-                        <label><span>City</span><input required name="city" value={form.city} onChange={change} placeholder="City" /></label>
+                      <div className="checkout-delivery-eta">
+                        <Clock3 size={14} />
+                        <span>Thời gian giao hàng dự kiến: <b>30 – 60 phút</b></span>
                       </div>
-                      <label><span>Postal code</span><input required name="postalCode" value={form.postalCode} onChange={change} placeholder="10001" /></label>
+                      <label>
+                        <span>Khung giờ nhận hàng mong muốn</span>
+                        <select name="deliverySlot" value={form.deliverySlot} onChange={change} className="checkout-select">
+                          {DELIVERY_SLOTS.map((slot) => <option key={slot} value={slot}>{slot}</option>)}
+                        </select>
+                      </label>
+                      <label><span>Địa chỉ *</span><input required name="address" value={form.address} onChange={change} placeholder="Số nhà, tên đường" /></label>
+                      <div className="checkout-grid">
+                        <label><span>Tầng / Căn hộ</span><input name="apartment" value={form.apartment} onChange={change} placeholder="Tùy chọn" /></label>
+                        <label>
+                          <span>Tỉnh / Thành phố *</span>
+                          <select required name="city" value={form.city} onChange={change} className="checkout-select">
+                            <option value="">Chọn thành phố</option>
+                            {VN_CITIES.map((city) => <option key={city} value={city}>{city}</option>)}
+                          </select>
+                        </label>
+                      </div>
+                      <label><span>Mã bưu chính</span><input name="postalCode" value={form.postalCode} onChange={change} placeholder="700000" /></label>
                     </>
+                  )}
+
+                  {form.deliveryMethod === 'pickup' && (
+                    <div className="checkout-pickup-stores">
+                      {storeLocations.map((loc) => (
+                        <label key={loc.id} className={`checkout-pickup-option ${form.pickupStoreId === loc.id ? 'selected' : ''}`}>
+                          <input type="radio" name="pickupStoreId" value={loc.id} checked={form.pickupStoreId === loc.id} onChange={change} />
+                          <div className="pickup-option-info">
+                            <b>{loc.name}</b>
+                            <span>{loc.address}, {loc.city}</span>
+                            <small>{loc.ready}</small>
+                          </div>
+                        </label>
+                      ))}
+                      <p className="checkout-pickup-note"><MapPin size={13} /> {selectedStore.name}: {selectedStore.address}, {selectedStore.city}</p>
+                    </div>
                   )}
                 </fieldset>
 
                 <fieldset>
-                  <legend>Payment</legend>
-                  <div className="checkout-choice-grid">
-                    <label className={form.paymentMethod === 'cod' ? 'selected' : ''}>
-                      <input type="radio" name="paymentMethod" value="cod" checked={form.paymentMethod === 'cod'} onChange={change} />
-                      <span><Package size={18} /> Pay on delivery <b>Manual</b></span>
-                    </label>
-                    <label className={form.paymentMethod === 'transfer' ? 'selected' : ''}>
-                      <input type="radio" name="paymentMethod" value="transfer" checked={form.paymentMethod === 'transfer'} onChange={change} />
-                      <span><ShieldCheck size={18} /> Bank transfer <b>Pending</b></span>
-                    </label>
+                  <legend>Thanh toán</legend>
+                  <div className="checkout-payment-list">
+                    {PAYMENT_METHODS.map((method) => (
+                      <label key={method.id} className={`checkout-payment-option ${form.paymentMethod === method.id ? 'selected' : ''}`}>
+                        <input type="radio" name="paymentMethod" value={method.id} checked={form.paymentMethod === method.id} onChange={change} />
+                        <span className="payment-icon">{method.icon}</span>
+                        <div className="payment-info">
+                          <b>{method.label}</b>
+                          {method.promo && <small style={method.color ? { color: method.color } : {}}>{method.promo}</small>}
+                        </div>
+                      </label>
+                    ))}
                   </div>
-                  <label><span>Order notes</span><input name="notes" value={form.notes} onChange={change} placeholder="Delivery instructions or substitutions" /></label>
+                  {form.paymentMethod === 'transfer' && (
+                    <div className="checkout-transfer-note">
+                      <ShieldCheck size={14} />
+                      <span>Thông tin số tài khoản và cú pháp chuyển khoản sẽ hiển thị ngay sau khi bạn bấm "Đặt hàng".</span>
+                    </div>
+                  )}
+                  {['momo', 'zalopay', 'shopeepay', 'vnpay'].includes(form.paymentMethod) && (
+                    <div className="checkout-transfer-note qr-note">
+                      <span>📱 <b>Mobile:</b> App ví sẽ được mở tự động sau khi đặt hàng.</span>
+                      <span>💻 <b>Desktop:</b> Mã QR sẽ hiển thị để quét bằng điện thoại.</span>
+                    </div>
+                  )}
+                  <label><span>Ghi chú đơn hàng</span><input name="notes" value={form.notes} onChange={change} placeholder="Hướng dẫn giao hàng hoặc yêu cầu đặc biệt" /></label>
                 </fieldset>
               </div>
 
               <aside className="checkout-summary-panel">
-                <h3>Order summary</h3>
+                <h3>Tóm tắt đơn hàng</h3>
                 <div className="checkout-review-items">
                   {items.map((item) => (
                     <div className="checkout-review-item" key={item.id}>
                       <img src={item.image} alt="" />
-                      <span><b>{item.name}</b><small>{item.variantLabel || item.unit} - {item.quantity} x {formatPrice(item.price)}</small></span>
+                      <span>
+                        <b>{item.name}</b>
+                        <small>{item.variantLabel || item.unit}</small>
+                        {onUpdateQuantity && (
+                          <div className="checkout-qty-ctrl">
+                            <button type="button" onClick={() => onUpdateQuantity(item.id, -1)}><Minus size={11} /></button>
+                            <em>{item.quantity}</em>
+                            <button type="button" onClick={() => onUpdateQuantity(item.id, 1)}><Plus size={11} /></button>
+                          </div>
+                        )}
+                      </span>
                       <strong>{formatPrice(item.price * item.quantity)}</strong>
                     </div>
                   ))}
                 </div>
-                <div className="checkout-discount"><span>Discount code</span></div>
+                <div className="checkout-discount"><span>Mã giảm giá</span></div>
                 <DiscountCodeForm
                   value={checkoutDiscountDraft}
                   appliedCode={checkoutDiscountCode}
                   error={checkoutDiscountError}
                   hint={checkoutDiscountHint}
-                  onChange={(value) => {
-                    setCheckoutDiscountDraft(value)
-                    setCheckoutDiscountError('')
-                  }}
+                  onChange={(value) => { setCheckoutDiscountDraft(value); setCheckoutDiscountError('') }}
                   onApply={applyCheckoutDiscount}
-                  onRemove={() => {
-                    setCheckoutDiscountCode('')
-                    setCheckoutDiscountError('')
-                  }}
+                  onRemove={() => { setCheckoutDiscountCode(''); setCheckoutDiscountError('') }}
                   compact
                 />
                 <div className="checkout-totals">
-                  <p><span>Subtotal</span><b>{formatPrice(subtotal)}</b></p>
-                  <p><span>Discount</span><b>-{formatPrice(discount)}</b></p>
-                  {totals.shippingDiscount > 0 && <p><span>Shipping discount</span><b>-{formatPrice(totals.shippingDiscount)}</b></p>}
-                  <p><span>Delivery</span><b>{deliveryFee ? formatPrice(deliveryFee) : 'Free'}</b></p>
-                  <p><span>Estimated tax</span><b>{formatPrice(tax)}</b></p>
-                  <p className="grand-total"><span>Total</span><b>{formatPrice(total)}</b></p>
+                  <p><span>Tạm tính</span><b>{formatPrice(subtotal)}</b></p>
+                  <p><span>Giảm giá</span><b>-{formatPrice(discount)}</b></p>
+                  {totals.shippingDiscount > 0 && <p><span>Giảm phí ship</span><b>-{formatPrice(totals.shippingDiscount)}</b></p>}
+                  <p><span>Giao hàng</span><b>{deliveryFee ? formatPrice(deliveryFee) : 'Miễn phí'}</b></p>
+                  <p><span>Thuế ước tính</span><b>{formatPrice(tax)}</b></p>
+                  <p className="grand-total"><span>Tổng cộng</span><b>{formatPrice(total)}</b></p>
                 </div>
                 {message && <p className="checkout-error">{message}</p>}
                 <button type="submit" disabled={status === 'submitting'}>
-                  {status === 'submitting' ? 'Placing order...' : 'Place order'} <ArrowRight size={17} />
+                  {status === 'submitting' ? 'Đang xử lý...' : 'Đặt hàng'} <ArrowRight size={17} />
                 </button>
+                <div className="checkout-trust-badges">
+                  <span><ShieldCheck size={13} /> Thanh toán bảo mật SSL</span>
+                  <span>🔒 Dữ liệu mã hóa 256-bit</span>
+                  <span>✓ Xác thực Visa / MC</span>
+                </div>
               </aside>
             </div>
           </form>
@@ -2566,7 +2661,7 @@ function App() {
       {quickProduct && <QuickProductModal product={quickProduct} onAdd={addToCart} onBuyNow={buyNow} onClose={() => setQuickProduct(null)} />}
       {accountOpen && <AccountModal user={storefrontUser} profile={accountProfile} onClose={() => setAccountOpen(false)} onSignOut={signOutAccount} />}
       {pickupOpen && <SelectPickupModal selectedId={selectedPickup?.id} onSelect={selectPickup} onClose={() => setPickupOpen(false)} />}
-      {checkoutOpen && <CheckoutModal items={cart} discounts={discounts} initialDiscountCode={appliedDiscountCode} onClose={() => setCheckoutOpen(false)} onComplete={() => setCart([])} />}
+      {checkoutOpen && <CheckoutModal items={cart} discounts={discounts} initialDiscountCode={appliedDiscountCode} onClose={() => setCheckoutOpen(false)} onComplete={() => setCart([])} onUpdateQuantity={updateQuantity} />}
       {searchOpen && <button className="search-closer" aria-label="Close search" type="button" onClick={() => setSearchOpen(false)} />}
     </div>
   )
