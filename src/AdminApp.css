@@ -369,6 +369,12 @@
 .modal-form .product-mode-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .product-mode-toggle button { height: 36px; border: 1px solid #d6e0d9; border-radius: 18px; color: #50665d; background: white; font-size: 11px; font-weight: 700; }
 .product-mode-toggle button.active { border-color: #274d3c; color: white; background: #274d3c; }
+.product-mode-select { display: grid; gap: 8px; padding: 12px; border: 1px solid #dfe8e1; border-radius: 8px; background: #fbfdfb; }
+.product-mode-select span { color: #365747; font-size: 12px; font-weight: 700; }
+.product-mode-select select { height: 42px; padding: 0 12px; border: 1px solid #cbd9cf; border-radius: 7px; color: #253e33; background: white; font-size: 13px; font-weight: 700; }
+.product-mode-select small { color: #71877c; font-size: 11px; line-height: 1.4; }
+.single-product-editor { display: grid; gap: 10px; padding: 12px; border: 1px solid #dfe8e1; border-radius: 8px; background: #fbfdfb; }
+.single-product-editor > div:not(.variant-editor-head) { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .variant-editor { display: grid; gap: 10px; padding: 12px; border: 1px solid #dfe8e1; border-radius: 8px; background: #fbfdfb; }
 .variant-editor-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #365747; font-size: 12px; }
 .variant-editor-head button { height: 28px; display: inline-flex; align-items: center; gap: 5px; padding: 0 9px; border: 1px solid #cbd9cf; border-radius: 14px; color: #365747; background: white; font-size: 10px; font-weight: 700; }
@@ -453,6 +459,12 @@
 .settings-section-card .admin-secondary { justify-self: start; }
 .settings-inline-check { display: inline-flex !important; grid-template-columns: auto 1fr; align-items: center; gap: 8px !important; color: #52655c !important; font-size: 11px !important; font-weight: 700 !important; }
 .settings-inline-check input { width: 16px; min-height: 16px; padding: 0; }
+.carrier-create-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.carrier-create-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.carrier-list { display: grid; gap: 10px; }
+.carrier-card { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--admin-line); border-radius: 8px; background: #fbfdfb; }
+.carrier-card > div:not(.carrier-card-actions) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.carrier-card-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .settings-user-table .admin-table-row { grid-template-columns: minmax(170px, 1.2fr) minmax(110px, .75fr) minmax(110px, .75fr) 72px 60px; }
 .settings-user-table span small { display: block; margin-top: 3px; color: #7a8981; font-size: 10px; }
 .settings-event-list { display: grid; gap: 8px; }
@@ -474,6 +486,8 @@
 .order-total-box { display: grid; gap: 7px; padding-top: 12px; border-top: 1px solid var(--admin-line); }
 .order-total-box p { display: flex; justify-content: space-between; margin: 0; color: #65746d; font-size: 11px; }
 .order-total-box strong { color: #294b3d; font-size: 16px; }
+.carrier-order-note { margin: -2px 0 0; color: #6b8176; font-size: 11px; line-height: 1.4; }
+.tracking-link { display: inline-flex; align-items: center; gap: 5px; color: #315846; font-size: 11px; font-weight: 700; }
 .order-timeline { display: grid; gap: 9px; }
 .order-timeline p { display: flex; align-items: center; gap: 7px; margin: 0; color: #5c6f66; font-size: 11px; }
 .order-note { display: grid; gap: 5px; padding: 10px; border-radius: 6px; color: #596c63; background: #f6f8f5; font-size: 11px; }
@@ -518,7 +532,7 @@
   .dashboard-hero:after { background: linear-gradient(0deg, #244c3df2 0%, #244c3d9c 62%, #244c3d28 100%); }
   .dashboard-hero h2 { font-size: 25px; }
   .dashboard-hero p { line-height: 1.55; }
-  .setup-grid, .dashboard-lower-grid, .metrics-grid, .analytics-metrics, .analytics-grid, .reports-layout, .report-kpis, .location-grid, .settings-grid, .settings-workspace, .settings-two { grid-template-columns: 1fr; }
+  .setup-grid, .dashboard-lower-grid, .metrics-grid, .analytics-metrics, .analytics-grid, .reports-layout, .report-kpis, .location-grid, .settings-grid, .settings-workspace, .settings-two, .carrier-create-grid, .carrier-card > div:not(.carrier-card-actions) { grid-template-columns: 1fr; }
   .setup-card, .setup-card.wide { min-height: 220px; }
   .compact-order { grid-template-columns: 1fr 60px 76px; }
   .sales-summary { min-height: 190px; }

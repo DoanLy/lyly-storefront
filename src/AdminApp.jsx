@@ -161,9 +161,15 @@ const articles = [
   { id: 3, title: 'Meet the growers behind our organic greens', slug: 'organic-greens-growers', type: 'news', category: 'News', status: 'Draft', author: 'LyLy Editorial', date: '28 May 2026', excerpt: 'Local sourcing notes from the growers behind our organic greens.', content: 'Local sourcing notes from the growers behind our organic greens.', tags: ['Local'], image: 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=260&q=85' },
 ]
 
+const defaultShippingCarriers = [
+  { id: 'ghn', name: 'GHN', service: 'Giao hàng nhanh', type: 'domestic', enabled: true, cod: true, trackingUrl: 'https://donhang.ghn.vn/?order_code={trackingId}', notes: 'Phù hợp giao nội thành và liên tỉnh.' },
+  { id: 'ghtk', name: 'GHTK', service: 'Giao hàng tiết kiệm', type: 'domestic', enabled: true, cod: true, trackingUrl: 'https://i.ghtk.vn/{trackingId}', notes: 'Tối ưu chi phí cho đơn tiêu chuẩn.' },
+  { id: 'viettel-post', name: 'Viettel Post', service: 'Chuyển phát tiêu chuẩn', type: 'domestic', enabled: true, cod: true, trackingUrl: 'https://viettelpost.com.vn/tra-cuu-hanh-trinh-don/?orderNumber={trackingId}', notes: 'Phủ rộng toàn quốc.' },
+]
+
 const initialStoreSettings = {
   general: { storeName: 'LyLy Fresh Market', contactEmail: 'lydoan.king@gmail.com', phone: '', country: 'Vietnam', currency: 'VND', timezone: 'Asia/Bangkok', orderPrefix: 'LY' },
-  shipping: { pickupEnabled: true, deliveryEnabled: true, freeShippingThreshold: 75, localDeliveryFee: 0, domesticShippingFee: 8, expressShippingFee: 18, promise: 'Usually ready in 2 hrs' },
+  shipping: { pickupEnabled: true, deliveryEnabled: true, freeShippingThreshold: 75, localDeliveryFee: 0, domesticShippingFee: 8, expressShippingFee: 18, promise: 'Usually ready in 2 hrs', carriers: defaultShippingCarriers },
   notifications: { senderEmail: 'lydoan.king@gmail.com', customerNotifications: true, staffNotifications: true, webhooks: false },
   users: [{ id: 'owner', name: 'Doan Thi Truc Ly', email: 'lydoan.king@gmail.com', role: 'Owner', status: 'Active', twoFactor: true }],
 }
@@ -1074,7 +1080,7 @@ function CategoriesPage({ meta, categories, products, onCreate, onEdit, onRemove
   )
 }
 
-function OrdersPage({ meta, orders, onUpdate, onBulkUpdate }) {
+function OrdersPage({ meta, orders, onUpdate, onBulkUpdate, shippingSettings = {} }) {
   const [query, setQuery] = useState('')
   const [tab, setTab] = useState('all')
   const [deliveryFilter, setDeliveryFilter] = useState('all')
@@ -1088,7 +1094,8 @@ function OrdersPage({ meta, orders, onUpdate, onBulkUpdate }) {
   const [detailOrder, setDetailOrder] = useState(null)
   const [notice, setNotice] = useState('')
 
-  const shippingPartners = [...new Set(orders.map((o) => o.shippingPartner).filter(Boolean))]
+  const carrierOptions = (shippingSettings.carriers?.length ? shippingSettings.carriers : defaultShippingCarriers).filter((carrier) => carrier.enabled !== false)
+  const shippingPartners = [...new Set([...carrierOptions.map((carrier) => carrier.name), ...orders.map((o) => o.shippingPartner)].filter(Boolean))]
 
   const visible = orders.filter((order) => {
     const text = `${order.id} ${order.customer} ${order.email || ''} ${order.phone || ''} ${order.location || ''} ${order.paymentMethod || ''} ${order.trackingId || ''}`.toLowerCase()
@@ -1308,12 +1315,12 @@ function OrdersPage({ meta, orders, onUpdate, onBulkUpdate }) {
           {!visible.length && <EmptyHint icon={ShoppingCart} title="Không tìm thấy đơn hàng" copy="Thử đổi từ khóa, bộ lọc hoặc trạng thái đơn." />}
         </div>
       </section>
-      {detailOrder && <OrderDetailModal order={detailOrder} onClose={() => setDetailOrder(null)} onUpdate={updateOrder} />}
+      {detailOrder && <OrderDetailModal order={detailOrder} carriers={carrierOptions} onClose={() => setDetailOrder(null)} onUpdate={updateOrder} />}
     </>
   )
 }
 
-function OrderDetailModal({ order, onClose, onUpdate }) {
+function OrderDetailModal({ order, carriers = [], onClose, onUpdate }) {
   const [payment, setPayment] = useState(order.payment)
   const [delivery, setDelivery] = useState(order.delivery)
   const [shippingPartner, setShippingPartner] = useState(order.shippingPartner || '')
@@ -1323,6 +1330,10 @@ function OrderDetailModal({ order, onClose, onUpdate }) {
   const discountTotal = Number(order.discountTotal || 0)
   const deliveryFee = Number(order.deliveryFee || 0)
   const taxTotal = Number(order.taxTotal || 0)
+  const selectedCarrier = carriers.find((carrier) => carrier.name === shippingPartner)
+  const trackingHref = selectedCarrier?.trackingUrl && trackingId
+    ? selectedCarrier.trackingUrl.replace('{trackingId}', encodeURIComponent(trackingId))
+    : ''
 
   return (
     <Modal wide title={`${order.id} · ${order.customer}`} onClose={onClose}>
@@ -1383,8 +1394,17 @@ function OrderDetailModal({ order, onClose, onUpdate }) {
                 <option value="Failed Delivery">Giao thất bại</option>
               </select>
             </label>
-            <label><span>Đơn vị vận chuyển</span><input value={shippingPartner} onChange={(e) => setShippingPartner(e.target.value)} placeholder="GHN, GHTK, Viettel Post..." /></label>
+            <label>
+              <span>Đơn vị vận chuyển</span>
+              <select value={shippingPartner} onChange={(e) => setShippingPartner(e.target.value)}>
+                <option value="">Chọn đơn vị</option>
+                {carriers.map((carrier) => <option key={carrier.id || carrier.name} value={carrier.name}>{carrier.name} - {carrier.service}</option>)}
+                {shippingPartner && !selectedCarrier && <option value={shippingPartner}>{shippingPartner}</option>}
+              </select>
+            </label>
             <label><span>Mã vận đơn</span><input value={trackingId} onChange={(e) => setTrackingId(e.target.value)} placeholder="Nhập mã tracking" /></label>
+            {selectedCarrier && <p className="carrier-order-note">{selectedCarrier.service}{selectedCarrier.cod ? ' · Hỗ trợ COD' : ''}</p>}
+            {trackingHref && <a className="tracking-link" href={trackingHref} target="_blank" rel="noreferrer">Mở trang tra cứu vận đơn <ArrowUpRight size={13} /></a>}
             <button className="admin-primary" type="button" onClick={save}><CheckCircle2 size={15} /> Lưu thay đổi</button>
           </div>
           <div className="order-card">
@@ -1983,7 +2003,9 @@ function SettingsWorkspacePage({ meta, settings, orders, onSave }) {
   const [section, setSection] = useState('general')
   const [form, setForm] = useState(settings)
   const [newUser, setNewUser] = useState({ name: '', email: '', role: 'Staff', status: 'Invited', twoFactor: false })
+  const [newCarrier, setNewCarrier] = useState({ name: '', service: '', type: 'domestic', enabled: true, cod: true, trackingUrl: '', notes: '' })
   const users = form.users || []
+  const shippingCarriers = form.shipping?.carriers?.length ? form.shipping.carriers : defaultShippingCarriers
   const openOrders = orders.filter((order) => !['Delivered', 'Cancelled'].includes(order.delivery)).slice(0, 5)
   const settingsNav = [
     { id: 'general', icon: Store, title: 'Chung', text: 'Thông tin cửa hàng, tiền tệ, múi giờ và định dạng đơn hàng.' },
@@ -2001,6 +2023,20 @@ function SettingsWorkspacePage({ meta, settings, orders, onSave }) {
   }
   const updateUser = (id, field, value) => setForm((current) => ({ ...current, users: (current.users || []).map((user) => user.id === id ? { ...user, [field]: value } : user) }))
   const removeUser = (id) => setForm((current) => ({ ...current, users: (current.users || []).filter((user) => user.id !== id) }))
+  const setShippingCarriers = (carriers) => setGroupValue('shipping', 'carriers', carriers)
+  const addCarrier = () => {
+    if (!newCarrier.name.trim()) return
+    const carrier = {
+      ...newCarrier,
+      id: slugify(newCarrier.name) || `carrier-${Date.now()}`,
+      name: newCarrier.name.trim(),
+      service: newCarrier.service.trim() || 'Giao hàng tiêu chuẩn',
+    }
+    setShippingCarriers([carrier, ...shippingCarriers])
+    setNewCarrier({ name: '', service: '', type: 'domestic', enabled: true, cod: true, trackingUrl: '', notes: '' })
+  }
+  const updateCarrier = (id, field, value) => setShippingCarriers(shippingCarriers.map((carrier) => carrier.id === id ? { ...carrier, [field]: value } : carrier))
+  const removeCarrier = (id) => setShippingCarriers(shippingCarriers.filter((carrier) => carrier.id !== id))
   const submit = (event) => {
     event.preventDefault()
     onSave(form)
@@ -2100,6 +2136,41 @@ function SettingsWorkspacePage({ meta, settings, orders, onSave }) {
                   <label>Phí tiêu chuẩn<input type="number" value={form.shipping?.domesticShippingFee || 0} onChange={(event) => setGroupValue('shipping', 'domesticShippingFee', Number(event.target.value))} /></label>
                 </div>
                 <label>Phí nhanh<input type="number" value={form.shipping?.expressShippingFee || 0} onChange={(event) => setGroupValue('shipping', 'expressShippingFee', Number(event.target.value))} /></label>
+              </section>
+              <section className="admin-panel settings-section-card">
+                <h3>Đơn vị vận chuyển</h3>
+                <p>Quản lý đối tác giao hàng dùng trong luồng xử lý đơn. Admin chọn đơn vị vận chuyển và nhập mã vận đơn trong chi tiết đơn hàng.</p>
+                <div className="carrier-create-grid">
+                  <label>Tên đơn vị<input value={newCarrier.name} onChange={(event) => setNewCarrier((current) => ({ ...current, name: event.target.value }))} placeholder="GHN, GHTK, Viettel Post..." /></label>
+                  <label>Dịch vụ<input value={newCarrier.service} onChange={(event) => setNewCarrier((current) => ({ ...current, service: event.target.value }))} placeholder="Giao hàng nhanh" /></label>
+                  <label>Phạm vi<select value={newCarrier.type} onChange={(event) => setNewCarrier((current) => ({ ...current, type: event.target.value }))}><option value="local">Nội thành</option><option value="domestic">Toàn quốc</option><option value="express">Hỏa tốc</option><option value="international">Quốc tế</option></select></label>
+                  <label>URL tra cứu<input value={newCarrier.trackingUrl} onChange={(event) => setNewCarrier((current) => ({ ...current, trackingUrl: event.target.value }))} placeholder="https://.../{trackingId}" /></label>
+                </div>
+                <div className="carrier-create-actions">
+                  <label className="settings-inline-check"><input type="checkbox" checked={newCarrier.cod} onChange={(event) => setNewCarrier((current) => ({ ...current, cod: event.target.checked }))} /> Hỗ trợ COD</label>
+                  <label className="settings-inline-check"><input type="checkbox" checked={newCarrier.enabled} onChange={(event) => setNewCarrier((current) => ({ ...current, enabled: event.target.checked }))} /> Đang bật</label>
+                  <button className="admin-secondary" type="button" onClick={addCarrier}><Plus size={15} /> Thêm đơn vị</button>
+                </div>
+                <div className="carrier-list">
+                  {shippingCarriers.map((carrier) => (
+                    <article className="carrier-card" key={carrier.id}>
+                      <div>
+                        <label>Tên<input value={carrier.name} onChange={(event) => updateCarrier(carrier.id, 'name', event.target.value)} /></label>
+                        <label>Dịch vụ<input value={carrier.service || ''} onChange={(event) => updateCarrier(carrier.id, 'service', event.target.value)} /></label>
+                      </div>
+                      <div>
+                        <label>Phạm vi<select value={carrier.type || 'domestic'} onChange={(event) => updateCarrier(carrier.id, 'type', event.target.value)}><option value="local">Nội thành</option><option value="domestic">Toàn quốc</option><option value="express">Hỏa tốc</option><option value="international">Quốc tế</option></select></label>
+                        <label>URL tra cứu<input value={carrier.trackingUrl || ''} onChange={(event) => updateCarrier(carrier.id, 'trackingUrl', event.target.value)} placeholder="https://.../{trackingId}" /></label>
+                      </div>
+                      <label>Ghi chú<input value={carrier.notes || ''} onChange={(event) => updateCarrier(carrier.id, 'notes', event.target.value)} /></label>
+                      <div className="carrier-card-actions">
+                        <label className="settings-inline-check"><input type="checkbox" checked={carrier.enabled !== false} onChange={(event) => updateCarrier(carrier.id, 'enabled', event.target.checked)} /> Bật</label>
+                        <label className="settings-inline-check"><input type="checkbox" checked={Boolean(carrier.cod)} onChange={(event) => updateCarrier(carrier.id, 'cod', event.target.checked)} /> COD</label>
+                        <button className="icon-danger" type="button" onClick={() => removeCarrier(carrier.id)}><Trash2 size={15} /></button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
               </section>
             </>
           )}
@@ -2520,11 +2591,34 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy }
 
         {activeTab === 'variants' && (
           <div className="tab-pane">
-            <div className="product-mode-toggle">
-              <button className={productMode === 'single' ? 'active' : ''} type="button" onClick={() => setProductMode('single')}>Sản phẩm đơn</button>
-              <button className={productMode === 'variants' ? 'active' : ''} type="button" onClick={() => setProductMode('variants')}>Có nhiều lựa chọn</button>
-            </div>
-            {productMode === 'single' && <p className="tab-empty-hint">Chuyển sang "Có nhiều lựa chọn" để cấu hình biến thể (kích thước, màu sắc, khối lượng...)</p>}
+            <label className="product-mode-select">
+              <span>Kiểu sản phẩm</span>
+              <select value={productMode} onChange={(event) => setProductMode(event.target.value)}>
+                <option value="single">Sản phẩm đơn</option>
+                <option value="variants">Có nhiều lựa chọn / biến thể</option>
+              </select>
+              <small>{productMode === 'single' ? 'Dùng khi sản phẩm chỉ có một giá, một SKU và một tồn kho.' : 'Dùng khi sản phẩm có nhiều lựa chọn như kích thước, màu sắc, khối lượng.'}</small>
+            </label>
+            {productMode === 'single' && (
+              <section className="single-product-editor">
+                <div className="variant-editor-head">
+                  <b>Thông tin bán hàng cho sản phẩm đơn</b>
+                  <small>Nhập thông tin chính cho một phiên bản duy nhất.</small>
+                </div>
+                <div>
+                  <label><span>{copy.price} *</span><input min="0" step=".01" type="number" name="price" value={form.price} onChange={change} placeholder="0.00" required /></label>
+                  <label><span>{copy.oldPrice}</span><input min="0" step=".01" type="number" name="oldPrice" value={form.oldPrice || ''} onChange={change} placeholder={copy.oldPricePlaceholder} /></label>
+                </div>
+                <div>
+                  <label><span>{copy.stock} *</span><input min="0" type="number" name="stock" value={form.stock} onChange={change} placeholder="0" required /></label>
+                  <label><span>{copy.unit} *</span><input required name="unit" value={form.unit} onChange={change} placeholder={copy.unitPlaceholder} /></label>
+                </div>
+                <div>
+                  <div className="sku-field"><span>SKU</span><div><strong>{form.sku}</strong><button type="button" onClick={regenerateSku}>{copy.regenerate}</button></div></div>
+                  <label><span>{copy.status}</span><select name="status" value={form.status} onChange={change}><option value="active">{copy.active}</option><option value="draft">{copy.draft}</option></select></label>
+                </div>
+              </section>
+            )}
             {productMode === 'variants' && (
               <section className="variant-editor">
                 <div className="variant-editor-head"><b>Tùy chọn</b><button type="button" onClick={addOption}><Plus size={13} /> Thêm tùy chọn</button></div>
@@ -3451,7 +3545,7 @@ function AdminApp() {
     if (page === 'dashboard') return <Dashboard tasks={tasks} setTasks={setTasks} orders={adminOrders} />
     if (page === 'products') return <ProductsPage meta={localizedMeta} categories={categories} products={products} onBulkEdit={bulkEditProducts} onCreate={() => { setProductEditing(null); setProductModal(true) }} onEdit={(product) => { setProductEditing(product); setProductModal(true) }} onImport={importProducts} onRemove={removeProducts} />
     if (page === 'categories') return <CategoriesPage meta={localizedMeta} categories={categories} products={products} onCreate={() => { setCategoryEditing(null); setCategoryModal(true) }} onEdit={(category) => { setCategoryEditing(category); setCategoryModal(true) }} onRemove={removeCategory} onToggle={toggleCategory} />
-    if (page === 'orders') return <OrdersPage meta={localizedMeta} orders={adminOrders} onUpdate={saveOrder} onBulkUpdate={bulkSaveOrders} />
+    if (page === 'orders') return <OrdersPage meta={localizedMeta} orders={adminOrders} shippingSettings={storeSettings.shipping || {}} onUpdate={saveOrder} onBulkUpdate={bulkSaveOrders} />
     if (page === 'customers') return <CustomersManagePage meta={localizedMeta} customers={adminCustomers} onCreate={() => { setCustomerEditing(null); setCustomerModal(true) }} onEdit={(customer) => { setCustomerDetail(null); setCustomerEditing(customer); setCustomerModal(true) }} onView={setCustomerDetail} onRemove={removeCustomer} />
     if (page === 'marketing') return <MarketingPage meta={localizedMeta} />
     if (page === 'discounts') return <DiscountsManagePage meta={localizedMeta} discounts={discounts} onCreate={() => { setDiscountEditing(null); setDiscountModal(true) }} onEdit={editDiscount} onView={setDiscountDetail} onRemove={removeDiscount} />

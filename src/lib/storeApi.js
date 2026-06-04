@@ -2,7 +2,7 @@ import { isSupabaseConfigured, supabase } from './supabase'
 
 const productColumns = 'id, name, category, sku, price, old_price, stock, status, unit, badge, image_url, manufacturer, vendor, warehouse, product_type, description, images, options, variants'
 const categoryColumns = 'id, parent_id, name, slug, description, image_url, active, show_on_home, include_in_menu, display_order, home_display_order'
-const orderColumns = 'id, order_number, total, subtotal, discount_total, delivery_fee, tax_total, delivery_method, payment_method, shipping_address, notes, payment_status, delivery_status, created_at, customers(full_name, email, phone, location), order_items(product_name, unit_price, quantity, line_total, variant_label)'
+const orderColumns = 'id, order_number, total, subtotal, discount_total, delivery_fee, tax_total, delivery_method, payment_method, shipping_address, shipping_partner, tracking_id, notes, payment_status, delivery_status, created_at, customers(full_name, email, phone, location), order_items(product_name, unit_price, quantity, line_total, variant_label)'
 const discountColumns = 'id, code, percent_off, active, ends_at, title, method, discount_type, value_type, value_amount, applies_to, minimum_type, minimum_value, usage_limit, once_per_customer, combines, starts_at'
 const customerColumns = 'id, email, full_name, phone, location, created_at, updated_at'
 const articleColumns = 'id, title, slug, category, excerpt, image_url, status, published_at, author, content, tags, type, created_at, updated_at'
@@ -135,6 +135,8 @@ function mapOrder(order) {
     items: lineItems.reduce((total, item) => total + Number(item.quantity || 0), 0),
     note: order.notes || '',
     shippingAddress: order.shipping_address || order.customers?.location || '',
+    shippingPartner: order.shipping_partner || '',
+    trackingId: order.tracking_id || '',
     lineItems: lineItems.map((item) => ({
       name: item.variant_label ? `${item.product_name} (${item.variant_label})` : item.product_name,
       quantity: Number(item.quantity),
@@ -736,6 +738,8 @@ export async function updateAdminOrder(order) {
     .update({
       payment_status: orderStatusValue(order.payment),
       delivery_status: orderStatusValue(order.delivery),
+      shipping_partner: order.shippingPartner || null,
+      tracking_id: order.trackingId || null,
     })
     .eq('id', order.uuid)
     .select(orderColumns)
