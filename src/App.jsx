@@ -1093,6 +1093,9 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
   const [expandedOrders, setExpandedOrders] = useState(() => new Set())
   const [actionNotice, setActionNotice] = useState('')
   const [orderActionKey, setOrderActionKey] = useState('')
+  const [payOrderModal, setPayOrderModal] = useState(null)
+  const [payMethod, setPayMethod] = useState('momo')
+  const [cancelOrderModal, setCancelOrderModal] = useState(null)
   const [profileOpen, setProfileOpen] = useState(false)
   const [addressOpen, setAddressOpen] = useState(false)
   const [profileForm, setProfileForm] = useState({
@@ -1358,8 +1361,8 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
                       </div>
                       {order.trackingId && <p className="account-order-tracking">Tracking: {order.trackingId}</p>}
                       <div className="account-order-actions">
-                        {bucket === 'unpaid' && <button type="button" disabled={Boolean(orderActionKey)} onClick={() => runOrderAction(order, 'pay')}>{orderActionKey === `${order.uuid}-pay` ? 'Processing...' : 'Pay now'}</button>}
-                        {!['delivered', 'cancelled'].includes(bucket) && <button type="button" disabled={Boolean(orderActionKey)} onClick={() => runOrderAction(order, 'cancel')}>{orderActionKey === `${order.uuid}-cancel` ? 'Cancelling...' : 'Cancel order'}</button>}
+                        {bucket === 'unpaid' && <button type="button" disabled={Boolean(orderActionKey)} onClick={() => { setPayMethod('momo'); setPayOrderModal(order) }}>{orderActionKey === `${order.uuid}-pay` ? 'Processing...' : 'Pay now'}</button>}
+                        {!['delivered', 'cancelled'].includes(bucket) && <button type="button" disabled={Boolean(orderActionKey)} onClick={() => bucket === 'transit' ? showActionNotice(`Cannot cancel ${order.id} — it is already in transit.`) : setCancelOrderModal(order)}>{orderActionKey === `${order.uuid}-cancel` ? 'Cancelling...' : 'Cancel order'}</button>}
                         {bucket === 'transit' && <button type="button" onClick={() => showActionNotice(order.trackingId ? `Tracking ${order.trackingId}` : `Tracking for ${order.id} will update soon.`)}>Track order</button>}
                         {bucket === 'delivered' && <button type="button" onClick={() => onReorder?.(order)}>Reorder</button>}
                         {bucket === 'delivered' && <button type="button" onClick={() => showActionNotice(`Review form for ${order.id} will be available soon.`)}>Review products</button>}
@@ -1505,6 +1508,46 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
             <label className="account-check"><input type="checkbox" checked={profileForm.emailOffers} onChange={(event) => setProfileForm((current) => ({ ...current, emailOffers: event.target.checked }))} /> {accountText.emailOffers}</label>
             <div className="modal-button-row"><button type="button" onClick={() => setProfileOpen(false)}>{accountText.cancel}</button><button type="submit">{accountText.save}</button></div>
           </form>
+        </div>
+      )}
+
+      {payOrderModal && (
+        <div className="account-overlay" onMouseDown={(event) => event.target === event.currentTarget && setPayOrderModal(null)}>
+          <div className="account-edit-modal order-pay-modal">
+            <button className="account-modal-close" type="button" onClick={() => setPayOrderModal(null)} aria-label="Close"><X size={28} /></button>
+            <h2>Payment method</h2>
+            <p className="order-pay-modal-subtitle">{payOrderModal.id} · {formatPrice(payOrderModal.total)}</p>
+            <div className="checkout-payment-list order-pay-list">
+              {PAYMENT_METHODS.map((method) => (
+                <label key={method.id} className={`checkout-payment-option ${payMethod === method.id ? 'selected' : ''}`}>
+                  <input type="radio" name="orderPayMethod" value={method.id} checked={payMethod === method.id} onChange={() => setPayMethod(method.id)} />
+                  <PaymentLogo type={method.logoType} />
+                  <div className="payment-info">
+                    <b>{method.label}</b>
+                    {method.promo && <small style={method.promoColor ? { color: method.promoColor } : {}}>{method.promo}</small>}
+                  </div>
+                </label>
+              ))}
+            </div>
+            <div className="order-pay-modal-actions">
+              <button type="button" className="order-pay-cancel-btn" onClick={() => setPayOrderModal(null)}>Cancel</button>
+              <button type="button" className="order-pay-confirm-btn" disabled={Boolean(orderActionKey)} onClick={async () => { const order = payOrderModal; setPayOrderModal(null); await runOrderAction(order, 'pay') }}>{orderActionKey ? 'Processing...' : 'Confirm payment'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {cancelOrderModal && (
+        <div className="account-overlay" onMouseDown={(event) => event.target === event.currentTarget && setCancelOrderModal(null)}>
+          <div className="account-edit-modal order-cancel-modal">
+            <button className="account-modal-close" type="button" onClick={() => setCancelOrderModal(null)} aria-label="Close"><X size={28} /></button>
+            <h2>Cancel order?</h2>
+            <p className="order-cancel-modal-text">Are you sure you want to cancel <strong>{cancelOrderModal.id}</strong>? This action cannot be undone.</p>
+            <div className="order-pay-modal-actions">
+              <button type="button" className="order-pay-cancel-btn" onClick={() => setCancelOrderModal(null)}>Keep order</button>
+              <button type="button" className="order-cancel-confirm-btn" disabled={Boolean(orderActionKey)} onClick={async () => { const order = cancelOrderModal; setCancelOrderModal(null); await runOrderAction(order, 'cancel') }}>{orderActionKey ? 'Cancelling...' : 'Yes, cancel order'}</button>
+            </div>
+          </div>
         </div>
       )}
 
