@@ -1179,6 +1179,10 @@ function OrdersPage({ meta, orders, focusedOrderId = '', onFocusedOrderHandled, 
   const toggleSelected = (id) => setSelected((c) => c.includes(id) ? c.filter((i) => i !== id) : [...c, id])
   const updateOrder = async (order, changes) => {
     const updated = await onUpdate({ ...order, ...changes })
+    if (!updated) {
+      setNotice(`Không thể cập nhật ${order.id}. Trạng thái này chưa được hỗ trợ — vui lòng liên hệ admin để apply DB migration.`)
+      return
+    }
     setDetailOrder((current) => current?.id === updated.id ? updated : current)
     setNotice(`${updated.id} đã được cập nhật.`)
   }
