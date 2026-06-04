@@ -1769,6 +1769,7 @@ function CheckoutModal({ items, discounts, initialDiscountCode = '', onClose, on
   const [message, setMessage] = useState('')
   const [order, setOrder] = useState(null)
   const [confirmClose, setConfirmClose] = useState(false)
+  const [showAllPayments, setShowAllPayments] = useState(false)
 
   const subtotal = items.reduce((total, item) => total + item.price * item.quantity, 0)
   const baseDeliveryFee = form.deliveryMethod === 'pickup' || subtotal >= 75 ? 0 : 8
@@ -1918,7 +1919,7 @@ function CheckoutModal({ items, discounts, initialDiscountCode = '', onClose, on
                 <fieldset>
                   <legend>Thanh toán</legend>
                   <div className="checkout-payment-list">
-                    {PAYMENT_METHODS.map((method) => (
+                    {PAYMENT_METHODS.slice(0, 3).map((method) => (
                       <label key={method.id} className={`checkout-payment-option ${form.paymentMethod === method.id ? 'selected' : ''}`}>
                         <input type="radio" name="paymentMethod" value={method.id} checked={form.paymentMethod === method.id} onChange={change} />
                         <PaymentLogo type={method.logoType} />
@@ -1928,6 +1929,20 @@ function CheckoutModal({ items, discounts, initialDiscountCode = '', onClose, on
                         </div>
                       </label>
                     ))}
+                    {showAllPayments && PAYMENT_METHODS.slice(3).map((method) => (
+                      <label key={method.id} className={`checkout-payment-option ${form.paymentMethod === method.id ? 'selected' : ''}`}>
+                        <input type="radio" name="paymentMethod" value={method.id} checked={form.paymentMethod === method.id} onChange={change} />
+                        <PaymentLogo type={method.logoType} />
+                        <div className="payment-info">
+                          <b>{method.label}</b>
+                          {method.promo && <small style={method.promoColor ? { color: method.promoColor } : {}}>{method.promo}</small>}
+                        </div>
+                      </label>
+                    ))}
+                    <button type="button" className="payment-show-more" onClick={() => setShowAllPayments(!showAllPayments)}>
+                      <ChevronDown size={14} style={{ transform: showAllPayments ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }} />
+                      {showAllPayments ? 'Thu gọn' : `Xem thêm ${PAYMENT_METHODS.length - 3} hình thức khác`}
+                    </button>
                   </div>
                   {form.paymentMethod === 'transfer' && (
                     <div className="checkout-transfer-note">
