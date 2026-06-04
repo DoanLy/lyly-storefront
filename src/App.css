@@ -719,13 +719,14 @@ footer { color: #dfe9e2; background: #1e392e; }
 .account-price-breakdown b { color: inherit; }
 .account-order-tracking { margin: 0; color: #4b6759; font-size: 13px; font-weight: 700; }
 .order-pay-modal, .order-cancel-modal { width: min(100%, 520px); }
-.order-pay-modal-subtitle { margin: -8px 0 18px; color: #69756f; font-size: 13px; }
+.order-pay-modal-subtitle { margin: -8px 0 14px; color: #69756f; font-size: 13px; }
+.order-pay-notice { display: flex; align-items: flex-start; gap: 9px; margin-bottom: 18px; padding: 11px 13px; border: 1px solid #fde68a; border-radius: 9px; background: #fffbeb; color: #92400e; font-size: 12.5px; line-height: 1.55; }
 .order-pay-list { margin-bottom: 22px; }
 .order-pay-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
 .order-pay-cancel-btn { height: 42px; padding: 0 20px; border: 1px solid #d7dfd9; border-radius: 22px; color: #304d40; background: white; font-size: 13px; font-weight: 700; cursor: pointer; }
 .order-pay-cancel-btn:hover { background: #f5faf4; }
 .order-pay-confirm-btn { height: 42px; padding: 0 20px; border: 0; border-radius: 22px; color: white; background: #1e211f; font-size: 13px; font-weight: 800; cursor: pointer; }
-.order-pay-confirm-btn:disabled { opacity: .6; cursor: wait; }
+.order-pay-confirm-btn:disabled { opacity: .45; cursor: not-allowed; }
 .order-cancel-confirm-btn { height: 42px; padding: 0 20px; border: 0; border-radius: 22px; color: white; background: #c0392b; font-size: 13px; font-weight: 800; cursor: pointer; }
 .order-cancel-confirm-btn:disabled { opacity: .6; cursor: wait; }
 .order-cancel-modal-text { margin: 0 0 24px; color: #4b6257; font-size: 14px; line-height: 1.55; }

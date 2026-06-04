@@ -1094,7 +1094,7 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
   const [actionNotice, setActionNotice] = useState('')
   const [orderActionKey, setOrderActionKey] = useState('')
   const [payOrderModal, setPayOrderModal] = useState(null)
-  const [payMethod, setPayMethod] = useState('momo')
+  const [payMethod, setPayMethod] = useState(null)
   const [cancelOrderModal, setCancelOrderModal] = useState(null)
   const [profileOpen, setProfileOpen] = useState(false)
   const [addressOpen, setAddressOpen] = useState(false)
@@ -1361,7 +1361,7 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
                       </div>
                       {order.trackingId && <p className="account-order-tracking">Tracking: {order.trackingId}</p>}
                       <div className="account-order-actions">
-                        {bucket === 'unpaid' && <button type="button" disabled={Boolean(orderActionKey)} onClick={() => { setPayMethod('momo'); setPayOrderModal(order) }}>{orderActionKey === `${order.uuid}-pay` ? 'Processing...' : 'Pay now'}</button>}
+                        {bucket === 'unpaid' && <button type="button" disabled={Boolean(orderActionKey)} onClick={() => { setPayMethod(null); setPayOrderModal(order) }}>{orderActionKey === `${order.uuid}-pay` ? 'Processing...' : 'Pay now'}</button>}
                         {!['delivered', 'cancelled'].includes(bucket) && <button type="button" disabled={Boolean(orderActionKey)} onClick={() => bucket === 'transit' ? showActionNotice(`Cannot cancel ${order.id} — it is already in transit.`) : setCancelOrderModal(order)}>{orderActionKey === `${order.uuid}-cancel` ? 'Cancelling...' : 'Cancel order'}</button>}
                         {bucket === 'transit' && <button type="button" onClick={() => showActionNotice(order.trackingId ? `Tracking ${order.trackingId}` : `Tracking for ${order.id} will update soon.`)}>Track order</button>}
                         {bucket === 'delivered' && <button type="button" onClick={() => onReorder?.(order)}>Reorder</button>}
@@ -1515,8 +1515,12 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
         <div className="account-overlay" onMouseDown={(event) => event.target === event.currentTarget && setPayOrderModal(null)}>
           <div className="account-edit-modal order-pay-modal">
             <button className="account-modal-close" type="button" onClick={() => setPayOrderModal(null)} aria-label="Close"><X size={28} /></button>
-            <h2>Payment method</h2>
+            <h2>Complete payment</h2>
             <p className="order-pay-modal-subtitle">{payOrderModal.id} · {formatPrice(payOrderModal.total)}</p>
+            <div className="order-pay-notice">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, marginTop: 1 }}><circle cx="8" cy="8" r="7.25" stroke="#b45309" strokeWidth="1.5"/><rect x="7.25" y="4" width="1.5" height="4.5" rx=".75" fill="#b45309"/><rect x="7.25" y="10" width="1.5" height="1.5" rx=".75" fill="#b45309"/></svg>
+              <span>This order is awaiting payment. Select a method below to complete your purchase — your order will be held until payment is confirmed.</span>
+            </div>
             <div className="checkout-payment-list order-pay-list">
               {PAYMENT_METHODS.map((method) => (
                 <label key={method.id} className={`checkout-payment-option ${payMethod === method.id ? 'selected' : ''}`}>
@@ -1530,8 +1534,8 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
               ))}
             </div>
             <div className="order-pay-modal-actions">
-              <button type="button" className="order-pay-cancel-btn" onClick={() => setPayOrderModal(null)}>Cancel</button>
-              <button type="button" className="order-pay-confirm-btn" disabled={Boolean(orderActionKey)} onClick={async () => { const order = payOrderModal; const method = payMethod; setPayOrderModal(null); await runOrderAction(order, 'pay', method) }}>{orderActionKey ? 'Processing...' : 'Confirm payment'}</button>
+              <button type="button" className="order-pay-cancel-btn" onClick={() => setPayOrderModal(null)}>Back to order</button>
+              <button type="button" className="order-pay-confirm-btn" disabled={Boolean(orderActionKey) || !payMethod} onClick={async () => { const order = payOrderModal; const method = payMethod; setPayOrderModal(null); await runOrderAction(order, 'pay', method) }}>{orderActionKey ? 'Processing...' : 'Confirm payment'}</button>
             </div>
           </div>
         </div>
@@ -2179,12 +2183,12 @@ function CollectionsPage({ categories }) {
 }
 
 const PAYMENT_METHODS = [
-  { id: 'momo', label: 'MoMo', logoType: 'momo', promo: 'Giảm 10.000đ cho đơn từ 40.000đ', promoColor: '#a50064' },
-  { id: 'zalopay', label: 'ZaloPay', logoType: 'zalopay', promo: 'Đồng giá ship 5.000đ khi thanh toán qua ZaloPay', promoColor: '#0068ff' },
-  { id: 'shopeepay', label: 'ShopeePay', logoType: 'shopeepay', promo: 'Hoàn 5% cho lần đầu thanh toán qua ShopeePay', promoColor: '#ee4d2d' },
-  { id: 'vnpay', label: 'VNPAY-QR', logoType: 'vnpay', promo: 'Quét mã QR bằng mọi app ngân hàng', promoColor: '#1a56a4' },
-  { id: 'cod', label: 'Thanh toán khi nhận hàng (COD)', logoType: 'cod', promo: null, promoColor: null },
-  { id: 'transfer', label: 'Chuyển khoản ngân hàng', logoType: 'transfer', promo: 'Thông tin tài khoản hiển thị sau khi đặt hàng', promoColor: null },
+  { id: 'momo', label: 'MoMo', logoType: 'momo', promo: 'Discount available on qualifying orders', promoColor: '#a50064' },
+  { id: 'zalopay', label: 'ZaloPay', logoType: 'zalopay', promo: 'Flat-rate shipping when paying with ZaloPay', promoColor: '#0068ff' },
+  { id: 'shopeepay', label: 'ShopeePay', logoType: 'shopeepay', promo: '5% cashback on your first ShopeePay transaction', promoColor: '#ee4d2d' },
+  { id: 'vnpay', label: 'VNPAY-QR', logoType: 'vnpay', promo: 'Scan QR code with any banking app', promoColor: '#1a56a4' },
+  { id: 'cod', label: 'Cash on Delivery (COD)', logoType: 'cod', promo: null, promoColor: null },
+  { id: 'transfer', label: 'Bank Transfer', logoType: 'transfer', promo: 'Account details shown after order placement', promoColor: null },
 ]
 
 function PaymentLogo({ type }) {
