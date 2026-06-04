@@ -145,7 +145,7 @@ h1, h2 { font-family: 'Libre Baskerville', Georgia, serif; font-weight: 400; }
 .collection-card-body svg { flex: 0 0 auto; transition: transform .25s ease; }
 .collection-card:hover .collection-card-body svg { transform: translateX(4px); }
 
-.promo-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 18px; padding-bottom: 96px; }
+.promo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; padding-bottom: 96px; }
 .promo-card { min-height: 338px; position: relative; display: block; overflow: hidden; color: white; border-radius: 4px; }
 .promo-card:after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, #143426d9, #14342640 75%); }
 .promo-card img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s; }
