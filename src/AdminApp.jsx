@@ -1370,8 +1370,8 @@ function OrdersPage({ meta, orders, focusedOrderId = '', onFocusedOrderHandled, 
           carriers={carrierOptions}
           onClose={() => setDetailOrder(null)}
           onUpdate={updateOrder}
-          onResolveReturn={async (uuid, approve) => {
-            const updated = await resolveReturnRequest(uuid, approve)
+          onResolveReturn={async (uuid, approve, rejectionReason) => {
+            const updated = await resolveReturnRequest(uuid, approve, rejectionReason)
             await onUpdate(updated, {})
             setDetailOrder(null)
             setNotice(`${updated.id} ${approve ? 'đã được duyệt trả hàng.' : 'đã từ chối trả hàng.'}`)
@@ -1388,16 +1388,20 @@ function OrderDetailModal({ order, carriers = [], onClose, onUpdate, onResolveRe
   const [shippingPartner, setShippingPartner] = useState(order.shippingPartner || '')
   const [trackingId, setTrackingId] = useState(order.trackingId || '')
   const [resolving, setResolving] = useState(false)
+  const [rejectStep, setRejectStep] = useState(false)
+  const [rejectReason, setRejectReason] = useState('')
   const hasReturnRequest = Boolean(order.returnReason)
   const canMarkPickup = !hasReturnRequest && delivery === 'Ready' && Boolean(shippingPartner)
   const save = () => onUpdate(order, { payment, delivery, shippingPartner, trackingId })
   const markCarrierPickup = () => onUpdate(order, { payment, delivery: 'In Transit', shippingPartner, trackingId })
-  const handleResolveReturn = async (approve) => {
+  const handleResolveReturn = async (approve, reason = '') => {
     setResolving(true)
     try {
-      await onResolveReturn(order.uuid, approve)
+      await onResolveReturn(order.uuid, approve, reason)
     } finally {
       setResolving(false)
+      setRejectStep(false)
+      setRejectReason('')
     }
   }
   const subtotal = Number(order.subtotal || 0) || order.lineItems?.reduce((total, item) => total + item.total, 0) || order.total
@@ -1471,12 +1475,34 @@ function OrderDetailModal({ order, carriers = [], onClose, onUpdate, onResolveRe
             {hasReturnRequest ? (
               <div className="return-action-panel">
                 <p className="return-action-notice">Đơn hàng đang có yêu cầu trả hàng. Vui lòng duyệt hoặc từ chối trước khi chỉnh sửa trạng thái.</p>
-                <button className="return-approve-btn" type="button" disabled={resolving} onClick={() => handleResolveReturn(true)}>
-                  <CheckCircle2 size={15} /> {resolving ? 'Đang xử lý...' : 'Duyệt trả hàng'}
-                </button>
-                <button className="return-reject-btn" type="button" disabled={resolving} onClick={() => handleResolveReturn(false)}>
-                  <XCircle size={15} /> Từ chối trả hàng
-                </button>
+                {!rejectStep ? (
+                  <>
+                    <button className="return-approve-btn" type="button" disabled={resolving} onClick={() => handleResolveReturn(true)}>
+                      <CheckCircle2 size={15} /> {resolving ? 'Đang xử lý...' : 'Duyệt trả hàng'}
+                    </button>
+                    <button className="return-reject-btn" type="button" disabled={resolving} onClick={() => setRejectStep(true)}>
+                      <XCircle size={15} /> Từ chối trả hàng
+                    </button>
+                  </>
+                ) : (
+                  <div className="reject-reason-panel">
+                    <label className="reject-reason-label">Lý do từ chối <span>(bắt buộc)</span></label>
+                    <textarea
+                      className="reject-reason-input"
+                      value={rejectReason}
+                      onChange={(e) => setRejectReason(e.target.value)}
+                      placeholder="Nhập lý do từ chối yêu cầu trả hàng..."
+                      rows={3}
+                      autoFocus
+                    />
+                    <div className="reject-reason-actions">
+                      <button type="button" className="admin-secondary" onClick={() => { setRejectStep(false); setRejectReason('') }}>Hủy</button>
+                      <button className="return-reject-btn" type="button" disabled={resolving || !rejectReason.trim()} onClick={() => handleResolveReturn(false, rejectReason.trim())}>
+                        <XCircle size={15} /> {resolving ? 'Đang xử lý...' : 'Xác nhận từ chối'}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <>

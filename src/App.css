@@ -725,6 +725,9 @@ footer { color: #dfe9e2; background: #1e392e; }
 .order-history-date { flex-shrink: 0; color: #8a9e92; font-size: 11px; min-width: 85px; }
 .order-history-msg { color: #3d5248; font-size: 11px; }
 .return-pending-tag { display: inline-flex; align-items: center; height: 40px; padding: 0 14px; border-radius: 22px; color: #92400e; background: #fff7ed; border: 1px solid #fed7aa; font-size: 12px; font-weight: 700; }
+.return-rejected-notice { display: grid; gap: 4px; padding: 10px 14px; border-radius: 8px; background: #fef2f2; border: 1px solid #fecaca; margin-top: 4px; }
+.return-rejected-notice b { color: #991b1b; font-size: 12px; }
+.return-rejected-notice span { color: #7f1d1d; font-size: 12px; }
 .order-pay-modal, .order-cancel-modal { width: min(100%, 520px); }
 .order-pay-modal-subtitle { margin: -8px 0 14px; color: #69756f; font-size: 13px; }
 .order-pay-notice { display: flex; align-items: flex-start; gap: 9px; margin-bottom: 18px; padding: 11px 13px; border: 1px solid #fde68a; border-radius: 9px; background: #fffbeb; color: #92400e; font-size: 12.5px; line-height: 1.55; }

@@ -167,6 +167,12 @@ function mapOrder(order) {
         date: new Intl.DateTimeFormat('en-US', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(e.created_at)),
       }))
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+    returnRejected: (order.order_events || []).some(e => e.event_type === 'return_rejected'),
+    returnRejectedMessage: (() => {
+      const ev = (order.order_events || []).find(e => e.event_type === 'return_rejected')
+      if (!ev) return ''
+      return ev.message.replace(/^Admin từ chối trả hàng[:\s]*/i, '').trim()
+    })(),
   }
 }
 
@@ -876,7 +882,7 @@ export async function submitStorefrontReturnRequest(orderId, reason, notes) {
   await logOrderEvents(orderId, [{ actor: 'customer', eventType: 'return_requested', message: `Yêu cầu trả hàng: ${reason}` }])
 }
 
-export async function resolveReturnRequest(orderId, approve) {
+export async function resolveReturnRequest(orderId, approve, rejectionReason = '') {
   if (!supabase) throw new Error('Supabase is not configured.')
 
   const updates = {
@@ -900,7 +906,9 @@ export async function resolveReturnRequest(orderId, approve) {
   await logOrderEvents(orderId, [{
     actor: 'admin',
     eventType: approve ? 'return_approved' : 'return_rejected',
-    message: approve ? 'Admin đã duyệt yêu cầu trả hàng' : 'Admin đã từ chối yêu cầu trả hàng',
+    message: approve
+      ? 'Admin đã duyệt yêu cầu trả hàng'
+      : `Admin từ chối trả hàng${rejectionReason ? ': ' + rejectionReason : ''}`,
   }])
   return mapOrder(data)
 }
