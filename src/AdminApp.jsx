@@ -141,12 +141,12 @@ const initialOrders = [
 ]
 
 const customers = [
-  { id: 1, name: 'Emma Wilson', email: 'emma.wilson@example.com', orders: 8, spent: 424.6, location: 'Brooklyn, NY', initials: 'EW' },
-  { id: 2, name: 'Noah Taylor', email: 'noah.taylor@example.com', orders: 5, spent: 279.85, location: 'Queens, NY', initials: 'NT' },
-  { id: 3, name: 'Ava Anderson', email: 'ava.anderson@example.com', orders: 2, spent: 86.2, location: 'Jersey City, NJ', initials: 'AA' },
-  { id: 4, name: 'Liam Johnson', email: 'liam.johnson@example.com', orders: 11, spent: 642.4, location: 'Manhattan, NY', initials: 'LJ' },
-  { id: 5, name: 'Mia Brown', email: 'mia.brown@example.com', orders: 4, spent: 175.3, location: 'Hoboken, NJ', initials: 'MB' },
-  { id: 6, name: 'Oliver Davis', email: 'oliver.davis@example.com', orders: 7, spent: 388.1, location: 'Brooklyn, NY', initials: 'OD' },
+  { id: 1, name: 'Emma Wilson', email: 'emma.wilson@example.com', phone: '+1 555 0184', orders: 8, spent: 424.6, location: 'Brooklyn, NY', province: 'New York', district: 'Brooklyn', ward: '', address: '142 Atlantic Ave', initials: 'EW', status: 'active', createdAt: '15 Jan 2025', birthday: '1992-06-14', gender: 'female', tags: ['VIP', 'Returning'], notes: 'Khách thân thiết, hay mua hàng sáng thứ Hai.' },
+  { id: 2, name: 'Noah Taylor', email: 'noah.taylor@example.com', phone: '+1 555 0162', orders: 5, spent: 279.85, location: 'Queens, NY', province: 'New York', district: 'Queens', ward: '', address: '78 Jamaica Ave', initials: 'NT', status: 'active', createdAt: '03 Mar 2025', birthday: '1988-11-22', gender: 'male', tags: ['Wholesale'], notes: '' },
+  { id: 3, name: 'Ava Anderson', email: 'ava.anderson@example.com', phone: '+1 555 0138', orders: 2, spent: 86.2, location: 'Jersey City, NJ', province: 'New Jersey', district: 'Jersey City', ward: '', address: '30 Grove St', initials: 'AA', status: 'active', createdAt: '20 Apr 2025', birthday: '1995-03-08', gender: 'female', tags: [], notes: 'Gọi trước khi giao.' },
+  { id: 4, name: 'Liam Johnson', email: 'liam.johnson@example.com', phone: '+1 555 0119', orders: 11, spent: 642.4, location: 'Manhattan, NY', province: 'New York', district: 'Manhattan', ward: '', address: '200 W 57th St', initials: 'LJ', status: 'active', createdAt: '08 Dec 2024', birthday: '1985-07-30', gender: 'male', tags: ['VIP'], notes: '' },
+  { id: 5, name: 'Mia Brown', email: 'mia.brown@example.com', phone: '+1 555 0144', orders: 4, spent: 175.3, location: 'Hoboken, NJ', province: 'New Jersey', district: 'Hoboken', ward: '', address: '55 Newark St', initials: 'MB', status: 'blocked', createdAt: '14 Feb 2025', birthday: '1990-12-01', gender: 'female', tags: ['Blocked'], notes: 'Đã hủy đơn 2 lần không lý do.' },
+  { id: 6, name: 'Oliver Davis', email: 'oliver.davis@example.com', phone: '+1 555 0157', orders: 7, spent: 388.1, location: 'Brooklyn, NY', province: 'New York', district: 'Brooklyn', ward: '', address: '90 Court St', initials: 'OD', status: 'active', createdAt: '27 Nov 2024', birthday: '1993-09-17', gender: 'male', tags: ['Facebook'], notes: '' },
 ]
 
 const initialDiscounts = [
@@ -933,9 +933,17 @@ function CategoriesPage({ meta, categories, products, onCreate, onEdit, onRemove
   const [query, setQuery] = useState('')
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [filters, setFilters] = useState({ root: 'all', status: 'all', homepage: 'all', menu: 'all' })
-  const rootCategories = categories.filter((category) => !category.parentId)
-  const activeFilterCount = Object.values(filters).filter((value) => value !== 'all').length
-  const visible = categories.filter((category) => {
+  const [selected, setSelected] = useState([])
+  const [collapsed, setCollapsed] = useState({})
+  const rootCategories = categories.filter((c) => !c.parentId)
+  const activeFilterCount = Object.values(filters).filter((v) => v !== 'all').length
+
+  const aggregateProductCount = (category) => {
+    const direct = products.filter((p) => p.category === category.name).length
+    const childCounts = categories.filter((c) => c.parentId === category.id).reduce((sum, child) => sum + products.filter((p) => p.category === child.name).length, 0)
+    return direct + childCounts
+  }
+  const matchesFilters = (category) => {
     const matchesQuery = `${category.name} ${category.slug}`.toLowerCase().includes(query.toLowerCase())
     const rootId = Number(filters.root)
     const matchesRoot = filters.root === 'all' || category.id === rootId || category.parentId === rootId
@@ -943,49 +951,110 @@ function CategoriesPage({ meta, categories, products, onCreate, onEdit, onRemove
     const matchesHomepage = filters.homepage === 'all' || category.showOnHome === (filters.homepage === 'yes')
     const matchesMenu = filters.menu === 'all' || category.includeInMenu === (filters.menu === 'yes')
     return matchesQuery && matchesRoot && matchesStatus && matchesHomepage && matchesMenu
-  })
-  const categoryName = (id) => categories.find((category) => category.id === id)?.name || 'Danh mục gốc'
-  const productCount = (name) => products.filter((product) => product.category === name).length
-  const setFilter = (name, value) => setFilters((current) => ({ ...current, [name]: value }))
+  }
+
+  const setFilter = (name, value) => setFilters((cur) => ({ ...cur, [name]: value }))
   const resetFilters = () => setFilters({ root: 'all', status: 'all', homepage: 'all', menu: 'all' })
+  const toggleCollapse = (id) => setCollapsed((cur) => ({ ...cur, [id]: !cur[id] }))
+  const toggleSelected = (id) => setSelected((cur) => cur.includes(id) ? cur.filter((i) => i !== id) : [...cur, id])
+  const allIds = categories.map((c) => c.id)
+  const allSelected = allIds.length > 0 && allIds.every((id) => selected.includes(id))
+  const toggleAll = () => setSelected(allSelected ? [] : allIds)
+
+  const handleRemove = (category) => {
+    const hasChildren = categories.some((c) => c.parentId === category.id)
+    if (hasChildren) {
+      // Show error via onRemove with a flag — parent will handle
+      alert(`Không thể xóa "${category.name}" vì đang có danh mục con bên trong.\nVui lòng di chuyển hoặc xóa danh mục con trước.`)
+      return
+    }
+    onRemove(category.id)
+  }
+  const bulkToggle = (active) => {
+    selected.forEach((id) => {
+      const cat = categories.find((c) => c.id === id)
+      if (cat && cat.active !== active) onToggle(cat)
+    })
+    setSelected([])
+  }
+
+  const treeRows = []
+  rootCategories.filter(matchesFilters).forEach((root) => {
+    const children = categories.filter((c) => c.parentId === root.id && matchesFilters(c))
+    const isCollapsed = collapsed[root.id]
+    treeRows.push({ ...root, depth: 0, hasChildren: children.length > 0, isCollapsed })
+    if (!isCollapsed) children.forEach((child) => treeRows.push({ ...child, depth: 1 }))
+  })
 
   return (
     <>
       <SectionTitle title={meta.categories[0]} description={meta.categories[1]} action="Thêm danh mục" onAction={onCreate} />
       <section className="admin-panel data-panel">
         <div className="table-toolbar category-toolbar">
-          <label><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm kiếm danh mục" /></label>
-          <button className={activeFilterCount ? 'filter-active' : ''} type="button" aria-expanded={filtersOpen} onClick={() => setFiltersOpen(!filtersOpen)}><Filter size={15} /> Bộ lọc {activeFilterCount > 0 && <em>{activeFilterCount}</em>}</button>
+          <label><Search size={16} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Tìm kiếm danh mục" /></label>
+          <button className={activeFilterCount ? 'filter-active' : ''} type="button" onClick={() => setFiltersOpen(!filtersOpen)}><Filter size={15} /> Bộ lọc {activeFilterCount > 0 && <em>{activeFilterCount}</em>}</button>
         </div>
         {filtersOpen && (
           <div className="category-filter-panel">
-            <label><span>Danh mục gốc</span><select value={filters.root} onChange={(event) => setFilter('root', event.target.value)}><option value="all">Tất cả danh mục</option>{rootCategories.map((category) => <option value={category.id} key={category.id}>{category.name}</option>)}</select></label>
-            <label><span>Trạng thái</span><select value={filters.status} onChange={(event) => setFilter('status', event.target.value)}><option value="all">Tất cả trạng thái</option><option value="active">Đang hoạt động</option><option value="draft">Tạm ẩn</option></select></label>
-            <label><span>Homepage</span><select value={filters.homepage} onChange={(event) => setFilter('homepage', event.target.value)}><option value="all">Tất cả</option><option value="yes">Có hiển thị</option><option value="no">Không hiển thị</option></select></label>
-            <label><span>Mega menu</span><select value={filters.menu} onChange={(event) => setFilter('menu', event.target.value)}><option value="all">Tất cả</option><option value="yes">Có hiển thị</option><option value="no">Không hiển thị</option></select></label>
+            <label><span>Danh mục gốc</span><select value={filters.root} onChange={(e) => setFilter('root', e.target.value)}><option value="all">Tất cả danh mục</option>{rootCategories.map((c) => <option value={c.id} key={c.id}>{c.name}</option>)}</select></label>
+            <label><span>Trạng thái</span><select value={filters.status} onChange={(e) => setFilter('status', e.target.value)}><option value="all">Tất cả</option><option value="active">Đang hoạt động</option><option value="draft">Tạm ẩn</option></select></label>
+            <label><span>Homepage</span><select value={filters.homepage} onChange={(e) => setFilter('homepage', e.target.value)}><option value="all">Tất cả</option><option value="yes">Có hiển thị</option><option value="no">Không hiển thị</option></select></label>
+            <label><span>Mega menu</span><select value={filters.menu} onChange={(e) => setFilter('menu', e.target.value)}><option value="all">Tất cả</option><option value="yes">Có hiển thị</option><option value="no">Không hiển thị</option></select></label>
             <div className="category-filter-actions"><button className="admin-secondary" type="button" onClick={resetFilters}>Xóa lọc</button><button className="admin-primary" type="button" onClick={() => setFiltersOpen(false)}>Áp dụng</button></div>
+          </div>
+        )}
+        {selected.length > 0 && (
+          <div className="order-bulk-bar">
+            <span>{selected.length} danh mục đã chọn</span>
+            <button type="button" onClick={() => bulkToggle(true)}>Kích hoạt</button>
+            <button type="button" onClick={() => bulkToggle(false)}>Tạm ẩn</button>
+            <button className="danger-button" type="button" onClick={() => { selected.forEach((id) => { const cat = categories.find((c) => c.id === id); if (cat) handleRemove(cat) }); setSelected([]) }}>Xóa đã chọn</button>
           </div>
         )}
         <div className="admin-table-wrap">
           <table className="admin-table category-table">
-            <thead><tr><th>Danh mục</th><th>Danh mục cha</th><th>Trạng thái</th><th>Homepage</th><th>Mega menu</th><th>Sản phẩm</th><th>Menu</th><th>Home</th><th></th></tr></thead>
+            <thead><tr>
+              <th><input type="checkbox" checked={allSelected} onChange={toggleAll} /></th>
+              <th>Danh mục</th>
+              <th>Trạng thái</th>
+              <th>Sản phẩm</th>
+              <th>Thứ tự Menu</th>
+              <th>Thứ tự Home</th>
+              <th>Menu</th>
+              <th>Home</th>
+              <th></th>
+            </tr></thead>
             <tbody>
-              {visible.map((category) => (
-                <tr key={category.id}>
-                  <td><div className="category-cell"><b>{category.name}</b><small>/{category.slug}</small></div></td>
-                  <td>{categoryName(category.parentId)}</td>
-                  <td><StatusPill>{category.active ? 'Active' : 'Draft'}</StatusPill></td>
-                  <td>{category.showOnHome ? 'Có' : '-'}</td>
-                  <td>{category.includeInMenu ? 'Có' : '-'}</td>
-                  <td>{productCount(category.name)}</td>
-                  <td>{category.displayOrder}</td>
-                  <td>{category.homeDisplayOrder ?? category.displayOrder}</td>
-                  <td><div className="row-actions"><button className="row-icon" type="button" onClick={() => onToggle(category)} title={category.active ? 'Ẩn danh mục' : 'Hiện danh mục'}><Eye size={15} /></button><button className="row-icon" type="button" onClick={() => onEdit(category)} title="Sửa danh mục"><Pencil size={15} /></button><button className="row-icon" type="button" onClick={() => onRemove(category.id)} title="Xóa danh mục"><Trash2 size={15} /></button></div></td>
+              {treeRows.map((row) => (
+                <tr key={row.id} className={row.depth === 1 ? 'category-child-row' : ''}>
+                  <td><input type="checkbox" checked={selected.includes(row.id)} onChange={() => toggleSelected(row.id)} /></td>
+                  <td>
+                    <div className="category-cell" style={{ paddingLeft: row.depth * 20 }}>
+                      {row.hasChildren && (
+                        <button type="button" className="tree-toggle" onClick={() => toggleCollapse(row.id)}>
+                          {row.isCollapsed ? '▶' : '▼'}
+                        </button>
+                      )}
+                      {row.depth === 1 && !row.hasChildren && <span className="tree-indent">└</span>}
+                      <div><b>{row.name}</b><small>/{row.slug}</small></div>
+                    </div>
+                  </td>
+                  <td><StatusPill>{row.active ? 'Active' : 'Draft'}</StatusPill></td>
+                  <td><span className={aggregateProductCount(row) === 0 ? 'muted-dash' : ''}>{aggregateProductCount(row)}</span></td>
+                  <td>{row.displayOrder}</td>
+                  <td>{row.homeDisplayOrder ?? row.displayOrder}</td>
+                  <td>{row.includeInMenu ? <span className="cat-check">✓</span> : <span className="muted-dash">—</span>}</td>
+                  <td>{row.showOnHome ? <span className="cat-check">✓</span> : <span className="muted-dash">—</span>}</td>
+                  <td><div className="row-actions">
+                    <button className="row-icon" type="button" onClick={() => onToggle(row)} title={row.active ? 'Ẩn danh mục' : 'Hiện danh mục'}><Eye size={15} /></button>
+                    <button className="row-icon" type="button" onClick={() => onEdit(row)} title="Sửa"><Pencil size={15} /></button>
+                    <button className="row-icon" type="button" onClick={() => handleRemove(row)} title="Xóa"><Trash2 size={15} /></button>
+                  </div></td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {!visible.length && <EmptyHint icon={Tag} title="Không tìm thấy danh mục" copy="Thử thay đổi từ khóa hoặc thêm danh mục mới." />}
+          {!treeRows.length && <EmptyHint icon={Tag} title="Không tìm thấy danh mục" copy="Thử thay đổi từ khóa hoặc thêm danh mục mới." />}
         </div>
       </section>
     </>
@@ -1342,21 +1411,72 @@ function CustomersPage({ meta }) {
 function CustomersManagePage({ meta, customers, onCreate, onEdit, onView, onRemove }) {
   const [query, setQuery] = useState('')
   const [tab, setTab] = useState('all')
+  const [selected, setSelected] = useState([])
+  const sanitizeLocation = (loc) => {
+    if (!loc) return ''
+    if (/pass|api|token|key|secret|password|@#\$|77086/i.test(loc)) return ''
+    return loc
+  }
   const visible = customers.filter((customer) => {
-    const matchesQuery = `${customer.name} ${customer.email} ${customer.location} ${customer.phone}`.toLowerCase().includes(query.toLowerCase())
-    const matchesTab = tab === 'all' || (tab === 'returning' && customer.orders > 1) || (tab === 'email' && customer.email)
+    const matchesQuery = `${customer.name} ${customer.email} ${sanitizeLocation(customer.location)} ${customer.phone || ''}`.toLowerCase().includes(query.toLowerCase())
+    const matchesTab = tab === 'all' || (tab === 'returning' && customer.orders > 1) || (tab === 'email' && customer.email) || (tab === 'blocked' && customer.status === 'blocked')
     return matchesQuery && matchesTab
   })
+  const allSelected = visible.length > 0 && visible.every((c) => selected.includes(c.id))
+  const toggleAll = () => setSelected(allSelected ? [] : visible.map((c) => c.id))
+  const toggleSelected = (id) => setSelected((cur) => cur.includes(id) ? cur.filter((i) => i !== id) : [...cur, id])
+  const blockedCount = customers.filter((c) => c.status === 'blocked').length
+
   return (
     <>
       <SectionTitle title={meta.customers[0]} description={meta.customers[1]} action="Thêm khách hàng" onAction={onCreate} />
       <section className="admin-panel data-panel">
-        <div className="data-tabs"><button className={tab === 'all' ? 'active' : ''} type="button" onClick={() => setTab('all')}>Tất cả</button><button className={tab === 'returning' ? 'active' : ''} type="button" onClick={() => setTab('returning')}>Khách quay lại</button><button className={tab === 'email' ? 'active' : ''} type="button" onClick={() => setTab('email')}>Có email</button></div>
-        <div className="table-toolbar"><label><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm tên, email, điện thoại hoặc địa điểm" /></label><button type="button"><Filter size={15} /> Phân khúc</button></div>
+        <div className="data-tabs">
+          <button className={tab === 'all' ? 'active' : ''} type="button" onClick={() => setTab('all')}>Tất cả <em>{customers.length}</em></button>
+          <button className={tab === 'returning' ? 'active' : ''} type="button" onClick={() => setTab('returning')}>Khách quay lại</button>
+          <button className={tab === 'email' ? 'active' : ''} type="button" onClick={() => setTab('email')}>Có email</button>
+          {blockedCount > 0 && <button className={tab === 'blocked' ? 'active' : ''} type="button" onClick={() => setTab('blocked')}>Bị khóa <em>{blockedCount}</em></button>}
+        </div>
+        <div className="table-toolbar">
+          <label><Search size={16} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Tìm tên, email, điện thoại hoặc địa điểm" /></label>
+          <button type="button"><Filter size={15} /> Phân khúc</button>
+        </div>
+        {selected.length > 0 && (
+          <div className="order-bulk-bar">
+            <span>{selected.length} khách đã chọn</span>
+            <button className="danger-button" type="button" onClick={() => { selected.forEach((id) => onRemove(id)); setSelected([]) }}>Xóa đã chọn</button>
+          </div>
+        )}
         <div className="admin-table-wrap">
-          <table className="admin-table">
-            <thead><tr><th><input type="checkbox" /></th><th>Khách hàng</th><th>Địa điểm</th><th>Đơn hàng</th><th>Đã chi tiêu</th><th></th></tr></thead>
-            <tbody>{visible.map((customer) => <tr key={customer.id}><td><input type="checkbox" /></td><td><div className="customer-cell"><span>{customer.initials}</span><div><b>{customer.name}</b><small>{customer.email}</small></div></div></td><td>{customer.location || 'Chưa có'}</td><td>{customer.orders}</td><td><b>{money(customer.spent)}</b></td><td><div className="row-actions"><button className="row-icon" type="button" onClick={() => onView(customer)} title="Xem"><Eye size={15} /></button><button className="row-icon" type="button" onClick={() => onEdit(customer)} title="Sửa"><Pencil size={15} /></button><button className="row-icon" type="button" onClick={() => onRemove(customer.id)} title="Xóa"><Trash2 size={15} /></button></div></td></tr>)}</tbody>
+          <table className="admin-table customers-table">
+            <thead><tr>
+              <th><input type="checkbox" checked={allSelected} onChange={toggleAll} /></th>
+              <th>Khách hàng</th>
+              <th>Số điện thoại</th>
+              <th>Địa điểm</th>
+              <th>Ngày đăng ký</th>
+              <th>Trạng thái</th>
+              <th>Đơn hàng</th>
+              <th>Đã chi tiêu</th>
+              <th></th>
+            </tr></thead>
+            <tbody>{visible.map((customer) => (
+              <tr key={customer.id}>
+                <td><input type="checkbox" checked={selected.includes(customer.id)} onChange={() => toggleSelected(customer.id)} /></td>
+                <td><div className="customer-cell"><span>{customer.initials}</span><div><b>{customer.name}</b><small>{customer.email}</small></div></div></td>
+                <td>{customer.phone ? <a href={`tel:${customer.phone}`} className="customer-phone">{customer.phone}</a> : <span className="muted-dash">—</span>}</td>
+                <td>{sanitizeLocation(customer.location) || <span className="muted-dash">—</span>}</td>
+                <td className="date-cell">{customer.createdAt || <span className="muted-dash">—</span>}</td>
+                <td><StatusPill>{customer.status === 'blocked' ? 'Blocked' : 'Active'}</StatusPill></td>
+                <td>{customer.orders}</td>
+                <td><b>{money(customer.spent)}</b></td>
+                <td><div className="row-actions">
+                  <button className="row-icon" type="button" onClick={() => onView(customer)} title="Xem"><Eye size={15} /></button>
+                  <button className="row-icon" type="button" onClick={() => onEdit(customer)} title="Sửa"><Pencil size={15} /></button>
+                  <button className="row-icon" type="button" onClick={() => onRemove(customer.id)} title="Xóa"><Trash2 size={15} /></button>
+                </div></td>
+              </tr>
+            ))}</tbody>
           </table>
           {!visible.length && <EmptyHint icon={Users} title="Không tìm thấy khách hàng" copy="Thử đổi từ khóa hoặc tạo khách hàng mới." />}
         </div>
@@ -1366,16 +1486,75 @@ function CustomersManagePage({ meta, customers, onCreate, onEdit, onView, onRemo
 }
 
 function CustomerModal({ customer, onClose, onSubmit }) {
-  const [form, setForm] = useState({ name: customer?.name || '', email: customer?.email || '', phone: customer?.phone || '', location: customer?.location || '' })
-  const change = (event) => setForm((current) => ({ ...current, [event.target.name]: event.target.value }))
+  const [form, setForm] = useState({
+    name: customer?.name || '', email: customer?.email || '', phone: customer?.phone || '',
+    province: customer?.province || '', district: customer?.district || '',
+    ward: customer?.ward || '', address: customer?.address || '',
+    birthday: customer?.birthday || '', gender: customer?.gender || '',
+    tags: Array.isArray(customer?.tags) ? customer.tags.join(', ') : (customer?.tags || ''),
+    notes: customer?.notes || '', status: customer?.status || 'active',
+    sendActivation: !customer,
+  })
+  const change = (event) => {
+    const { checked, name, type, value } = event.target
+    setForm((cur) => ({ ...cur, [name]: type === 'checkbox' ? checked : value }))
+  }
+  const submit = (event) => {
+    event.preventDefault()
+    onSubmit({
+      ...customer,
+      ...form,
+      tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
+      location: [form.district, form.province].filter(Boolean).join(', ') || customer?.location || '',
+    })
+  }
   return (
-    <Modal title={customer ? 'Sửa khách hàng' : 'Thêm khách hàng'} onClose={onClose}>
-      <form className="admin-form compact-form" onSubmit={(event) => { event.preventDefault(); onSubmit({ ...customer, ...form }) }}>
-        <label><span>Tên khách hàng</span><input required name="name" value={form.name} onChange={change} /></label>
-        <label><span>Email</span><input required type="email" name="email" value={form.email} onChange={change} /></label>
-        <label><span>Số điện thoại</span><input name="phone" value={form.phone} onChange={change} /></label>
-        <label><span>Địa điểm</span><input name="location" value={form.location} onChange={change} placeholder="Vietnam, Ho Chi Minh" /></label>
-        <div className="modal-actions"><button className="admin-secondary" type="button" onClick={onClose}>Hủy</button><button className="admin-primary" type="submit">Lưu</button></div>
+    <Modal title={customer ? 'Sửa khách hàng' : 'Thêm khách hàng mới'} onClose={onClose}>
+      <form className="modal-form compact-form" onSubmit={submit}>
+        <p className="form-section-head">Thông tin cơ bản</p>
+        <div>
+          <label><span>Tên khách hàng *</span><input required name="name" value={form.name} onChange={change} /></label>
+          <label><span>Email *</span><input required type="email" name="email" value={form.email} onChange={change} /></label>
+        </div>
+        <div>
+          <label><span>Số điện thoại</span><input name="phone" value={form.phone} onChange={change} placeholder="+84..." /></label>
+          <label><span>Trạng thái</span>
+            <select name="status" value={form.status} onChange={change}>
+              <option value="active">Đang hoạt động</option>
+              <option value="blocked">Bị khóa</option>
+            </select>
+          </label>
+        </div>
+        <div>
+          <label><span>Ngày sinh</span><input type="date" name="birthday" value={form.birthday} onChange={change} /></label>
+          <label><span>Giới tính</span>
+            <select name="gender" value={form.gender} onChange={change}>
+              <option value="">Không xác định</option>
+              <option value="female">Nữ</option>
+              <option value="male">Nam</option>
+              <option value="other">Khác</option>
+            </select>
+          </label>
+        </div>
+        <p className="form-section-head">Địa chỉ giao hàng</p>
+        <div>
+          <label><span>Tỉnh / Thành phố</span><input name="province" value={form.province} onChange={change} placeholder="Hồ Chí Minh" /></label>
+          <label><span>Quận / Huyện</span><input name="district" value={form.district} onChange={change} placeholder="Quận 1" /></label>
+        </div>
+        <div>
+          <label><span>Phường / Xã</span><input name="ward" value={form.ward} onChange={change} placeholder="Phường Bến Nghé" /></label>
+        </div>
+        <label><span>Địa chỉ cụ thể (số nhà, đường...)</span><input name="address" value={form.address} onChange={change} placeholder="123 Nguyễn Huệ" /></label>
+        <p className="form-section-head">CRM & Ghi chú</p>
+        <label><span>Nhãn / Tags</span><input name="tags" value={form.tags} onChange={change} placeholder="VIP, Wholesale, Facebook (phân cách bởi dấu phẩy)" /></label>
+        <label><span>Ghi chú nội bộ</span><textarea name="notes" value={form.notes} onChange={change} placeholder="Ví dụ: Khách chỉ nhận hàng sau 18h..." rows={2} /></label>
+        {!customer && (
+          <label className="checkbox-label">
+            <input type="checkbox" name="sendActivation" checked={form.sendActivation} onChange={change} />
+            <span>Tự động tạo mật khẩu ngẫu nhiên và gửi email kích hoạt tài khoản</span>
+          </label>
+        )}
+        <div className="modal-actions"><button className="admin-secondary" type="button" onClick={onClose}>Hủy</button><button className="admin-primary" type="submit">{customer ? 'Lưu thay đổi' : 'Thêm khách hàng'}</button></div>
       </form>
     </Modal>
   )
@@ -1992,48 +2171,79 @@ function CategoryModal({ categories, category, onClose, onSubmit }) {
   const rootCategories = categories.filter((item) => !item.parentId)
   const editingRoot = Boolean(category && !category.parentId)
   const [form, setForm] = useState(category || {
-    name: '',
-    slug: '',
-    parentId: '',
-    description: '',
-    image: '',
-    active: true,
-    showOnHome: false,
-    includeInMenu: false,
-    displayOrder: 100,
-    homeDisplayOrder: 100,
+    name: '', slug: '', parentId: '', description: '', image: '',
+    active: true, showOnHome: false, includeInMenu: false,
+    displayOrder: 100, homeDisplayOrder: 100,
+    metaTitle: '', metaDescription: '',
   })
+  const [slugLocked, setSlugLocked] = useState(Boolean(category?.slug))
+  const [imageFile, setImageFile] = useState(null)
+  const [imagePreview, setImagePreview] = useState(category?.image || '')
+
   const change = (event) => {
     const { checked, name, type, value } = event.target
     setForm((current) => ({
       ...current,
       [name]: type === 'checkbox' ? checked : value,
-      ...(name === 'name' && (!current.slug || current.slug === slugify(current.name)) ? { slug: slugify(value) } : {}),
+      ...(name === 'name' && !slugLocked ? { slug: slugify(value) } : {}),
     }))
+  }
+  const chooseImage = (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    setImageFile(file)
+    imageFilePreview(file, setImagePreview)
   }
   const submit = (event) => {
     event.preventDefault()
-    onSubmit({
-      ...form,
-      parentId: form.parentId ? Number(form.parentId) : null,
-      displayOrder: Number(form.displayOrder),
-    })
+    onSubmit({ ...form, parentId: form.parentId ? Number(form.parentId) : null, displayOrder: Number(form.displayOrder), imageFile: imageFile || null })
   }
 
   return (
     <Modal title={category ? 'Sửa danh mục' : 'Thêm danh mục mới'} onClose={onClose}>
       <form className="modal-form" onSubmit={submit}>
-        <label><span>Tên danh mục</span><input required name="name" value={form.name} onChange={change} placeholder="Ví dụ: Fresh Produce" /></label>
-        <div><label><span>Slug</span><input required name="slug" value={form.slug} onChange={change} placeholder="fresh-produce" /></label><label><span>Danh mục cha</span><select required={!editingRoot} name="parentId" value={form.parentId || ''} onChange={change}><option value="">{editingRoot ? 'Danh mục gốc' : 'Chọn danh mục gốc'}</option>{rootCategories.filter((item) => item.id !== category?.id).map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label></div>
+        <label><span>Tên danh mục *</span><input required name="name" value={form.name} onChange={change} placeholder="Ví dụ: Fresh Produce" /></label>
+        <div>
+          <label>
+            <span>Slug *</span>
+            <div className="slug-field">
+              <input required name="slug" value={form.slug} onChange={change} placeholder="fresh-produce" disabled={!slugLocked} />
+              <button type="button" className={`slug-lock-btn ${slugLocked ? 'unlocked' : 'locked'}`} onClick={() => setSlugLocked(!slugLocked)} title={slugLocked ? 'Khóa lại' : 'Mở khóa để sửa'}>
+                {slugLocked ? <Eye size={14} /> : <ShieldCheck size={14} />}
+              </button>
+            </div>
+          </label>
+          <label><span>Danh mục cha</span><select name="parentId" value={form.parentId || ''} onChange={change}><option value="">{editingRoot ? 'Danh mục gốc' : 'Chọn danh mục gốc'}</option>{rootCategories.filter((item) => item.id !== category?.id).map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
+        </div>
         <label><span>Mô tả</span><input name="description" value={form.description || ''} onChange={change} placeholder="Mô tả ngắn cho danh mục" /></label>
-        <label><span>URL ảnh</span><input name="image" value={form.image || ''} onChange={change} placeholder="https://..." /></label>
-        <label><span>Thứ tự hiển thị</span><input required min="0" type="number" name="displayOrder" value={form.displayOrder} onChange={change} /></label>
-        <label><span>Thứ tự homepage</span><input required min="0" type="number" name="homeDisplayOrder" value={form.homeDisplayOrder ?? form.displayOrder} onChange={change} /></label>
+        <label className="product-upload-field">
+          <span>Ảnh danh mục</span>
+          <div className="product-image-picker category-image-picker">
+            {imagePreview ? <img src={imagePreview} alt="" /> : <div className="image-placeholder"><Upload size={20} /></div>}
+            <div><Upload size={18} /><b>{imageFile ? imageFile.name : (imagePreview ? 'Đổi ảnh' : 'Chọn ảnh')}</b><small>JPG, PNG hoặc WebP</small></div>
+            <input accept="image/*" type="file" onChange={chooseImage} />
+          </div>
+        </label>
+        <div>
+          <label><span>Thứ tự Menu</span><input required min="0" type="number" name="displayOrder" value={form.displayOrder} onChange={change} /></label>
+          <label><span>Thứ tự Homepage</span><input required min="0" type="number" name="homeDisplayOrder" value={form.homeDisplayOrder ?? form.displayOrder} onChange={change} /></label>
+        </div>
         <div className="modal-check-grid">
           <label><input type="checkbox" name="active" checked={form.active} onChange={change} /><span>Đang hoạt động</span></label>
           <label><input type="checkbox" name="showOnHome" checked={form.showOnHome} onChange={change} /><span>Hiện homepage</span></label>
           <label><input type="checkbox" name="includeInMenu" checked={form.includeInMenu} onChange={change} /><span>Hiện mega menu</span></label>
         </div>
+        <p className="form-section-head">SEO</p>
+        <label>
+          <span>Meta Title</span>
+          <input name="metaTitle" value={form.metaTitle || ''} onChange={change} placeholder={form.name || 'Tiêu đề SEO'} maxLength={60} />
+          <small className="char-count">{(form.metaTitle || '').length}/60</small>
+        </label>
+        <label>
+          <span>Meta Description</span>
+          <textarea name="metaDescription" value={form.metaDescription || ''} onChange={change} placeholder="Mô tả ngắn hiển thị trên Google (150–160 ký tự)" maxLength={160} rows={2} />
+          <small className="char-count">{(form.metaDescription || '').length}/160</small>
+        </label>
         <div className="modal-actions"><button className="admin-secondary" type="button" onClick={onClose}>Hủy</button><button className="admin-primary" type="submit">{category ? 'Lưu thay đổi' : 'Thêm danh mục'}</button></div>
       </form>
     </Modal>
@@ -2078,59 +2288,76 @@ function imageFilePreview(file, callback) {
   reader.readAsDataURL(file)
 }
 
+function CategoryTreeSelect({ categories, value, onChange }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef()
+  const rootCategories = categories.filter((c) => !c.parentId)
+  useEffect(() => {
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [])
+  return (
+    <div className="category-tree-select" ref={ref}>
+      <button type="button" className="tree-select-btn" onClick={() => setOpen(!open)}>
+        <span>{value || 'Chọn danh mục'}</span>
+        <ChevronDown size={14} />
+      </button>
+      {open && (
+        <div className="tree-select-dropdown">
+          {rootCategories.map((root) => {
+            const children = categories.filter((c) => c.parentId === root.id)
+            return (
+              <div key={root.id}>
+                <button type="button" className={`tree-item tree-root ${value === root.name ? 'selected' : ''}`} onClick={() => { onChange(root.name); setOpen(false) }}>
+                  {root.name}
+                </button>
+                {children.map((child) => (
+                  <button type="button" key={child.id} className={`tree-item tree-child ${value === child.name ? 'selected' : ''}`} onClick={() => { onChange(child.name); setOpen(false) }}>
+                    └ {child.name}
+                  </button>
+                ))}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function ProductModal({ categories, products, product, onClose, onSubmit, copy }) {
-  const activeCategories = categories.filter((category) => category.active)
+  const activeCategories = categories.filter((c) => c.active)
   const initialCategory = product?.category || activeCategories[0]?.name || ''
   const hasExistingVariants = product?.variants?.length > 0
   const initialDescription = parseProductDescriptionFields(product?.description)
+  const [activeTab, setActiveTab] = useState('general')
   const [form, setForm] = useState(product || {
-    name: '',
-    category: initialCategory,
-    sku: generateProductSku(initialCategory, products),
-    price: '',
-    oldPrice: '',
-    stock: '',
-    status: 'active',
-    unit: '',
-    badge: '',
-    image: defaultProductImage,
-    manufacturer: 'LyLy Market',
-    vendor: 'LyLy Market',
-    warehouse: 'Main Store',
-    productType: 'Grocery',
-    description: '',
-    images: [],
-    options: [],
-    variants: [],
+    name: '', category: initialCategory, sku: generateProductSku(initialCategory, products),
+    price: '', oldPrice: '', stock: '', status: 'active', unit: '', badge: '',
+    image: defaultProductImage, manufacturer: 'LyLy Market', vendor: 'LyLy Market',
+    warehouse: 'Main Store', productType: 'Grocery', description: '', images: [], options: [], variants: [],
+    weight: '', weightUnit: 'g', length: '', width: '', height: '',
+    mfgDate: '', expDate: '', shelfLife: '', barcode: '', purchaseLimit: '',
+    metaSlug: '', metaTitle: '', metaDescription: '',
   })
   const [descriptionTitle, setDescriptionTitle] = useState(initialDescription.title)
   const [descriptionBody, setDescriptionBody] = useState(initialDescription.body)
   const [productMode, setProductMode] = useState(hasExistingVariants ? 'variants' : 'single')
-  const [galleryImages, setGalleryImages] = useState(
-    Array.from({ length: 5 }, (_, index) => ({
-      url: product?.images?.[index] || '',
-      preview: product?.images?.[index] || '',
-      file: null,
-    })),
-  )
-  const [options, setOptions] = useState(product?.options?.length ? product.options.map((option) => ({ ...option, values: Array.isArray(option.values) ? option.values.join(', ') : option.values || '' })) : [blankProductOption()])
-  const [variants, setVariants] = useState(product?.variants?.length ? product.variants.map((variant) => ({
-    ...variant,
-    price: variant.price ?? '',
-    oldPrice: variant.oldPrice ?? '',
-    stock: variant.stock ?? '',
-    unit: variant.unit ?? '',
-    image: variant.image ?? '',
-    imagePreview: variant.image ?? '',
-    imageFile: null,
-  })) : [blankProductVariant(product || {}, 1)])
+  const [galleryImages, setGalleryImages] = useState(product?.images?.map((url) => ({ url, preview: url, file: null })) || [])
+  const [options, setOptions] = useState(product?.options?.length ? product.options.map((o) => ({ ...o, values: Array.isArray(o.values) ? o.values.join(', ') : o.values || '' })) : [blankProductOption()])
+  const [variants, setVariants] = useState(product?.variants?.length ? product.variants.map((v) => ({ ...v, price: v.price ?? '', oldPrice: v.oldPrice ?? '', stock: v.stock ?? '', unit: v.unit ?? '', image: v.image ?? '', imagePreview: v.image ?? '', imageFile: null })) : [blankProductVariant(product || {}, 1)])
   const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState(form.image || defaultProductImage)
+  const [slugLocked, setSlugLocked] = useState(Boolean(product?.metaSlug))
+  const descRef = useRef()
+
   const change = (event) => {
     const { name, value } = event.target
     setForm((current) => {
       const next = { ...current, [name]: value }
       if (name === 'category') next.sku = generateProductSku(value, products, product?.id)
+      if (name === 'name' && !slugLocked) next.metaSlug = slugify(value)
       return next
     })
   }
@@ -2140,142 +2367,215 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy }
     setImageFile(file)
     imageFilePreview(file, setImagePreview)
   }
-  const chooseGalleryImage = (index, event) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-    imageFilePreview(file, (preview) => {
-      setGalleryImages((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, file, preview, url: item.url } : item))
+  const addGalleryFiles = (files) => {
+    Array.from(files).forEach((file) => {
+      imageFilePreview(file, (preview) => setGalleryImages((cur) => [...cur, { url: '', preview, file }]))
     })
   }
-  const removeGalleryImage = (index) => {
-    setGalleryImages((current) => current.map((item, itemIndex) => itemIndex === index ? { url: '', preview: '', file: null } : item))
-  }
-  const changeOption = (index, name, value) => setOptions((current) => current.map((option, optionIndex) => optionIndex === index ? { ...option, [name]: value } : option))
-  const changeVariant = (index, name, value) => setVariants((current) => current.map((variant, variantIndex) => variantIndex === index ? { ...variant, [name]: value } : variant))
+  const removeGalleryImage = (index) => setGalleryImages((cur) => cur.filter((_, i) => i !== index))
+  const changeOption = (index, name, value) => setOptions((cur) => cur.map((o, i) => i === index ? { ...o, [name]: value } : o))
+  const changeVariant = (index, name, value) => setVariants((cur) => cur.map((v, i) => i === index ? { ...v, [name]: value } : v))
   const chooseVariantImage = (index, event) => {
     const file = event.target.files?.[0]
     if (!file) return
-    imageFilePreview(file, (preview) => {
-      setVariants((current) => current.map((variant, variantIndex) => variantIndex === index ? { ...variant, imageFile: file, imagePreview: preview } : variant))
-    })
+    imageFilePreview(file, (preview) => setVariants((cur) => cur.map((v, i) => i === index ? { ...v, imageFile: file, imagePreview: preview } : v)))
   }
-  const removeVariantImage = (index) => {
-    setVariants((current) => current.map((variant, variantIndex) => variantIndex === index ? { ...variant, image: '', imageFile: null, imagePreview: '' } : variant))
+  const removeVariantImage = (index) => setVariants((cur) => cur.map((v, i) => i === index ? { ...v, image: '', imageFile: null, imagePreview: '' } : v))
+  const addOption = () => setOptions((cur) => [...cur, blankProductOption()])
+  const addVariant = () => setVariants((cur) => [...cur, blankProductVariant(form, cur.length + 1)])
+  const removeOption = (index) => setOptions((cur) => cur.filter((_, i) => i !== index))
+  const removeVariant = (index) => setVariants((cur) => cur.filter((_, i) => i !== index))
+  const regenerateSku = () => setForm((cur) => ({ ...cur, sku: generateProductSku(cur.category, products, product?.id, cur.sku) }))
+  const insertFormat = (before, after = '') => {
+    const el = descRef.current
+    if (!el) return
+    const s = el.selectionStart; const e = el.selectionEnd
+    setDescriptionBody(descriptionBody.slice(0, s) + before + descriptionBody.slice(s, e) + after + descriptionBody.slice(e))
   }
-  const addOption = () => setOptions((current) => [...current, blankProductOption()])
-  const addVariant = () => setVariants((current) => [...current, blankProductVariant(form, current.length + 1)])
-  const removeOption = (index) => setOptions((current) => current.filter((_, optionIndex) => optionIndex !== index))
-  const removeVariant = (index) => setVariants((current) => current.filter((_, variantIndex) => variantIndex !== index))
-  const regenerateSku = () => setForm((current) => ({ ...current, sku: generateProductSku(current.category, products, product?.id, current.sku) }))
   const submit = (event) => {
     event.preventDefault()
-    const normalizedOptions = productMode === 'variants'
-      ? options
-        .map((option) => ({ name: option.name.trim(), values: option.values.split(',').map((value) => value.trim()).filter(Boolean) }))
-        .filter((option) => option.name && option.values.length)
-      : []
-    const normalizedVariants = productMode === 'variants'
-      ? variants
-        .map((variant, index) => ({
-          id: variant.id || `${form.sku}-${index + 1}`,
-          label: variant.label.trim(),
-          sku: variant.sku.trim() || `${form.sku}-${index + 1}`,
-          price: Number(variant.price || form.price),
-          oldPrice: variant.oldPrice ? Number(variant.oldPrice) : undefined,
-          stock: Number(variant.stock || 0),
-          unit: variant.unit.trim() || form.unit,
-          image: variant.image.trim() || '',
-          imageFile: variant.imageFile || null,
-        }))
-        .filter((variant) => variant.label && Number.isFinite(variant.price))
-      : []
-    onSubmit({
-      ...form,
-      sku: ensureUniqueSku(form, products).sku,
-      price: Number(form.price),
-      oldPrice: form.oldPrice ? Number(form.oldPrice) : undefined,
-      stock: Number(form.stock),
-      image: form.image || imagePreview || defaultProductImage,
-      description: buildProductDescription(descriptionTitle, descriptionBody),
-      images: galleryImages.map((item) => item.url).filter(Boolean),
-      imageFiles: galleryImages.map((item, index) => ({ index, file: item.file })).filter((item) => item.file),
-      options: normalizedOptions,
-      variants: normalizedVariants,
-      imageFile,
-    })
+    const normalizedOptions = productMode === 'variants' ? options.map((o) => ({ name: o.name.trim(), values: o.values.split(',').map((v) => v.trim()).filter(Boolean) })).filter((o) => o.name && o.values.length) : []
+    const normalizedVariants = productMode === 'variants' ? variants.map((v, i) => ({ id: v.id || `${form.sku}-${i + 1}`, label: v.label.trim(), sku: v.sku.trim() || `${form.sku}-${i + 1}`, price: Number(v.price || form.price), oldPrice: v.oldPrice ? Number(v.oldPrice) : undefined, stock: Number(v.stock || 0), unit: v.unit.trim() || form.unit, image: v.image.trim() || '', imageFile: v.imageFile || null })).filter((v) => v.label && Number.isFinite(v.price)) : []
+    onSubmit({ ...form, sku: ensureUniqueSku(form, products).sku, price: Number(form.price), oldPrice: form.oldPrice ? Number(form.oldPrice) : undefined, stock: Number(form.stock), purchaseLimit: form.purchaseLimit ? Number(form.purchaseLimit) : undefined, image: form.image || imagePreview || defaultProductImage, description: buildProductDescription(descriptionTitle, descriptionBody), images: galleryImages.map((item) => item.url).filter(Boolean), imageFiles: galleryImages.map((item, index) => ({ index, file: item.file })).filter((item) => item.file), options: normalizedOptions, variants: normalizedVariants, imageFile })
   }
+
   return (
     <Modal wide title={product ? copy.edit : copy.create} onClose={onClose}>
-      <form className="modal-form" onSubmit={submit}>
-        <label><span>{copy.name}</span><input required name="name" value={form.name} onChange={change} placeholder={copy.namePlaceholder} /></label>
-        <label><span>Tiêu đề mô tả</span><input value={descriptionTitle} onChange={(event) => setDescriptionTitle(event.target.value)} placeholder="Ví dụ: Rich, smooth texture" /></label>
-        <label><span>Nội dung mô tả</span><textarea value={descriptionBody} onChange={(event) => setDescriptionBody(event.target.value)} placeholder="Nội dung sẽ hiển thị dưới tiêu đề ở trang chi tiết sản phẩm" /></label>
-        <div>
-          <label><span>{copy.category}</span><select required name="category" value={form.category} onChange={change}>{activeCategories.map((category) => <option key={category.id}>{category.name}</option>)}</select></label>
-          <div className="sku-field"><span>SKU</span><div><strong>{form.sku}</strong><button type="button" onClick={regenerateSku}>{copy.regenerate}</button></div></div>
+      <form className="modal-form product-tabbed-form" onSubmit={submit}>
+        <div className="product-modal-tabs">
+          {[['general', 'Thông tin chung'], ['pricing', 'Giá & Kho vận'], ['variants', 'Biến thể'], ['seo', 'SEO']].map(([id, label]) => (
+            <button key={id} type="button" className={activeTab === id ? 'active' : ''} onClick={() => setActiveTab(id)}>
+              {label}{id === 'variants' && productMode === 'variants' && <em>ON</em>}
+            </button>
+          ))}
         </div>
-        <div><label><span>{copy.price}</span><input required min="0" step=".01" type="number" name="price" value={form.price} onChange={change} placeholder="0.00" /></label><label><span>{copy.oldPrice}</span><input min={form.price || 0} step=".01" type="number" name="oldPrice" value={form.oldPrice || ''} onChange={change} placeholder={copy.oldPricePlaceholder} /></label></div>
-        <div><label><span>{copy.stock}</span><input required min="0" type="number" name="stock" value={form.stock} onChange={change} placeholder="0" /></label><label><span>{copy.status}</span><select name="status" value={form.status} onChange={change}><option value="active">{copy.active}</option><option value="draft">{copy.draft}</option></select></label></div>
-        <div><label><span>{copy.unit}</span><input required name="unit" value={form.unit} onChange={change} placeholder={copy.unitPlaceholder} /></label><label><span>{copy.badge}</span><input name="badge" value={form.badge || ''} onChange={change} placeholder={copy.badgePlaceholder} /></label></div>
-        <label className="product-upload-field">
-          <span>Ảnh chính</span>
-          <div className="product-image-picker">
-            <img src={imagePreview || defaultProductImage} alt="" />
-            <div><Upload size={21} /><b>{imageFile ? imageFile.name : copy.chooseImage}</b><small>{copy.imageHelp}</small></div>
-            <input accept="image/*" type="file" onChange={chooseImage} />
-          </div>
-        </label>
-        <section className="product-gallery-picker">
-          <div className="variant-editor-head"><b>Ảnh phụ</b><small>Tối đa 5 ảnh, dùng cho gallery sản phẩm</small></div>
-          <div className="product-gallery-grid">
-            {galleryImages.map((item, index) => (
-              <label className={item.preview ? 'gallery-upload-slot has-image' : 'gallery-upload-slot'} key={index}>
-                <span>Ảnh phụ {index + 1}</span>
-                {item.preview ? <img src={item.preview} alt="" /> : <Upload size={20} />}
-                <b>{item.file?.name || (item.preview ? 'Đổi ảnh' : 'Chọn ảnh')}</b>
-                {item.preview && <button type="button" onClick={(event) => { event.preventDefault(); removeGalleryImage(index) }}>Xóa</button>}
-                <input accept="image/*" type="file" onChange={(event) => chooseGalleryImage(index, event)} />
-              </label>
-            ))}
-          </div>
-        </section>
-        <div className="product-mode-toggle">
-          <button className={productMode === 'single' ? 'active' : ''} type="button" onClick={() => setProductMode('single')}>Sản phẩm đơn</button>
-          <button className={productMode === 'variants' ? 'active' : ''} type="button" onClick={() => setProductMode('variants')}>Có nhiều lựa chọn</button>
-        </div>
-        {productMode === 'variants' && (
-          <section className="variant-editor">
-            <div className="variant-editor-head"><b>Tùy chọn</b><button type="button" onClick={addOption}><Plus size={13} /> Thêm tùy chọn</button></div>
-            {options.map((option, index) => (
-              <div className="variant-row" key={index}>
-                <label><span>Tên tùy chọn</span><input value={option.name} onChange={(event) => changeOption(index, 'name', event.target.value)} placeholder="Ví dụ: Kích thước, Màu sắc, Khối lượng" /></label>
-                <label><span>Giá trị</span><input value={option.values} onChange={(event) => changeOption(index, 'values', event.target.value)} placeholder="Ví dụ: 250g, 500g, 1kg" /></label>
-                <button type="button" onClick={() => removeOption(index)}><Trash2 size={13} /></button>
+
+        {activeTab === 'general' && (
+          <div className="tab-pane">
+            <label><span>{copy.name} *</span><input required name="name" value={form.name} onChange={change} placeholder={copy.namePlaceholder} /></label>
+            <label>
+              <span>{copy.category} *</span>
+              <CategoryTreeSelect categories={activeCategories} value={form.category} onChange={(val) => change({ target: { name: 'category', value: val } })} />
+            </label>
+            <label><span>Tiêu đề mô tả</span><input name="descriptionTitle" value={descriptionTitle} onChange={(e) => setDescriptionTitle(e.target.value)} placeholder="Ví dụ: Rich, smooth texture" /></label>
+            <div className="rich-editor-wrap">
+              <span className="form-label">Nội dung mô tả</span>
+              <div className="rich-editor-toolbar">
+                <button type="button" title="In đậm" onClick={() => insertFormat('**', '**')}><b>B</b></button>
+                <button type="button" title="In nghiêng" onClick={() => insertFormat('_', '_')}><i>I</i></button>
+                <button type="button" title="Gạch đầu dòng" onClick={() => insertFormat('\n• ')}>• List</button>
+                <button type="button" title="Tiêu đề" onClick={() => insertFormat('\n### ')}>H3</button>
               </div>
-            ))}
-            <div className="variant-editor-head"><b>Biến thể bán hàng</b><button type="button" onClick={addVariant}><Plus size={13} /> Thêm biến thể</button></div>
-            {variants.map((variant, index) => (
-              <div className="variant-card" key={variant.id || index}>
-                <label><span>Tên hiển thị</span><input required value={variant.label} onChange={(event) => changeVariant(index, 'label', event.target.value)} placeholder="Ví dụ: 500g / Đỏ" /></label>
-                <div><label><span>SKU</span><input value={variant.sku} onChange={(event) => changeVariant(index, 'sku', event.target.value)} /></label><label><span>Quy cách</span><input value={variant.unit} onChange={(event) => changeVariant(index, 'unit', event.target.value)} placeholder={form.unit || '500g'} /></label></div>
-                <div><label><span>Giá</span><input required min="0" step=".01" type="number" value={variant.price} onChange={(event) => changeVariant(index, 'price', event.target.value)} /></label><label><span>Tồn kho</span><input required min="0" type="number" value={variant.stock} onChange={(event) => changeVariant(index, 'stock', event.target.value)} /></label></div>
-                <label className="variant-image-upload">
-                  <span>Ảnh biến thể</span>
-                  <div>
-                    <img src={variant.imagePreview || imagePreview || defaultProductImage} alt="" />
-                    <strong>{variant.imageFile?.name || (variant.imagePreview ? 'Đổi ảnh biến thể' : 'Chọn ảnh biến thể')}</strong>
-                    <small>Để trống sẽ dùng ảnh chính</small>
-                    {variant.imagePreview && <button type="button" onClick={(event) => { event.preventDefault(); removeVariantImage(index) }}>Xóa ảnh</button>}
-                    <input accept="image/*" type="file" onChange={(event) => chooseVariantImage(index, event)} />
+              <textarea ref={descRef} name="description" value={descriptionBody} onChange={(e) => setDescriptionBody(e.target.value)} placeholder="Nội dung mô tả chi tiết sản phẩm..." rows={6} />
+            </div>
+            <label className="product-upload-field">
+              <span>Ảnh chính</span>
+              <div className="product-image-picker">
+                <img src={imagePreview || defaultProductImage} alt="" />
+                <div><Upload size={21} /><b>{imageFile ? imageFile.name : copy.chooseImage}</b><small>{copy.imageHelp}</small></div>
+                <input accept="image/*" type="file" onChange={chooseImage} />
+              </div>
+            </label>
+            <div className="gallery-dropzone-wrap">
+              <div className="variant-editor-head"><b>Ảnh phụ (gallery)</b><small>Kéo thả hoặc bấm + để upload nhiều ảnh</small></div>
+              <div className="gallery-dropzone" onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); addGalleryFiles(e.dataTransfer.files) }}>
+                {galleryImages.map((item, index) => (
+                  <div className="gallery-thumb" key={index}>
+                    <img src={item.preview} alt="" />
+                    <button type="button" className="gallery-remove" onClick={() => removeGalleryImage(index)}><X size={12} /></button>
                   </div>
+                ))}
+                <label className="gallery-add-slot">
+                  <Plus size={20} /><small>Thêm ảnh</small>
+                  <input accept="image/*" type="file" multiple onChange={(e) => addGalleryFiles(e.target.files)} />
                 </label>
-                <button className="variant-remove" type="button" onClick={() => removeVariant(index)}>Xóa biến thể</button>
               </div>
-            ))}
-          </section>
+            </div>
+          </div>
         )}
-        <div><label><span>{copy.manufacturer}</span><input required name="manufacturer" value={form.manufacturer} onChange={change} /></label><label><span>{copy.vendor}</span><input required name="vendor" value={form.vendor} onChange={change} /></label></div>
-        <div><label><span>{copy.warehouse}</span><input required name="warehouse" value={form.warehouse} onChange={change} /></label><label><span>{copy.productType}</span><input required name="productType" value={form.productType} onChange={change} /></label></div>
+
+        {activeTab === 'pricing' && (
+          <div className="tab-pane">
+            <p className="form-section-head">Giá bán & Tồn kho</p>
+            <div>
+              <label><span>{copy.price}{productMode === 'single' ? ' *' : ' (mặc định)'}</span><input min="0" step=".01" type="number" name="price" value={form.price} onChange={change} placeholder="0.00" required={productMode === 'single'} disabled={productMode === 'variants'} /></label>
+              <label><span>{copy.oldPrice}</span><input min="0" step=".01" type="number" name="oldPrice" value={form.oldPrice || ''} onChange={change} placeholder={copy.oldPricePlaceholder} disabled={productMode === 'variants'} /></label>
+            </div>
+            <div>
+              <label><span>{copy.stock}{productMode === 'single' ? ' *' : ' (mặc định)'}</span><input min="0" type="number" name="stock" value={form.stock} onChange={change} placeholder="0" required={productMode === 'single'} disabled={productMode === 'variants'} /></label>
+              <label><span>{copy.status}</span><select name="status" value={form.status} onChange={change}><option value="active">{copy.active}</option><option value="draft">{copy.draft}</option></select></label>
+            </div>
+            <div>
+              <label><span>{copy.unit} *</span><input required name="unit" value={form.unit} onChange={change} placeholder={copy.unitPlaceholder} /></label>
+              <label><span>{copy.badge}</span><input name="badge" value={form.badge || ''} onChange={change} placeholder={copy.badgePlaceholder} /></label>
+            </div>
+            <div>
+              <div className="sku-field"><span>SKU</span><div><strong>{form.sku}</strong><button type="button" onClick={regenerateSku}>{copy.regenerate}</button></div></div>
+              <label><span>Barcode (EAN/UPC)</span><input name="barcode" value={form.barcode || ''} onChange={change} placeholder="0123456789012" /></label>
+            </div>
+            <label><span>Giới hạn mua tối đa / đơn</span><input min="1" type="number" name="purchaseLimit" value={form.purchaseLimit || ''} onChange={change} placeholder="Không giới hạn" /></label>
+            <p className="form-section-head">Thông tin vận chuyển</p>
+            <div>
+              <label><span>Khối lượng</span>
+                <div className="weight-input">
+                  <input type="number" min="0" step=".01" name="weight" value={form.weight || ''} onChange={change} placeholder="0" />
+                  <select name="weightUnit" value={form.weightUnit || 'g'} onChange={change}><option value="g">g</option><option value="kg">kg</option></select>
+                </div>
+              </label>
+            </div>
+            <div>
+              <label><span>Dài (cm)</span><input type="number" min="0" step=".1" name="length" value={form.length || ''} onChange={change} placeholder="0" /></label>
+              <label><span>Rộng (cm)</span><input type="number" min="0" step=".1" name="width" value={form.width || ''} onChange={change} placeholder="0" /></label>
+              <label><span>Cao (cm)</span><input type="number" min="0" step=".1" name="height" value={form.height || ''} onChange={change} placeholder="0" /></label>
+            </div>
+            <p className="form-section-head">Hạn sử dụng & Nhà cung cấp</p>
+            <div>
+              <label><span>Ngày sản xuất (MFG)</span><input type="date" name="mfgDate" value={form.mfgDate || ''} onChange={change} /></label>
+              <label><span>Hạn sử dụng (EXP)</span><input type="date" name="expDate" value={form.expDate || ''} onChange={change} /></label>
+            </div>
+            <label><span>Thời hạn sử dụng (ngày kể từ SX)</span><input type="number" min="0" name="shelfLife" value={form.shelfLife || ''} onChange={change} placeholder="Ví dụ: 365" /></label>
+            <div><label><span>{copy.manufacturer} *</span><input required name="manufacturer" value={form.manufacturer} onChange={change} /></label><label><span>{copy.vendor} *</span><input required name="vendor" value={form.vendor} onChange={change} /></label></div>
+            <div><label><span>{copy.warehouse} *</span><input required name="warehouse" value={form.warehouse} onChange={change} /></label><label><span>{copy.productType} *</span><input required name="productType" value={form.productType} onChange={change} /></label></div>
+          </div>
+        )}
+
+        {activeTab === 'variants' && (
+          <div className="tab-pane">
+            <div className="product-mode-toggle">
+              <button className={productMode === 'single' ? 'active' : ''} type="button" onClick={() => setProductMode('single')}>Sản phẩm đơn</button>
+              <button className={productMode === 'variants' ? 'active' : ''} type="button" onClick={() => setProductMode('variants')}>Có nhiều lựa chọn</button>
+            </div>
+            {productMode === 'single' && <p className="tab-empty-hint">Chuyển sang "Có nhiều lựa chọn" để cấu hình biến thể (kích thước, màu sắc, khối lượng...)</p>}
+            {productMode === 'variants' && (
+              <section className="variant-editor">
+                <div className="variant-editor-head"><b>Tùy chọn</b><button type="button" onClick={addOption}><Plus size={13} /> Thêm tùy chọn</button></div>
+                {options.map((option, index) => (
+                  <div className="variant-row" key={index}>
+                    <label><span>Tên tùy chọn</span><input value={option.name} onChange={(e) => changeOption(index, 'name', e.target.value)} placeholder="Ví dụ: Kích thước" /></label>
+                    <label><span>Giá trị (phân cách bởi dấu phẩy)</span><input value={option.values} onChange={(e) => changeOption(index, 'values', e.target.value)} placeholder="250g, 500g, 1kg" /></label>
+                    <button type="button" onClick={() => removeOption(index)}><Trash2 size={13} /></button>
+                  </div>
+                ))}
+                <div className="variant-editor-head"><b>Biến thể bán hàng</b><button type="button" onClick={addVariant}><Plus size={13} /> Thêm biến thể</button></div>
+                {variants.map((variant, index) => (
+                  <div className="variant-card" key={variant.id || index}>
+                    <label><span>Tên hiển thị *</span><input required name={`variants[${index}][label]`} value={variant.label} onChange={(e) => changeVariant(index, 'label', e.target.value)} placeholder="500g / Đỏ" /></label>
+                    <div>
+                      <label><span>SKU</span><input name={`variants[${index}][sku]`} value={variant.sku} onChange={(e) => changeVariant(index, 'sku', e.target.value)} /></label>
+                      <label><span>Quy cách</span><input name={`variants[${index}][unit]`} value={variant.unit} onChange={(e) => changeVariant(index, 'unit', e.target.value)} placeholder={form.unit || '500g'} /></label>
+                    </div>
+                    <div>
+                      <label><span>Giá *</span><input required min="0" step=".01" type="number" name={`variants[${index}][price]`} value={variant.price} onChange={(e) => changeVariant(index, 'price', e.target.value)} /></label>
+                      <label><span>Tồn kho *</span><input required min="0" type="number" name={`variants[${index}][stock]`} value={variant.stock} onChange={(e) => changeVariant(index, 'stock', e.target.value)} /></label>
+                    </div>
+                    <label className="variant-image-upload">
+                      <span>Ảnh biến thể</span>
+                      <div>
+                        <img src={variant.imagePreview || imagePreview || defaultProductImage} alt="" />
+                        <strong>{variant.imageFile?.name || (variant.imagePreview ? 'Đổi ảnh biến thể' : 'Chọn ảnh biến thể')}</strong>
+                        <small>Để trống sẽ dùng ảnh chính</small>
+                        {variant.imagePreview && <button type="button" onClick={(e) => { e.preventDefault(); removeVariantImage(index) }}>Xóa ảnh</button>}
+                        <input accept="image/*" type="file" onChange={(e) => chooseVariantImage(index, e)} />
+                      </div>
+                    </label>
+                    <button className="variant-remove" type="button" onClick={() => removeVariant(index)}>Xóa biến thể</button>
+                  </div>
+                ))}
+              </section>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'seo' && (
+          <div className="tab-pane">
+            <div className="seo-preview-card">
+              <div className="seo-preview-url">lyly-storefront.vercel.app/products/{form.metaSlug || slugify(form.name) || 'ten-san-pham'}</div>
+              <div className="seo-preview-title">{form.metaTitle || form.name || 'Tiêu đề sản phẩm'}</div>
+              <div className="seo-preview-desc">{form.metaDescription || descriptionBody.slice(0, 120) || 'Mô tả ngắn hiển thị trên kết quả tìm kiếm Google...'}</div>
+            </div>
+            <label>
+              <span>Đường dẫn (Slug)</span>
+              <div className="slug-field">
+                <input name="metaSlug" value={form.metaSlug || slugify(form.name)} onChange={change} disabled={!slugLocked} placeholder="ten-san-pham" />
+                <button type="button" className={`slug-lock-btn ${slugLocked ? 'unlocked' : 'locked'}`} onClick={() => setSlugLocked(!slugLocked)} title={slugLocked ? 'Khóa lại' : 'Mở khóa để sửa'}>
+                  {slugLocked ? <Eye size={14} /> : <ShieldCheck size={14} />}
+                </button>
+              </div>
+              <small className="field-hint">Tự động sinh từ tên. Bấm 🔓 để sửa tay.</small>
+            </label>
+            <label>
+              <span>Meta Title</span>
+              <input name="metaTitle" value={form.metaTitle || ''} onChange={change} placeholder={form.name || 'Tiêu đề SEO (tối đa 60 ký tự)'} maxLength={60} />
+              <small className="char-count">{(form.metaTitle || '').length}/60</small>
+            </label>
+            <label>
+              <span>Meta Description</span>
+              <textarea name="metaDescription" value={form.metaDescription || ''} onChange={change} placeholder="Mô tả ngắn hiển thị dưới tiêu đề trên Google (150–160 ký tự)" maxLength={160} rows={3} />
+              <small className="char-count">{(form.metaDescription || '').length}/160</small>
+            </label>
+          </div>
+        )}
+
         <div className="modal-actions"><button className="admin-secondary" type="button" onClick={onClose}>{copy.cancel}</button><button className="admin-primary" type="submit">{product ? copy.save : copy.add}</button></div>
       </form>
     </Modal>
@@ -2909,15 +3209,23 @@ function AdminApp() {
   const saveCategory = async (category) => {
     setAdminError('')
     try {
-      if (category.id) {
-        const previous = categories.find((item) => item.id === category.id)
-        const updatedCategory = await updateAdminCategory(category)
+      let categoryToSave = { ...category }
+      if (category.imageFile) {
+        try {
+          const imageUrl = await uploadAdminProductImage(category.imageFile, `category-${slugify(category.name)}`)
+          categoryToSave.image = imageUrl
+        } catch { /* keep existing image if upload fails */ }
+        delete categoryToSave.imageFile
+      }
+      if (categoryToSave.id) {
+        const previous = categories.find((item) => item.id === categoryToSave.id)
+        const updatedCategory = await updateAdminCategory(categoryToSave)
         setCategories((current) => current.map((item) => item.id === updatedCategory.id ? updatedCategory : item))
         if (previous?.name !== updatedCategory.name) {
           setProducts((current) => current.map((product) => product.category === previous.name ? { ...product, category: updatedCategory.name } : product))
         }
       } else {
-        const createdCategory = await createAdminCategory(category)
+        const createdCategory = await createAdminCategory(categoryToSave)
         setCategories((current) => [...current, createdCategory].sort((a, b) => a.displayOrder - b.displayOrder || a.name.localeCompare(b.name)))
       }
       setCategoryEditing(null)
