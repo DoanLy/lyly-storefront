@@ -2596,47 +2596,58 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy }
         )}
 
         {activeTab === 'pricing' && (
-          <div className="tab-pane">
-            <p className="form-section-head">Giá bán & Tồn kho</p>
-            <div>
-              <label><span>{copy.price}{productMode === 'single' ? ' *' : ' (mặc định)'}</span><input min="0" step=".01" type="number" name="price" value={form.price} onChange={change} placeholder="0.00" required={productMode === 'single'} disabled={productMode === 'variants'} /></label>
-              <label><span>{copy.oldPrice}</span><input min="0" step=".01" type="number" name="oldPrice" value={form.oldPrice || ''} onChange={change} placeholder={copy.oldPricePlaceholder} disabled={productMode === 'variants'} /></label>
-            </div>
-            <div>
-              <label><span>{copy.stock}{productMode === 'single' ? ' *' : ' (mặc định)'}</span><input min="0" type="number" name="stock" value={form.stock} onChange={change} placeholder="0" required={productMode === 'single'} disabled={productMode === 'variants'} /></label>
-              <label><span>{copy.status}</span><select name="status" value={form.status} onChange={change}><option value="active">{copy.active}</option><option value="draft">{copy.draft}</option></select></label>
-            </div>
-            <div>
-              <label><span>{copy.unit} *</span><input required name="unit" value={form.unit} onChange={change} placeholder={copy.unitPlaceholder} /></label>
-              <label><span>{copy.badge}</span><input name="badge" value={form.badge || ''} onChange={change} placeholder={copy.badgePlaceholder} /></label>
-            </div>
-            <div>
-              <div className="sku-field"><span>SKU</span><div><strong>{form.sku}</strong><button type="button" onClick={regenerateSku}>{copy.regenerate}</button></div></div>
-              <label><span>Barcode (EAN/UPC)</span><input name="barcode" value={form.barcode || ''} onChange={change} placeholder="0123456789012" /></label>
-            </div>
-            <label><span>Giới hạn mua tối đa / đơn</span><input min="1" type="number" name="purchaseLimit" value={form.purchaseLimit || ''} onChange={change} placeholder="Không giới hạn" /></label>
-            <p className="form-section-head">Thông tin vận chuyển</p>
-            <div>
-              <label><span>Khối lượng</span>
-                <div className="weight-input">
-                  <input type="number" min="0" step=".01" name="weight" value={form.weight || ''} onChange={change} placeholder="0" />
-                  <select name="weightUnit" value={form.weightUnit || 'g'} onChange={change}><option value="g">g</option><option value="kg">kg</option></select>
-                </div>
-              </label>
-            </div>
-            <div>
-              <label><span>Dài (cm)</span><input type="number" min="0" step=".1" name="length" value={form.length || ''} onChange={change} placeholder="0" /></label>
-              <label><span>Rộng (cm)</span><input type="number" min="0" step=".1" name="width" value={form.width || ''} onChange={change} placeholder="0" /></label>
-              <label><span>Cao (cm)</span><input type="number" min="0" step=".1" name="height" value={form.height || ''} onChange={change} placeholder="0" /></label>
-            </div>
-            <p className="form-section-head">Hạn sử dụng & Nhà cung cấp</p>
-            <div>
-              <label><span>Ngày sản xuất (MFG)</span><input type="date" name="mfgDate" value={form.mfgDate || ''} onChange={change} /></label>
-              <label><span>Hạn sử dụng (EXP)</span><input type="date" name="expDate" value={form.expDate || ''} onChange={change} /></label>
-            </div>
-            <label><span>Thời hạn sử dụng (ngày kể từ SX)</span><input type="number" min="0" name="shelfLife" value={form.shelfLife || ''} onChange={change} placeholder="Ví dụ: 365" /></label>
-            <div><label><span>{copy.manufacturer} *</span><input required name="manufacturer" value={form.manufacturer} onChange={change} /></label><label><span>{copy.vendor} *</span><input required name="vendor" value={form.vendor} onChange={change} /></label></div>
-            <div><label><span>{copy.warehouse} *</span><input required name="warehouse" value={form.warehouse} onChange={change} /></label><label><span>{copy.productType} *</span><input required name="productType" value={form.productType} onChange={change} /></label></div>
+          <div className="tab-pane pricing-tab-pane">
+            <section className="product-form-section">
+              <div className="product-form-section-head">
+                <h3>Giá bán & Tồn kho</h3>
+                <p>Thiết lập giá mặc định, tồn kho, SKU và giới hạn mua cho sản phẩm.</p>
+              </div>
+              <div className="product-section-grid">
+                <label><span>{copy.price}{productMode === 'single' ? ' *' : ' (mặc định)'}</span><input min="0" step=".01" type="number" name="price" value={form.price} onChange={change} placeholder="0.00" required={productMode === 'single'} disabled={productMode === 'variants'} /></label>
+                <label><span>{copy.oldPrice}</span><input min="0" step=".01" type="number" name="oldPrice" value={form.oldPrice || ''} onChange={change} placeholder={copy.oldPricePlaceholder} disabled={productMode === 'variants'} /></label>
+                <label><span>{copy.stock}{productMode === 'single' ? ' *' : ' (mặc định)'}</span><input min="0" type="number" name="stock" value={form.stock} onChange={change} placeholder="0" required={productMode === 'single'} disabled={productMode === 'variants'} /></label>
+                <label><span>{copy.status}</span><select name="status" value={form.status} onChange={change}><option value="active">{copy.active}</option><option value="draft">{copy.draft}</option></select></label>
+                <label><span>{copy.unit} *</span><input required name="unit" value={form.unit} onChange={change} placeholder={copy.unitPlaceholder} /></label>
+                <label><span>{copy.badge}</span><input name="badge" value={form.badge || ''} onChange={change} placeholder={copy.badgePlaceholder} /></label>
+                <div className="sku-field"><span>SKU</span><div><strong>{form.sku}</strong><button type="button" onClick={regenerateSku}>{copy.regenerate}</button></div></div>
+                <label><span>Barcode (EAN/UPC)</span><input name="barcode" value={form.barcode || ''} onChange={change} placeholder="0123456789012" /></label>
+                <label className="section-wide"><span>Giới hạn mua tối đa / đơn</span><input min="1" type="number" name="purchaseLimit" value={form.purchaseLimit || ''} onChange={change} placeholder="Không giới hạn" /></label>
+              </div>
+            </section>
+
+            <section className="product-form-section">
+              <div className="product-form-section-head">
+                <h3>Thông tin vận chuyển</h3>
+                <p>Dữ liệu này giúp tính phí giao hàng và đóng gói chính xác hơn.</p>
+              </div>
+              <div className="product-section-grid shipping-dimensions-grid">
+                <label><span>Khối lượng</span>
+                  <div className="weight-input">
+                    <input type="number" min="0" step=".01" name="weight" value={form.weight || ''} onChange={change} placeholder="0" />
+                    <select name="weightUnit" value={form.weightUnit || 'g'} onChange={change}><option value="g">g</option><option value="kg">kg</option></select>
+                  </div>
+                </label>
+                <label><span>Dài (cm)</span><input type="number" min="0" step=".1" name="length" value={form.length || ''} onChange={change} placeholder="0" /></label>
+                <label><span>Rộng (cm)</span><input type="number" min="0" step=".1" name="width" value={form.width || ''} onChange={change} placeholder="0" /></label>
+                <label><span>Cao (cm)</span><input type="number" min="0" step=".1" name="height" value={form.height || ''} onChange={change} placeholder="0" /></label>
+              </div>
+            </section>
+
+            <section className="product-form-section">
+              <div className="product-form-section-head">
+                <h3>Hạn sử dụng & Nhà cung cấp</h3>
+                <p>Quản lý thông tin nguồn hàng, kho và hạn sử dụng của sản phẩm.</p>
+              </div>
+              <div className="product-section-grid">
+                <label><span>Ngày sản xuất (MFG)</span><input type="date" name="mfgDate" value={form.mfgDate || ''} onChange={change} /></label>
+                <label><span>Hạn sử dụng (EXP)</span><input type="date" name="expDate" value={form.expDate || ''} onChange={change} /></label>
+                <label className="section-wide"><span>Thời hạn sử dụng (ngày kể từ SX)</span><input type="number" min="0" name="shelfLife" value={form.shelfLife || ''} onChange={change} placeholder="Ví dụ: 365" /></label>
+                <label><span>{copy.manufacturer} *</span><input required name="manufacturer" value={form.manufacturer} onChange={change} /></label>
+                <label><span>{copy.vendor} *</span><input required name="vendor" value={form.vendor} onChange={change} /></label>
+                <label><span>{copy.warehouse} *</span><input required name="warehouse" value={form.warehouse} onChange={change} /></label>
+                <label><span>{copy.productType} *</span><input required name="productType" value={form.productType} onChange={change} /></label>
+              </div>
+            </section>
           </div>
         )}
 

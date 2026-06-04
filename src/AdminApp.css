@@ -547,6 +547,7 @@
   .product-tabbed-form .product-modal-tabs { gap: 10px; }
   .product-tabbed-form .product-modal-tabs button { height: 50px; padding-inline: 14px; font-size: 13px; }
   .product-tabbed-form .tab-pane { gap: 18px; }
+  .shipping-dimensions-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 760px) {
@@ -601,6 +602,9 @@
   .product-tabbed-form .product-image-picker img { width: 84px; height: 84px; }
   .product-tabbed-form .product-image-picker b { font-size: 13px; }
   .product-tabbed-form .product-image-picker small { font-size: 11px; }
+  .product-form-section { padding: 13px; }
+  .product-section-grid, .shipping-dimensions-grid { grid-template-columns: 1fr; }
+  .product-section-grid .section-wide { grid-column: auto; }
   .setup-card, .setup-card.wide { min-height: 220px; }
   .compact-order { grid-template-columns: 1fr 60px 76px; }
   .sales-summary { min-height: 190px; }
@@ -673,6 +677,18 @@
 .product-tabbed-form .gallery-add-slot { flex: 1; min-width: 160px; min-height: 104px; border: 0; color: #9aa3af; background: transparent; }
 .product-tabbed-form .gallery-add-slot svg { width: 36px; height: 36px; padding: 8px; border: 1px solid #d5dbe3; border-radius: 7px; }
 .product-tabbed-form .gallery-add-slot small { font-size: 13px; font-weight: 800; }
+.product-tabbed-form .pricing-tab-pane { grid-template-columns: 1fr; gap: 16px; }
+.product-form-section { display: grid; gap: 16px; padding: 16px; border: 1px solid #dfe7e2; border-radius: 10px; background: #fbfdfb; }
+.product-form-section-head { display: grid; gap: 4px; padding-bottom: 11px; border-bottom: 1px solid #e6ede8; }
+.product-form-section-head h3 { margin: 0; color: #2f5143; font-size: 13px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+.product-form-section-head p { margin: 0; color: #849189; font-size: 11px; line-height: 1.45; }
+.product-section-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; }
+.product-section-grid .section-wide { grid-column: 1 / -1; }
+.shipping-dimensions-grid { grid-template-columns: 1.4fr repeat(3, minmax(0, 1fr)); }
+.product-tabbed-form .product-form-section .sku-field div { height: 54px; padding: 0 8px 0 16px; border-color: #d5dbe3; border-radius: 8px; }
+.product-tabbed-form .product-form-section .sku-field button { height: 34px; padding: 0 12px; border-radius: 6px; font-size: 11px; }
+.product-tabbed-form .product-form-section .weight-input { gap: 6px; }
+.product-tabbed-form .product-form-section .weight-input select { width: 62px; height: 54px; border-color: #d5dbe3; border-radius: 8px; font-size: 12px; }
 .tab-pane { display: grid; gap: 13px; }
 .tab-empty-hint { padding: 24px; border: 1px dashed #d2ddd7; border-radius: 10px; color: #7a9082; font-size: 12px; text-align: center; }
 .form-section-head { margin: 4px 0 0; padding: 8px 10px; border-radius: 6px; color: #4e6b5d; background: #f2f7f4; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
