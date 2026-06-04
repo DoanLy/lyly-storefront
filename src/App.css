@@ -721,6 +721,7 @@ footer { color: #dfe9e2; background: #1e392e; }
 .account-order-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; padding-top: 4px; }
 .account-order-actions button { height: 40px; padding: 0 16px; border: 1px solid #d7dfd9; border-radius: 22px; color: #20362d; background: white; font-size: 12px; font-weight: 900; }
 .account-order-actions button:first-child, .account-order-actions button:hover { color: white; border-color: #1e211f; background: #1e211f; }
+.account-order-actions button:disabled { cursor: wait; opacity: .62; }
 .profile-card { min-height: 200px; }
 .profile-card button { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; border: 0; color: #69706c; background: transparent; font-size: 20px; }
 .profile-card p { margin: 0 0 8px; color: #69706c; font-size: 20px; }

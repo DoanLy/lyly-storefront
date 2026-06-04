@@ -32,7 +32,7 @@ import {
   X,
 } from 'lucide-react'
 import './App.css'
-import { createStorefrontOrder, loadPublicArticles, loadPublicCategories, loadPublicDiscounts, loadPublicProducts, loadStoreSettings, loadStorefrontOrders, subscribeToNewsletter } from './lib/storeApi'
+import { createStorefrontOrder, loadPublicArticles, loadPublicCategories, loadPublicDiscounts, loadPublicProducts, loadStoreSettings, loadStorefrontOrders, subscribeToNewsletter, updateStorefrontOrderAction } from './lib/storeApi'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 
 const fallbackCategories = [
@@ -1092,6 +1092,7 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
   const [orderFilter, setOrderFilter] = useState('all')
   const [expandedOrders, setExpandedOrders] = useState(() => new Set())
   const [actionNotice, setActionNotice] = useState('')
+  const [orderActionKey, setOrderActionKey] = useState('')
   const [profileOpen, setProfileOpen] = useState(false)
   const [addressOpen, setAddressOpen] = useState(false)
   const [profileForm, setProfileForm] = useState({
@@ -1222,6 +1223,24 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
     setAddressForm((current) => ({ ...current, address: '', apartment: '', city: '', zip: '' }))
   }
 
+  const runOrderAction = async (order, action) => {
+    const actionKey = `${order.uuid}-${action}`
+    setOrderActionKey(actionKey)
+    setActionNotice('')
+
+    try {
+      await updateStorefrontOrderAction(order.uuid, action)
+      const refreshedOrders = await loadStorefrontOrders(user.email)
+      setOrders(refreshedOrders)
+      showActionNotice(action === 'pay' ? `${order.id} has been marked as paid.` : `${order.id} has been cancelled.`)
+    } catch (error) {
+      console.error(`Unable to ${action} storefront order.`, error)
+      showActionNotice(action === 'pay' ? `Unable to process payment for ${order.id}.` : `Unable to cancel ${order.id}.`)
+    } finally {
+      setOrderActionKey('')
+    }
+  }
+
   return (
     <main className="account-page">
       <header className="account-page-header account-profile-header">
@@ -1339,8 +1358,8 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
                       </div>
                       {order.trackingId && <p className="account-order-tracking">Tracking: {order.trackingId}</p>}
                       <div className="account-order-actions">
-                        {bucket === 'unpaid' && <button type="button" onClick={() => showActionNotice(`Payment for ${order.id} will be available soon.`)}>Pay now</button>}
-                        {!['delivered', 'cancelled'].includes(bucket) && <button type="button" onClick={() => showActionNotice(`Cancellation request for ${order.id} has been noted.`)}>Cancel order</button>}
+                        {bucket === 'unpaid' && <button type="button" disabled={Boolean(orderActionKey)} onClick={() => runOrderAction(order, 'pay')}>{orderActionKey === `${order.uuid}-pay` ? 'Processing...' : 'Pay now'}</button>}
+                        {!['delivered', 'cancelled'].includes(bucket) && <button type="button" disabled={Boolean(orderActionKey)} onClick={() => runOrderAction(order, 'cancel')}>{orderActionKey === `${order.uuid}-cancel` ? 'Cancelling...' : 'Cancel order'}</button>}
                         {bucket === 'transit' && <button type="button" onClick={() => showActionNotice(order.trackingId ? `Tracking ${order.trackingId}` : `Tracking for ${order.id} will update soon.`)}>Track order</button>}
                         {bucket === 'delivered' && <button type="button" onClick={() => onReorder?.(order)}>Reorder</button>}
                         {bucket === 'delivered' && <button type="button" onClick={() => showActionNotice(`Review form for ${order.id} will be available soon.`)}>Review products</button>}

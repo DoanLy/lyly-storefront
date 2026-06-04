@@ -808,6 +808,20 @@ export async function loadStorefrontOrders(email) {
   return (data || []).map(mapOrder)
 }
 
+export async function updateStorefrontOrderAction(orderId, action) {
+  if (!supabase) throw new Error('Supabase is not configured.')
+
+  const normalizedAction = String(action || '').trim().toLowerCase()
+  if (!['pay', 'cancel'].includes(normalizedAction)) throw new Error('Unsupported order action.')
+
+  const { error } = await supabase.rpc('update_storefront_order_action', {
+    p_order_id: orderId,
+    p_action: normalizedAction,
+  })
+
+  if (error) throw error
+}
+
 export async function signInAdmin(email, password) {
   if (!supabase) return null
 
