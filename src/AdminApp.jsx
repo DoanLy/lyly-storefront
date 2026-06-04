@@ -2004,8 +2004,12 @@ function SettingsWorkspacePage({ meta, settings, orders, onSave }) {
   const [form, setForm] = useState(settings)
   const [newUser, setNewUser] = useState({ name: '', email: '', role: 'Staff', status: 'Invited', twoFactor: false })
   const [newCarrier, setNewCarrier] = useState({ name: '', service: '', type: 'domestic', enabled: true, cod: true, trackingUrl: '', notes: '' })
+  const [showCarrierForm, setShowCarrierForm] = useState(false)
+  const [editingCarrierId, setEditingCarrierId] = useState('')
   const users = form.users || []
   const shippingCarriers = form.shipping?.carriers?.length ? form.shipping.carriers : defaultShippingCarriers
+  const enabledCarriers = shippingCarriers.filter((carrier) => carrier.enabled !== false)
+  const codCarriers = shippingCarriers.filter((carrier) => carrier.cod)
   const openOrders = orders.filter((order) => !['Delivered', 'Cancelled'].includes(order.delivery)).slice(0, 5)
   const settingsNav = [
     { id: 'general', icon: Store, title: 'Chung', text: 'Thông tin cửa hàng, tiền tệ, múi giờ và định dạng đơn hàng.' },
@@ -2015,6 +2019,7 @@ function SettingsWorkspacePage({ meta, settings, orders, onSave }) {
   ]
   const roleOptions = ['Owner', 'Admin', 'Staff', 'Fulfillment', 'Viewer']
   const statusOptions = ['Active', 'Invited', 'Disabled']
+  const carrierTypeLabels = { local: 'Nội thành', domestic: 'Toàn quốc', express: 'Hỏa tốc', international: 'Quốc tế' }
   const setGroupValue = (group, name, value) => setForm((current) => ({ ...current, [group]: { ...(current[group] || {}), [name]: value } }))
   const addUser = () => {
     if (!newUser.name.trim() || !newUser.email.trim()) return
@@ -2034,6 +2039,8 @@ function SettingsWorkspacePage({ meta, settings, orders, onSave }) {
     }
     setShippingCarriers([carrier, ...shippingCarriers])
     setNewCarrier({ name: '', service: '', type: 'domestic', enabled: true, cod: true, trackingUrl: '', notes: '' })
+    setShowCarrierForm(false)
+    setEditingCarrierId(carrier.id)
   }
   const updateCarrier = (id, field, value) => setShippingCarriers(shippingCarriers.map((carrier) => carrier.id === id ? { ...carrier, [field]: value } : carrier))
   const removeCarrier = (id) => setShippingCarriers(shippingCarriers.filter((carrier) => carrier.id !== id))
@@ -2120,56 +2127,100 @@ function SettingsWorkspacePage({ meta, settings, orders, onSave }) {
 
           {section === 'shipping' && (
             <>
-              <section className="admin-panel settings-section-card">
-                <h3>Phương thức giao hàng</h3>
-                <label className="settings-inline-check"><input type="checkbox" checked={Boolean(form.shipping?.pickupEnabled)} onChange={(event) => setGroupValue('shipping', 'pickupEnabled', event.target.checked)} /> Cho phép nhận hàng tại cửa hàng</label>
-                <label className="settings-inline-check"><input type="checkbox" checked={Boolean(form.shipping?.deliveryEnabled)} onChange={(event) => setGroupValue('shipping', 'deliveryEnabled', event.target.checked)} /> Cho phép giao hàng tận nơi</label>
-                <div className="settings-two">
-                  <label>Ngưỡng miễn phí giao hàng<input type="number" value={form.shipping?.freeShippingThreshold || 0} onChange={(event) => setGroupValue('shipping', 'freeShippingThreshold', Number(event.target.value))} /></label>
-                  <label>Cam kết xử lý<input value={form.shipping?.promise || ''} onChange={(event) => setGroupValue('shipping', 'promise', event.target.value)} /></label>
+              <section className="admin-panel settings-section-card shipping-control-panel">
+                <div className="settings-card-head">
+                  <div>
+                    <h3>Vận chuyển và giao hàng</h3>
+                    <p>Bật phương thức phục vụ khách hàng và cấu hình phí hiển thị tại giỏ hàng, thanh toán.</p>
+                  </div>
+                  <div className="shipping-status-strip">
+                    <span>{enabledCarriers.length}/{shippingCarriers.length} đơn vị đang bật</span>
+                    <span>{codCarriers.length} hỗ trợ COD</span>
+                  </div>
+                </div>
+
+                <div className="delivery-method-grid">
+                  <label className={`delivery-method-card ${form.shipping?.pickupEnabled ? 'active' : ''}`}>
+                    <input type="checkbox" checked={Boolean(form.shipping?.pickupEnabled)} onChange={(event) => setGroupValue('shipping', 'pickupEnabled', event.target.checked)} />
+                    <Store size={18} />
+                    <span><b>Nhận tại cửa hàng</b><small>Khách tự đến nhận, không cần đơn vị vận chuyển.</small></span>
+                  </label>
+                  <label className={`delivery-method-card ${form.shipping?.deliveryEnabled ? 'active' : ''}`}>
+                    <input type="checkbox" checked={Boolean(form.shipping?.deliveryEnabled)} onChange={(event) => setGroupValue('shipping', 'deliveryEnabled', event.target.checked)} />
+                    <Truck size={18} />
+                    <span><b>Giao hàng tận nơi</b><small>Dùng phí vận chuyển và carrier khi xử lý đơn.</small></span>
+                  </label>
+                </div>
+
+                <div className="shipping-rate-grid">
+                  <label><span>Miễn phí từ</span><input type="number" value={form.shipping?.freeShippingThreshold || 0} onChange={(event) => setGroupValue('shipping', 'freeShippingThreshold', Number(event.target.value))} /></label>
+                  <label><span>Phí nội thành</span><input type="number" value={form.shipping?.localDeliveryFee || 0} onChange={(event) => setGroupValue('shipping', 'localDeliveryFee', Number(event.target.value))} /></label>
+                  <label><span>Phí tiêu chuẩn</span><input type="number" value={form.shipping?.domesticShippingFee || 0} onChange={(event) => setGroupValue('shipping', 'domesticShippingFee', Number(event.target.value))} /></label>
+                  <label><span>Phí nhanh</span><input type="number" value={form.shipping?.expressShippingFee || 0} onChange={(event) => setGroupValue('shipping', 'expressShippingFee', Number(event.target.value))} /></label>
+                  <label className="shipping-promise-field"><span>Cam kết xử lý</span><input value={form.shipping?.promise || ''} onChange={(event) => setGroupValue('shipping', 'promise', event.target.value)} /></label>
                 </div>
               </section>
-              <section className="admin-panel settings-section-card">
-                <h3>Phí vận chuyển</h3>
-                <div className="settings-two">
-                  <label>Phí nội thành<input type="number" value={form.shipping?.localDeliveryFee || 0} onChange={(event) => setGroupValue('shipping', 'localDeliveryFee', Number(event.target.value))} /></label>
-                  <label>Phí tiêu chuẩn<input type="number" value={form.shipping?.domesticShippingFee || 0} onChange={(event) => setGroupValue('shipping', 'domesticShippingFee', Number(event.target.value))} /></label>
+
+              <section className="admin-panel settings-section-card carrier-manager">
+                <div className="settings-card-head">
+                  <div>
+                    <h3>Đơn vị vận chuyển</h3>
+                    <p>Danh sách này dùng trong chi tiết đơn hàng để chọn carrier, nhập mã vận đơn và mở link tra cứu.</p>
+                  </div>
+                  <button className="admin-secondary" type="button" onClick={() => setShowCarrierForm((current) => !current)}><Plus size={15} /> Thêm đơn vị</button>
                 </div>
-                <label>Phí nhanh<input type="number" value={form.shipping?.expressShippingFee || 0} onChange={(event) => setGroupValue('shipping', 'expressShippingFee', Number(event.target.value))} /></label>
-              </section>
-              <section className="admin-panel settings-section-card">
-                <h3>Đơn vị vận chuyển</h3>
-                <p>Quản lý đối tác giao hàng dùng trong luồng xử lý đơn. Admin chọn đơn vị vận chuyển và nhập mã vận đơn trong chi tiết đơn hàng.</p>
-                <div className="carrier-create-grid">
-                  <label>Tên đơn vị<input value={newCarrier.name} onChange={(event) => setNewCarrier((current) => ({ ...current, name: event.target.value }))} placeholder="GHN, GHTK, Viettel Post..." /></label>
-                  <label>Dịch vụ<input value={newCarrier.service} onChange={(event) => setNewCarrier((current) => ({ ...current, service: event.target.value }))} placeholder="Giao hàng nhanh" /></label>
-                  <label>Phạm vi<select value={newCarrier.type} onChange={(event) => setNewCarrier((current) => ({ ...current, type: event.target.value }))}><option value="local">Nội thành</option><option value="domestic">Toàn quốc</option><option value="express">Hỏa tốc</option><option value="international">Quốc tế</option></select></label>
-                  <label>URL tra cứu<input value={newCarrier.trackingUrl} onChange={(event) => setNewCarrier((current) => ({ ...current, trackingUrl: event.target.value }))} placeholder="https://.../{trackingId}" /></label>
-                </div>
-                <div className="carrier-create-actions">
-                  <label className="settings-inline-check"><input type="checkbox" checked={newCarrier.cod} onChange={(event) => setNewCarrier((current) => ({ ...current, cod: event.target.checked }))} /> Hỗ trợ COD</label>
-                  <label className="settings-inline-check"><input type="checkbox" checked={newCarrier.enabled} onChange={(event) => setNewCarrier((current) => ({ ...current, enabled: event.target.checked }))} /> Đang bật</label>
-                  <button className="admin-secondary" type="button" onClick={addCarrier}><Plus size={15} /> Thêm đơn vị</button>
-                </div>
-                <div className="carrier-list">
-                  {shippingCarriers.map((carrier) => (
-                    <article className="carrier-card" key={carrier.id}>
-                      <div>
-                        <label>Tên<input value={carrier.name} onChange={(event) => updateCarrier(carrier.id, 'name', event.target.value)} /></label>
-                        <label>Dịch vụ<input value={carrier.service || ''} onChange={(event) => updateCarrier(carrier.id, 'service', event.target.value)} /></label>
-                      </div>
-                      <div>
-                        <label>Phạm vi<select value={carrier.type || 'domestic'} onChange={(event) => updateCarrier(carrier.id, 'type', event.target.value)}><option value="local">Nội thành</option><option value="domestic">Toàn quốc</option><option value="express">Hỏa tốc</option><option value="international">Quốc tế</option></select></label>
-                        <label>URL tra cứu<input value={carrier.trackingUrl || ''} onChange={(event) => updateCarrier(carrier.id, 'trackingUrl', event.target.value)} placeholder="https://.../{trackingId}" /></label>
-                      </div>
-                      <label>Ghi chú<input value={carrier.notes || ''} onChange={(event) => updateCarrier(carrier.id, 'notes', event.target.value)} /></label>
-                      <div className="carrier-card-actions">
-                        <label className="settings-inline-check"><input type="checkbox" checked={carrier.enabled !== false} onChange={(event) => updateCarrier(carrier.id, 'enabled', event.target.checked)} /> Bật</label>
-                        <label className="settings-inline-check"><input type="checkbox" checked={Boolean(carrier.cod)} onChange={(event) => updateCarrier(carrier.id, 'cod', event.target.checked)} /> COD</label>
-                        <button className="icon-danger" type="button" onClick={() => removeCarrier(carrier.id)}><Trash2 size={15} /></button>
-                      </div>
-                    </article>
-                  ))}
+
+                {showCarrierForm && (
+                  <div className="carrier-setup-panel">
+                    <div className="carrier-create-grid">
+                      <label>Tên đơn vị<input value={newCarrier.name} onChange={(event) => setNewCarrier((current) => ({ ...current, name: event.target.value }))} placeholder="GHN, GHTK, Viettel Post..." /></label>
+                      <label>Dịch vụ<input value={newCarrier.service} onChange={(event) => setNewCarrier((current) => ({ ...current, service: event.target.value }))} placeholder="Giao hàng nhanh" /></label>
+                      <label>Phạm vi<select value={newCarrier.type} onChange={(event) => setNewCarrier((current) => ({ ...current, type: event.target.value }))}><option value="local">Nội thành</option><option value="domestic">Toàn quốc</option><option value="express">Hỏa tốc</option><option value="international">Quốc tế</option></select></label>
+                      <label>URL tra cứu<input value={newCarrier.trackingUrl} onChange={(event) => setNewCarrier((current) => ({ ...current, trackingUrl: event.target.value }))} placeholder="https://.../{trackingId}" /></label>
+                    </div>
+                    <div className="carrier-create-actions">
+                      <label className="settings-inline-check"><input type="checkbox" checked={newCarrier.cod} onChange={(event) => setNewCarrier((current) => ({ ...current, cod: event.target.checked }))} /> Hỗ trợ COD</label>
+                      <label className="settings-inline-check"><input type="checkbox" checked={newCarrier.enabled} onChange={(event) => setNewCarrier((current) => ({ ...current, enabled: event.target.checked }))} /> Đang bật</label>
+                      <button className="admin-primary" type="button" onClick={addCarrier}><CheckCircle2 size={15} /> Lưu đơn vị</button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="carrier-table">
+                  <div className="carrier-table-head"><span>Đơn vị</span><span>Dịch vụ</span><span>Phạm vi</span><span>Trạng thái</span><span></span></div>
+                  {shippingCarriers.map((carrier) => {
+                    const isEditing = editingCarrierId === carrier.id
+                    return (
+                      <article className={`carrier-row ${isEditing ? 'editing' : ''}`} key={carrier.id}>
+                        <div className="carrier-row-main">
+                          <span><b>{carrier.name}</b><small>{carrier.notes || 'Chưa có ghi chú'}</small></span>
+                          <span>{carrier.service || 'Giao hàng tiêu chuẩn'}</span>
+                          <span>{carrierTypeLabels[carrier.type] || carrier.type || 'Toàn quốc'}</span>
+                          <span className="carrier-badges">
+                            <button className={`status-pill ${carrier.enabled !== false ? 'active' : ''}`} type="button" onClick={() => updateCarrier(carrier.id, 'enabled', carrier.enabled === false)}> {carrier.enabled !== false ? 'Đang bật' : 'Đang tắt'}</button>
+                            {carrier.cod && <em>COD</em>}
+                          </span>
+                          <span className="carrier-actions">
+                            <button className="admin-icon-btn" type="button" onClick={() => setEditingCarrierId(isEditing ? '' : carrier.id)}><Pencil size={14} /></button>
+                            <button className="icon-danger" type="button" onClick={() => removeCarrier(carrier.id)}><Trash2 size={15} /></button>
+                          </span>
+                        </div>
+                        {isEditing && (
+                          <div className="carrier-inline-editor">
+                            <label>Tên<input value={carrier.name} onChange={(event) => updateCarrier(carrier.id, 'name', event.target.value)} /></label>
+                            <label>Dịch vụ<input value={carrier.service || ''} onChange={(event) => updateCarrier(carrier.id, 'service', event.target.value)} /></label>
+                            <label>Phạm vi<select value={carrier.type || 'domestic'} onChange={(event) => updateCarrier(carrier.id, 'type', event.target.value)}><option value="local">Nội thành</option><option value="domestic">Toàn quốc</option><option value="express">Hỏa tốc</option><option value="international">Quốc tế</option></select></label>
+                            <label>URL tra cứu<input value={carrier.trackingUrl || ''} onChange={(event) => updateCarrier(carrier.id, 'trackingUrl', event.target.value)} placeholder="https://.../{trackingId}" /></label>
+                            <label className="carrier-note-field">Ghi chú<input value={carrier.notes || ''} onChange={(event) => updateCarrier(carrier.id, 'notes', event.target.value)} /></label>
+                            <div className="carrier-inline-flags">
+                              <label className="settings-inline-check"><input type="checkbox" checked={carrier.enabled !== false} onChange={(event) => updateCarrier(carrier.id, 'enabled', event.target.checked)} /> Bật</label>
+                              <label className="settings-inline-check"><input type="checkbox" checked={Boolean(carrier.cod)} onChange={(event) => updateCarrier(carrier.id, 'cod', event.target.checked)} /> COD</label>
+                            </div>
+                          </div>
+                        )}
+                      </article>
+                    )
+                  })}
                 </div>
               </section>
             </>
