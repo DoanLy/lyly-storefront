@@ -638,8 +638,8 @@
 .product-modal-tabs button.active { color: #2d5241; background: #e6f0ea; border-color: #b8d4c2; }
 .product-modal-tabs button em { padding: 1px 5px; border-radius: 5px; color: white; background: #4e7d60; font-size: 8px; font-style: normal; }
 .product-tabbed-form { gap: 20px; padding: 28px 29px 24px; }
-.product-tabbed-form .product-modal-tabs { display: flex; flex-wrap: nowrap; gap: 18px; padding: 0; border-bottom: 0; margin-bottom: 8px; overflow: visible; }
-.product-tabbed-form .product-modal-tabs button { width: auto; min-width: 0; flex: 1 1 0; height: 58px; justify-content: flex-start; padding: 0 20px; border-color: #dfe4ea; border-radius: 8px; color: #687385; background: white; font-size: 17px; font-weight: 700; box-shadow: 0 1px 2px #1f29370a; }
+.modal-form.product-tabbed-form > .product-modal-tabs { display: flex !important; grid-template-columns: none !important; flex-wrap: nowrap; gap: 18px; padding: 0; border-bottom: 0; margin-bottom: 8px; overflow: visible; }
+.modal-form.product-tabbed-form > .product-modal-tabs button { width: auto; min-width: 0; flex: 1 1 0; height: 58px; justify-content: flex-start; padding: 0 20px; border-color: #dfe4ea; border-radius: 8px; color: #687385; background: white; font-size: 17px; font-weight: 700; box-shadow: 0 1px 2px #1f29370a; }
 .product-tabbed-form .product-modal-tabs button:hover { color: #315846; border-color: #bfd3c7; background: #fbfdfb; }
 .product-tabbed-form .product-modal-tabs button.active { color: #274d3d; border-color: #dfe9e3; background: #eaf4ef; box-shadow: none; }
 .product-tabbed-form .product-modal-tabs button em { margin-left: auto; height: 18px; display: inline-flex; align-items: center; padding: 0 6px; border-radius: 9px; font-size: 8px; }
