@@ -353,16 +353,25 @@ footer { color: #dfe9e2; background: #1e392e; }
 .cart-drawer-panels details[open] summary svg { transform: rotate(180deg); }
 .drawer-discount { display: block; padding: 0 25px 18px; }
 .discount-code-form { display: grid; gap: 10px; }
+.cart-summary .discount-code-form,
+.cart-summary .discount-code-row,
+.cart-summary .discount-tag-list { display: grid; }
 .discount-code-row { display: grid; grid-template-columns: minmax(0, 1fr) 112px; gap: 14px; align-items: center; }
 .discount-code-row input { min-width: 0; height: 52px; padding: 0 14px; border: 1px solid #c9d4ce; border-radius: 7px; color: #1f2a25; background: white; font-size: 16px; }
 .discount-code-row button { height: 52px; border: 0; border-radius: 28px; color: white; background: #1e211f; font-size: 16px; font-weight: 800; }
 .discount-code-row button:disabled { background: #b8b8b8; cursor: not-allowed; }
 .discount-code-form p { margin: 0; color: #7e8581; font-size: 13px; line-height: 1.35; }
 .discount-error { color: #a43a2f !important; font-size: 12px !important; }
-.discount-chip { width: max-content; max-width: 100%; display: inline-flex; align-items: center; gap: 8px; padding: 9px 11px; border-radius: 7px; color: #111916; background: #f2f2f2; font-size: 13px; }
-.discount-chip button { width: 20px; height: 20px; display: grid; place-items: center; min-width: 0; padding: 0; border: 0; color: #4d5450; background: transparent; }
+.discount-tag-list { justify-content: start; align-items: start; padding: 8px 10px; border: 7px solid transparent; background: white; }
+.discount-chip { width: max-content; max-width: 100%; min-height: 40px; display: inline-flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 6px; color: #1c1f1d; background: #f2f2f2; font-size: 15px; line-height: 1; }
+.discount-chip svg { flex: 0 0 auto; color: #202320; stroke-width: 1.8; }
+.discount-chip b { overflow: hidden; max-width: 180px; color: inherit; font-size: inherit; font-weight: 500; letter-spacing: 0; text-overflow: ellipsis; white-space: nowrap; }
+.discount-chip button { width: 25px; height: 25px; display: grid; place-items: center; flex: 0 0 auto; min-width: 0; padding: 0; border: 0; color: #555b56; background: transparent; }
+.discount-chip button:hover { color: #1f2420; }
 .discount-code-form.compact .discount-code-row { grid-template-columns: minmax(0, 1fr) 96px; gap: 10px; }
 .discount-code-form.compact .discount-code-row input, .discount-code-form.compact .discount-code-row button { height: 43px; font-size: 13px; }
+.discount-code-form.compact .discount-tag-list { padding: 6px 0 0; border-width: 0; background: transparent; }
+.discount-code-form.compact .discount-chip { min-height: 36px; font-size: 13px; }
 .cart-summary { padding: 21px 25px 24px; border-top: 1px solid var(--line); }
 .cart-summary div { display: flex; justify-content: space-between; color: #2f4a3e; font-size: 15px; }
 .cart-summary p { margin: 7px 0 14px; color: var(--muted); font-size: 11px; }
@@ -413,9 +422,6 @@ footer { color: #dfe9e2; background: #1e392e; }
 .checkout-review-item small { color: #7c8b84; font-size: 10px; }
 .checkout-review-item strong { color: #304d40; font-size: 12px; }
 .checkout-discount span { color: #587066; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
-.checkout-discount div { display: grid; grid-template-columns: 1fr 62px; }
-.checkout-discount input { border-radius: 4px 0 0 4px; }
-.checkout-discount b { display: grid; place-items: center; border: 1px solid var(--line); border-left: 0; border-radius: 0 4px 4px 0; color: #405f50; background: white; font-size: 10px; }
 .checkout-totals { display: grid; gap: 8px; padding-top: 12px; border-top: 1px solid #dce5de; }
 .checkout-totals p { display: flex; justify-content: space-between; margin: 0; color: #61736a; font-size: 12px; }
 .checkout-totals b { color: #304d40; }
@@ -553,9 +559,10 @@ footer { color: #dfe9e2; background: #1e392e; }
 .related-cart-row:last-child { border-bottom: 0; }
 .related-cart-row span { display: flex; flex-direction: column; gap: 4px; }
 .related-cart-row button, .estimate-shipping button { height: 36px; padding: 0 20px; border: 1px solid #1e211f; border-radius: 19px; color: #111916; background: white; font-weight: 700; }
-.estimate-shipping form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 13px; padding: 15px; }
+.estimate-shipping form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 13px; align-items: end; padding: 15px; }
 .estimate-shipping label { display: grid; gap: 7px; color: #1d2722; font-size: 11px; }
 .estimate-shipping input, .estimate-shipping select { height: 38px; padding: 0 10px; border: 1px solid #cfd6d2; }
+.estimate-shipping button { height: 38px; align-self: end; }
 .estimate-error { margin: 0 15px 15px; color: #a43a2f; font-size: 12px; }
 .estimate-result { display: grid; grid-template-columns: 1fr auto; gap: 5px 10px; margin: 0 15px 15px; padding: 12px; border: 1px solid #d6e0d8; border-radius: 7px; color: #2c4639; background: #f8fbf6; font-size: 12px; }
 .estimate-result span { display: flex; align-items: center; gap: 8px; font-weight: 700; }

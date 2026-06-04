@@ -2,7 +2,7 @@ import { isSupabaseConfigured, supabase } from './supabase'
 
 const productColumns = 'id, name, category, sku, price, old_price, stock, status, unit, badge, image_url, manufacturer, vendor, warehouse, product_type, description, images, options, variants'
 const categoryColumns = 'id, parent_id, name, slug, description, image_url, active, show_on_home, include_in_menu, display_order, home_display_order'
-const orderColumns = 'id, order_number, total, payment_status, delivery_status, created_at, customers(full_name, email, phone, location), order_items(product_name, unit_price, quantity, line_total, variant_label)'
+const orderColumns = 'id, order_number, total, subtotal, discount_total, delivery_fee, tax_total, delivery_method, payment_method, shipping_address, notes, payment_status, delivery_status, created_at, customers(full_name, email, phone, location), order_items(product_name, unit_price, quantity, line_total, variant_label)'
 const discountColumns = 'id, code, percent_off, active, ends_at, title, method, discount_type, value_type, value_amount, applies_to, minimum_type, minimum_value, usage_limit, once_per_customer, combines, starts_at'
 const customerColumns = 'id, email, full_name, phone, location, created_at, updated_at'
 const articleColumns = 'id, title, slug, category, excerpt, image_url, status, published_at, author, content, tags, type, created_at, updated_at'
@@ -82,6 +82,28 @@ function orderStatusValue(value) {
   return String(value || '').trim().toLowerCase().replaceAll(' ', '_')
 }
 
+function paymentMethodLabel(value) {
+  const labels = {
+    momo: 'MoMo',
+    zalopay: 'ZaloPay',
+    shopeepay: 'ShopeePay',
+    vnpay: 'VNPAY-QR',
+    cod: 'Thanh toán khi nhận hàng (COD)',
+    transfer: 'Chuyển khoản ngân hàng',
+  }
+  const normalized = String(value || '').trim().toLowerCase()
+  return labels[normalized] || titleStatus(normalized || value)
+}
+
+function deliveryMethodLabel(value) {
+  const labels = {
+    local: 'Giao tận nơi',
+    pickup: 'Nhận tại cửa hàng',
+  }
+  const normalized = String(value || '').trim().toLowerCase()
+  return labels[normalized] || titleStatus(normalized || value)
+}
+
 function mapOrder(order) {
   const lineItems = order.order_items || []
 
@@ -100,10 +122,19 @@ function mapOrder(order) {
     phone: order.customers?.phone || '',
     location: order.customers?.location || '',
     total: Number(order.total || 0),
+    subtotal: Number(order.subtotal || 0),
+    discountTotal: Number(order.discount_total || 0),
+    deliveryFee: Number(order.delivery_fee || 0),
+    taxTotal: Number(order.tax_total || 0),
     payment: titleStatus(order.payment_status),
+    paymentMethod: paymentMethodLabel(order.payment_method),
+    paymentMethodCode: order.payment_method || '',
     delivery: titleStatus(order.delivery_status),
+    deliveryMethod: deliveryMethodLabel(order.delivery_method),
+    deliveryMethodCode: order.delivery_method || '',
     items: lineItems.reduce((total, item) => total + Number(item.quantity || 0), 0),
-    note: '',
+    note: order.notes || '',
+    shippingAddress: order.shipping_address || order.customers?.location || '',
     lineItems: lineItems.map((item) => ({
       name: item.variant_label ? `${item.product_name} (${item.variant_label})` : item.product_name,
       quantity: Number(item.quantity),

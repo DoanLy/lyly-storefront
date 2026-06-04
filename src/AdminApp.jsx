@@ -184,7 +184,7 @@ const navGroups = [
       { id: 'customers', label: 'Khách hàng', icon: Users },
       { id: 'marketing', label: 'Tiếp thị', icon: Megaphone },
       { id: 'discounts', label: 'Giảm giá', icon: BadgePercent },
-      { id: 'content', label: 'Nội dung', icon: FileText, children: [{ id: 'content-recipes', label: 'Recipes' }, { id: 'content-blog', label: 'Blog' }] },
+      { id: 'content', label: 'Nội dung', icon: FileText, children: [{ id: 'content-recipes', label: 'Công thức' }, { id: 'content-blog', label: 'Bài viết' }] },
       { id: 'analytics', label: 'Phân tích', icon: BarChart3, children: [{ id: 'analytics-reports', label: 'Báo cáo' }] },
     ],
   },
@@ -205,8 +205,8 @@ const pageMeta = {
   marketing: ['Tiếp thị', 'Tạo chiến dịch để khách hàng quay lại với LyLy.'],
   discounts: ['Giảm giá', 'Quản lý mã ưu đãi và chương trình khuyến mại.'],
   content: ['Nội dung', 'Quản lý bài viết và nội dung hiển thị trên storefront.'],
-  'content-recipes': ['Recipes', 'Tạo và quản lý bài viết công thức trên storefront.'],
-  'content-blog': ['Blog', 'Tạo và quản lý bài viết blog/news trên storefront.'],
+  'content-recipes': ['Công thức', 'Tạo và quản lý bài viết công thức trên storefront.'],
+  'content-blog': ['Bài viết', 'Tạo và quản lý bài viết blog/news trên storefront.'],
   analytics: ['Phân tích', 'Theo dõi hiệu quả bán hàng và hành vi khách hàng.'],
   'analytics-reports': ['Báo cáo', 'Phân tích các báo cáo quan trọng cho vận hành thương mại điện tử.'],
   locations: ['Điểm bán hàng', 'Cấu hình địa điểm lấy hàng và khu vực giao hàng.'],
@@ -230,14 +230,20 @@ const adminI18n = {
       marketing: 'Tiếp thị',
       discounts: 'Giảm giá',
       content: 'Nội dung',
-      'content-recipes': 'Recipes',
-      'content-blog': 'Blog',
+      'content-recipes': 'Công thức',
+      'content-blog': 'Bài viết',
       analytics: 'Phân tích',
       'analytics-reports': 'Báo cáo',
       'online-store': 'Cửa hàng trực tuyến',
       locations: 'Điểm bán hàng',
     },
     navGroup: { salesChannels: 'Kênh bán hàng' },
+    validation: {
+      required: 'Vui lòng nhập trường này.',
+      email: 'Vui lòng nhập đúng định dạng email.',
+      url: 'Vui lòng nhập đúng định dạng URL.',
+      number: 'Vui lòng nhập số hợp lệ.',
+    },
     pageMeta,
     product: {
       create: 'Thêm sản phẩm mới',
@@ -293,6 +299,12 @@ const adminI18n = {
       locations: 'Locations',
     },
     navGroup: { salesChannels: 'Sales channels' },
+    validation: {
+      required: 'Please fill out this field.',
+      email: 'Please enter a valid email address.',
+      url: 'Please enter a valid URL.',
+      number: 'Please enter a valid number.',
+    },
     pageMeta: {
       products: ['Products', 'Manage product catalog, inventory, and sales status.'],
       categories: ['Categories', 'Manage category structure, menus, and storefront category display.'],
@@ -556,7 +568,7 @@ function downloadCatalogPdf(products) {
 }
 
 function downloadOrdersCsv(orders) {
-  const headers = ['order_number', 'date', 'customer', 'email', 'phone', 'location', 'payment_status', 'delivery_status', 'items', 'total']
+  const headers = ['order_number', 'date', 'customer', 'email', 'phone', 'location', 'payment_method', 'payment_status', 'delivery_status', 'items', 'total']
   const rows = orders.map((order) => [
     order.id,
     order.date,
@@ -564,6 +576,7 @@ function downloadOrdersCsv(orders) {
     order.email || '',
     order.phone || '',
     order.location || '',
+    order.paymentMethod || '',
     order.payment,
     order.delivery,
     order.items,
@@ -1078,7 +1091,7 @@ function OrdersPage({ meta, orders, onUpdate, onBulkUpdate }) {
   const shippingPartners = [...new Set(orders.map((o) => o.shippingPartner).filter(Boolean))]
 
   const visible = orders.filter((order) => {
-    const text = `${order.id} ${order.customer} ${order.email || ''} ${order.phone || ''} ${order.location || ''} ${order.trackingId || ''}`.toLowerCase()
+    const text = `${order.id} ${order.customer} ${order.email || ''} ${order.phone || ''} ${order.location || ''} ${order.paymentMethod || ''} ${order.trackingId || ''}`.toLowerCase()
     const dl = order.delivery.toLowerCase()
     const pm = order.payment.toLowerCase()
     const matchesQuery = text.includes(query.toLowerCase())
@@ -1306,7 +1319,10 @@ function OrderDetailModal({ order, onClose, onUpdate }) {
   const [shippingPartner, setShippingPartner] = useState(order.shippingPartner || '')
   const [trackingId, setTrackingId] = useState(order.trackingId || '')
   const save = () => onUpdate(order, { payment, delivery, shippingPartner, trackingId })
-  const subtotal = order.lineItems?.reduce((total, item) => total + item.total, 0) || order.total
+  const subtotal = Number(order.subtotal || 0) || order.lineItems?.reduce((total, item) => total + item.total, 0) || order.total
+  const discountTotal = Number(order.discountTotal || 0)
+  const deliveryFee = Number(order.deliveryFee || 0)
+  const taxTotal = Number(order.taxTotal || 0)
 
   return (
     <Modal wide title={`${order.id} · ${order.customer}`} onClose={onClose}>
@@ -1324,7 +1340,9 @@ function OrderDetailModal({ order, onClose, onUpdate }) {
             </div>
             <div className="order-total-box">
               <p><span>Tạm tính</span><b>{money(subtotal)}</b></p>
-              <p><span>Vận chuyển</span><b>Tính khi giao</b></p>
+              {discountTotal > 0 && <p><span>Giảm giá</span><b>-{money(discountTotal)}</b></p>}
+              {taxTotal > 0 && <p><span>Thuế</span><b>{money(taxTotal)}</b></p>}
+              <p><span>Vận chuyển</span><b>{deliveryFee > 0 ? money(deliveryFee) : 'Miễn phí'}</b></p>
               <p><span>Tổng cộng</span><strong>{money(order.total)}</strong></p>
             </div>
           </div>
@@ -1333,9 +1351,10 @@ function OrderDetailModal({ order, onClose, onUpdate }) {
             <div className="order-card-title"><h3>Lịch sử</h3></div>
             <div className="order-timeline">
               <p><CheckCircle2 size={15} /> Đơn hàng tạo lúc {order.date}</p>
+              {order.deliveryMethod && <p><Truck size={15} /> Hình thức nhận hàng: {order.deliveryMethod}</p>}
               <p><Package size={15} /> Trạng thái giao hàng: {delivery}</p>
               <p><ShoppingBag size={15} /> Trạng thái thanh toán: {payment}</p>
-              {order.paymentMethod && <p><Truck size={15} /> Phương thức: {order.paymentMethod}</p>}
+              {order.paymentMethod && <p><BadgePercent size={15} /> Phương thức thanh toán: {order.paymentMethod}</p>}
             </div>
             {order.note && <div className="order-note"><b>Ghi chú khách hàng</b><span>{order.note}</span></div>}
           </div>
@@ -2960,6 +2979,34 @@ function AdminApp() {
   const [adminError, setAdminError] = useState('')
   const adminCopy = adminI18n[adminLanguage] || adminI18n.vi
   const localizedMeta = adminCopy.pageMeta
+
+  useEffect(() => {
+    const validationCopy = adminCopy.validation
+    const setLocalizedValidity = (event) => {
+      const field = event.target
+      if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement)) return
+      field.setCustomValidity('')
+      if (field.validity.valueMissing) field.setCustomValidity(validationCopy.required)
+      else if (field.validity.typeMismatch && field.type === 'email') field.setCustomValidity(validationCopy.email)
+      else if (field.validity.typeMismatch && field.type === 'url') field.setCustomValidity(validationCopy.url)
+      else if (field.validity.badInput) field.setCustomValidity(validationCopy.number)
+    }
+    const clearLocalizedValidity = (event) => {
+      const field = event.target
+      if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement) {
+        field.setCustomValidity('')
+      }
+    }
+
+    document.addEventListener('invalid', setLocalizedValidity, true)
+    document.addEventListener('input', clearLocalizedValidity, true)
+    document.addEventListener('change', clearLocalizedValidity, true)
+    return () => {
+      document.removeEventListener('invalid', setLocalizedValidity, true)
+      document.removeEventListener('input', clearLocalizedValidity, true)
+      document.removeEventListener('change', clearLocalizedValidity, true)
+    }
+  }, [adminCopy.validation])
   const safeLoad = async (loader, fallback) => {
     try {
       return await loader()
