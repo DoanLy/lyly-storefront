@@ -808,7 +808,7 @@ export async function loadStorefrontOrders(email) {
   return (data || []).map(mapOrder)
 }
 
-export async function updateStorefrontOrderAction(orderId, action) {
+export async function updateStorefrontOrderAction(orderId, action, paymentMethod) {
   if (!supabase) throw new Error('Supabase is not configured.')
 
   const normalizedAction = String(action || '').trim().toLowerCase()
@@ -820,6 +820,14 @@ export async function updateStorefrontOrderAction(orderId, action) {
   })
 
   if (error) throw error
+
+  if (normalizedAction === 'pay' && paymentMethod) {
+    const { error: methodError } = await supabase
+      .from('orders')
+      .update({ payment_method: String(paymentMethod).trim().toLowerCase() })
+      .eq('id', orderId)
+    if (methodError) throw methodError
+  }
 }
 
 export async function signInAdmin(email, password) {

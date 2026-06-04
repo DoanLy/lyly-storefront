@@ -1226,13 +1226,13 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
     setAddressForm((current) => ({ ...current, address: '', apartment: '', city: '', zip: '' }))
   }
 
-  const runOrderAction = async (order, action) => {
+  const runOrderAction = async (order, action, paymentMethod) => {
     const actionKey = `${order.uuid}-${action}`
     setOrderActionKey(actionKey)
     setActionNotice('')
 
     try {
-      await updateStorefrontOrderAction(order.uuid, action)
+      await updateStorefrontOrderAction(order.uuid, action, paymentMethod)
       const refreshedOrders = await loadStorefrontOrders(user.email)
       setOrders(refreshedOrders)
       showActionNotice(action === 'pay' ? `${order.id} has been marked as paid.` : `${order.id} has been cancelled.`)
@@ -1328,7 +1328,7 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
                       </header>
                       <div className="account-order-meta">
                         <span>{order.items} items</span>
-                        <span>Payment: {order.payment}</span>
+                        <span>Payment: {order.payment}{order.paymentMethod ? ` · ${order.paymentMethod}` : ''}</span>
                         <span>Delivery: {order.delivery}</span>
                       </div>
                       <div className={`account-order-stepper stage-${stage}`}>
@@ -1531,7 +1531,7 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
             </div>
             <div className="order-pay-modal-actions">
               <button type="button" className="order-pay-cancel-btn" onClick={() => setPayOrderModal(null)}>Cancel</button>
-              <button type="button" className="order-pay-confirm-btn" disabled={Boolean(orderActionKey)} onClick={async () => { const order = payOrderModal; setPayOrderModal(null); await runOrderAction(order, 'pay') }}>{orderActionKey ? 'Processing...' : 'Confirm payment'}</button>
+              <button type="button" className="order-pay-confirm-btn" disabled={Boolean(orderActionKey)} onClick={async () => { const order = payOrderModal; const method = payMethod; setPayOrderModal(null); await runOrderAction(order, 'pay', method) }}>{orderActionKey ? 'Processing...' : 'Confirm payment'}</button>
             </div>
           </div>
         </div>
