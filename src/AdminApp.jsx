@@ -2651,7 +2651,6 @@ function BulkProductEditor({ categories, products, onClose, onSubmit }) {
         <header className="bulk-editor-head">
           <button className="admin-secondary" type="button" onClick={onClose}><ChevronLeft size={16} /> Quay lại</button>
           <strong>Đang sửa {rows.length} sản phẩm</strong>
-          <span></span>
           <button className="admin-primary" type="submit">Lưu</button>
         </header>
         <div className="bulk-editor-table-wrap">
@@ -2660,11 +2659,10 @@ function BulkProductEditor({ categories, products, onClose, onSubmit }) {
               <tr>
                 <th>Tên sản phẩm</th>
                 <th>Trạng thái</th>
-                <th>Danh mục sản phẩm</th>
+                <th>Danh mục</th>
                 <th>Nhà cung cấp</th>
-                <th>Giá cơ sở</th>
-                <th>Số lượng sẵn sàng</th>
-                <th>Số lượng còn trong kho</th>
+                <th>Giá (đ)</th>
+                <th>Tồn kho</th>
               </tr>
             </thead>
             <tbody>
@@ -2680,18 +2678,16 @@ function BulkProductEditor({ categories, products, onClose, onSubmit }) {
                     <td><select value={product.status} onChange={(event) => changeProduct(product.id, 'status', event.target.value)}><option value="active">Đang hoạt động</option><option value="draft">Bản nháp</option></select></td>
                     <td><select value={product.category} onChange={(event) => changeProduct(product.id, 'category', event.target.value)}>{activeCategories.map((category) => <option key={category.id}>{category.name}</option>)}</select></td>
                     <td><input value={product.vendor || ''} onChange={(event) => changeProduct(product.id, 'vendor', event.target.value)} /></td>
-                    <td><input min="0" step=".01" type="number" value={product.price} onChange={(event) => changeProduct(product.id, 'price', event.target.value)} /></td>
-                    <td><input min="0" type="number" value={product.stock} onChange={(event) => changeProduct(product.id, 'stock', event.target.value)} /></td>
-                    <td><input min="0" type="number" value={product.stock} onChange={(event) => changeProduct(product.id, 'stock', event.target.value)} /></td>
+                    <td><input min="0" step=".01" type="number" value={product.price} disabled={product.variants?.length > 0} onChange={(event) => changeProduct(product.id, 'price', event.target.value)} /></td>
+                    <td><input min="0" type="number" value={product.stock} disabled={product.variants?.length > 0} onChange={(event) => changeProduct(product.id, 'stock', event.target.value)} /></td>
                   </tr>
                   {product.variants.map((variant) => (
                     <tr className="bulk-variant-row" key={variant._bulkKey}>
-                      <td><span>{variant.label || variant.unit || product.unit}</span></td>
+                      <td><span className="bulk-variant-label">↳ {variant.label || variant.unit || product.unit}</span></td>
                       <td></td>
                       <td></td>
                       <td></td>
                       <td><input min="0" step=".01" type="number" value={variant.price} onChange={(event) => changeVariant(product.id, variant._bulkKey, 'price', event.target.value)} /></td>
-                      <td><input min="0" type="number" value={variant.stock} onChange={(event) => changeVariant(product.id, variant._bulkKey, 'stock', event.target.value)} /></td>
                       <td><input min="0" type="number" value={variant.stock} onChange={(event) => changeVariant(product.id, variant._bulkKey, 'stock', event.target.value)} /></td>
                     </tr>
                   ))}
