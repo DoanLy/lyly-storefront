@@ -612,6 +612,19 @@ footer { color: #dfe9e2; background: #1e392e; }
 .account-content { display: grid; gap: 36px; }
 .account-content h1 { margin: 0 0 20px; font-size: 34px; font-weight: 800; }
 .account-card { padding: 36px; border: 1px solid #e1e1e1; border-radius: 18px; background: white; box-shadow: 0 10px 30px #11191608; }
+.account-orders-list { display: grid; gap: 16px; }
+.account-order-card { display: grid; gap: 18px; }
+.account-order-card header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.account-order-card header div { display: grid; gap: 6px; }
+.account-order-card header b { color: #111916; font-size: 22px; }
+.account-order-card header small { color: #6f7d75; font-size: 13px; }
+.account-order-card header strong { color: #111916; font-size: 22px; font-weight: 700; white-space: nowrap; }
+.account-order-meta { display: flex; flex-wrap: wrap; gap: 8px; }
+.account-order-meta span { padding: 7px 10px; border: 1px solid #dfe6e1; border-radius: 18px; color: #45594f; background: #f8faf7; font-size: 12px; font-weight: 700; }
+.account-order-card ul { display: grid; gap: 10px; margin: 0; padding: 14px 0 0; list-style: none; border-top: 1px solid #edf0ed; }
+.account-order-card li { display: flex; justify-content: space-between; gap: 16px; color: #36443f; font-size: 14px; }
+.account-order-card li b { color: #111916; font-weight: 700; white-space: nowrap; }
+.account-order-tracking { margin: 0; color: #4b6759; font-size: 13px; font-weight: 700; }
 .profile-card { min-height: 200px; }
 .profile-card button { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; border: 0; color: #69706c; background: transparent; font-size: 20px; }
 .profile-card p { margin: 0 0 8px; color: #69706c; font-size: 20px; }
@@ -946,6 +959,9 @@ footer { color: #dfe9e2; background: #1e392e; }
   .account-page-header > a { font-size: 23px; }
   .account-page-header nav { grid-column: 1/-1; order: 3; gap: 22px; }
   .account-card { padding: 22px 18px; border-radius: 14px; }
+  .account-order-card header { display: grid; gap: 8px; }
+  .account-order-card header strong { white-space: normal; }
+  .account-order-card li { display: grid; gap: 5px; }
   .account-form-grid.two, .account-form-grid.three { grid-template-columns: 1fr; gap: 14px; }
   .account-auth-form input, .account-edit-modal input, .account-edit-modal select { height: 50px; font-size: 16px; }
   .account-check { align-items: flex-start; font-size: 17px; }

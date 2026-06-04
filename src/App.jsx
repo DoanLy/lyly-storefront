@@ -29,7 +29,7 @@ import {
   X,
 } from 'lucide-react'
 import './App.css'
-import { createStorefrontOrder, loadPublicArticles, loadPublicCategories, loadPublicDiscounts, loadPublicProducts, loadStoreSettings, subscribeToNewsletter } from './lib/storeApi'
+import { createStorefrontOrder, loadPublicArticles, loadPublicCategories, loadPublicDiscounts, loadPublicProducts, loadStoreSettings, loadStorefrontOrders, subscribeToNewsletter } from './lib/storeApi'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 
 const fallbackCategories = [
@@ -941,6 +941,9 @@ function AccountModal({ user, profile, onClose, onSignOut }) {
 function AccountPage({ user, profile, addresses, onOpenAccount, onSaveProfile, onSaveAddress, onSignOut }) {
   const initialTab = new URLSearchParams(window.location.search).get('tab') === 'orders' ? 'orders' : 'profile'
   const [tab, setTab] = useState(initialTab)
+  const [orders, setOrders] = useState([])
+  const [ordersStatus, setOrdersStatus] = useState('idle')
+  const [ordersMessage, setOrdersMessage] = useState('')
   const [profileOpen, setProfileOpen] = useState(false)
   const [addressOpen, setAddressOpen] = useState(false)
   const [profileForm, setProfileForm] = useState({
@@ -959,6 +962,35 @@ function AccountPage({ user, profile, addresses, onOpenAccount, onSaveProfile, o
     zip: '',
     isDefault: true,
   })
+
+  useEffect(() => {
+    if (!user?.email) return undefined
+
+    let cancelled = false
+    Promise.resolve()
+      .then(() => {
+        if (cancelled) return []
+        setOrdersStatus('loading')
+        setOrdersMessage('')
+        return loadStorefrontOrders(user.email)
+      })
+      .then((data) => {
+        if (cancelled) return
+        setOrders(data)
+        setOrdersStatus('success')
+      })
+      .catch((error) => {
+        if (cancelled) return
+        console.error('Unable to load storefront orders.', error)
+        setOrders([])
+        setOrdersStatus('error')
+        setOrdersMessage('Unable to load orders right now.')
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [user?.email])
 
   if (!user) {
     return (
@@ -1002,10 +1034,52 @@ function AccountPage({ user, profile, addresses, onOpenAccount, onSaveProfile, o
       <section className="account-content">
         <h1>{tab === 'orders' ? 'Orders' : 'Profile'}</h1>
         {tab === 'orders' ? (
-          <div className="account-card account-empty-row">
-            <Package size={24} />
-            <span>No orders yet</span>
-          </div>
+          ordersStatus === 'loading' ? (
+            <div className="account-card account-empty-row">
+              <Package size={24} />
+              <span>Loading orders...</span>
+            </div>
+          ) : ordersStatus === 'error' ? (
+            <div className="account-card account-empty-row">
+              <Package size={24} />
+              <span>{ordersMessage}</span>
+            </div>
+          ) : orders.length ? (
+            <div className="account-orders-list">
+              {orders.map((order) => (
+                <article className="account-card account-order-card" key={order.uuid}>
+                  <header>
+                    <div>
+                      <b>{order.id}</b>
+                      <small>{order.date}</small>
+                    </div>
+                    <strong>{formatPrice(order.total)}</strong>
+                  </header>
+                  <div className="account-order-meta">
+                    <span>{order.items} items</span>
+                    <span>Payment: {order.payment}</span>
+                    <span>Delivery: {order.delivery}</span>
+                  </div>
+                  {order.lineItems?.length > 0 && (
+                    <ul>
+                      {order.lineItems.slice(0, 3).map((item) => (
+                        <li key={`${order.uuid}-${item.name}`}>
+                          <span>{item.quantity} x {item.name}</span>
+                          <b>{formatPrice(item.total)}</b>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {order.trackingId && <p className="account-order-tracking">Tracking: {order.trackingId}</p>}
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="account-card account-empty-row">
+              <Package size={24} />
+              <span>No orders yet</span>
+            </div>
+          )
         ) : (
           <>
             <div className="account-card profile-card">
@@ -1758,9 +1832,9 @@ const VN_CITIES = [
   'Hạ Long', 'Thái Nguyên', 'Nam Định', 'Thanh Hóa', 'Khác',
 ]
 
-function CheckoutModal({ items, discounts, initialDiscountCode = '', onClose, onComplete, onUpdateQuantity, copy = storefrontI18n.en }) {
+function CheckoutModal({ items, discounts, initialDiscountCode = '', user, profile = {}, onClose, onComplete, onUpdateQuantity, copy = storefrontI18n.en }) {
   const [form, setForm] = useState({
-    name: '', email: '', phone: '',
+    name: user ? getAccountName(user, profile) : '', email: user?.email || '', phone: '',
     address: '', apartment: '', city: '', postalCode: '',
     deliveryMethod: 'local', deliverySlot: DELIVERY_SLOTS[0],
     pickupStoreId: storeLocations[0].id,
@@ -2871,7 +2945,7 @@ function App() {
       {quickProduct && <QuickProductModal product={quickProduct} onAdd={addToCart} onBuyNow={buyNow} onClose={() => setQuickProduct(null)} copy={t} />}
       {accountOpen && <AccountModal user={storefrontUser} profile={accountProfile} onClose={() => setAccountOpen(false)} onSignOut={signOutAccount} />}
       {pickupOpen && <SelectPickupModal selectedId={selectedPickup?.id} onSelect={selectPickup} onClose={() => setPickupOpen(false)} />}
-      {checkoutOpen && <CheckoutModal items={cart} discounts={discounts} initialDiscountCode={appliedDiscountCode} onClose={() => setCheckoutOpen(false)} onComplete={() => setCart([])} onUpdateQuantity={updateQuantity} copy={t} />}
+      {checkoutOpen && <CheckoutModal items={cart} discounts={discounts} initialDiscountCode={appliedDiscountCode} user={storefrontUser} profile={accountProfile} onClose={() => setCheckoutOpen(false)} onComplete={() => setCart([])} onUpdateQuantity={updateQuantity} copy={t} />}
       {searchOpen && <button className="search-closer" aria-label="Close search" type="button" onClick={() => setSearchOpen(false)} />}
     </div>
   )
