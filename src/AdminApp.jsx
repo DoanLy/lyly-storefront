@@ -26,10 +26,12 @@ import {
   MapPin,
   Menu,
   Megaphone,
+  MessageSquare,
   MoreHorizontal,
   Package,
   Pencil,
   Plus,
+  Printer,
   Search,
   Send,
   Settings,
@@ -128,12 +130,14 @@ const initialCategories = [
 ]
 
 const initialOrders = [
-  { id: '#LY1048', date: '02 Jun, 13:42', customer: 'Emma Wilson', email: 'emma.wilson@example.com', phone: '+1 555 0184', location: 'Brooklyn, NY', total: 54.2, payment: 'Paid', delivery: 'Packing', items: 5, note: 'Leave at concierge if no answer.', lineItems: [{ name: 'Organic Hass Avocados', quantity: 2, price: 5.9, total: 11.8 }, { name: 'Farm Fresh Whole Milk', quantity: 1, price: 3.25, total: 3.25 }, { name: 'Sweet Garden Strawberries', quantity: 2, price: 4.75, total: 9.5 }] },
-  { id: '#LY1047', date: '02 Jun, 12:16', customer: 'Noah Taylor', email: 'noah.taylor@example.com', phone: '+1 555 0162', location: 'Queens, NY', total: 82.75, payment: 'Paid', delivery: 'Ready', items: 7, note: 'Pickup window: 5-6 PM.', lineItems: [{ name: 'Atlantic Salmon Fillet', quantity: 2, price: 14.5, total: 29 }, { name: 'Fresh Rigatoni Pasta', quantity: 2, price: 4.9, total: 9.8 }, { name: 'Artisan Sourdough Loaf', quantity: 1, price: 6.5, total: 6.5 }] },
-  { id: '#LY1046', date: '02 Jun, 10:04', customer: 'Ava Anderson', email: 'ava.anderson@example.com', phone: '+1 555 0138', location: 'Jersey City, NJ', total: 34.5, payment: 'Pending', delivery: 'Unfulfilled', items: 3, note: 'Call before delivery.', lineItems: [{ name: 'Free Range Brown Eggs', quantity: 1, price: 5.5, total: 5.5 }, { name: 'Sun-Kissed Navel Oranges', quantity: 2, price: 4.2, total: 8.4 }] },
-  { id: '#LY1045', date: '01 Jun, 18:32', customer: 'Liam Johnson', email: 'liam.johnson@example.com', phone: '+1 555 0119', location: 'Manhattan, NY', total: 96.4, payment: 'Paid', delivery: 'Delivered', items: 9, note: 'Delivered by local courier.', lineItems: [{ name: 'Atlantic Salmon Fillet', quantity: 3, price: 14.5, total: 43.5 }, { name: 'Organic Hass Avocados', quantity: 3, price: 5.9, total: 17.7 }] },
-  { id: '#LY1044', date: '01 Jun, 16:21', customer: 'Mia Brown', email: 'mia.brown@example.com', phone: '+1 555 0144', location: 'Hoboken, NJ', total: 41.85, payment: 'Refunded', delivery: 'Cancelled', items: 4, note: 'Customer requested cancellation.', lineItems: [{ name: 'Fresh Rigatoni Pasta', quantity: 2, price: 4.9, total: 9.8 }, { name: 'Artisan Sourdough Loaf', quantity: 2, price: 6.5, total: 13 }] },
-  { id: '#LY1043', date: '01 Jun, 14:47', customer: 'Oliver Davis', email: 'oliver.davis@example.com', phone: '+1 555 0157', location: 'Brooklyn, NY', total: 67.1, payment: 'Paid', delivery: 'Delivered', items: 6, note: 'No substitutions.', lineItems: [{ name: 'Sweet Garden Strawberries', quantity: 4, price: 4.75, total: 19 }, { name: 'Farm Fresh Whole Milk', quantity: 2, price: 3.25, total: 6.5 }] },
+  { id: '#LY1048', date: '02 Jun, 13:42', customer: 'Emma Wilson', email: 'emma.wilson@example.com', phone: '+1 555 0184', location: 'Brooklyn, NY', total: 54.2, payment: 'Paid', delivery: 'Packing', items: 5, note: 'Leave at concierge if no answer.', paymentMethod: 'Bank Transfer', shippingPartner: 'GHN', trackingId: 'GHN1023847', lineItems: [{ name: 'Organic Hass Avocados', quantity: 2, price: 5.9, total: 11.8 }, { name: 'Farm Fresh Whole Milk', quantity: 1, price: 3.25, total: 3.25 }, { name: 'Sweet Garden Strawberries', quantity: 2, price: 4.75, total: 9.5 }] },
+  { id: '#LY1047', date: '02 Jun, 12:16', customer: 'Noah Taylor', email: 'noah.taylor@example.com', phone: '+1 555 0162', location: 'Queens, NY', total: 82.75, payment: 'Paid', delivery: 'Ready', items: 7, note: 'Pickup window: 5-6 PM.', paymentMethod: 'MoMo', shippingPartner: 'GHTK', trackingId: 'GHTK5547821', lineItems: [{ name: 'Atlantic Salmon Fillet', quantity: 2, price: 14.5, total: 29 }, { name: 'Fresh Rigatoni Pasta', quantity: 2, price: 4.9, total: 9.8 }, { name: 'Artisan Sourdough Loaf', quantity: 1, price: 6.5, total: 6.5 }] },
+  { id: '#LY1046', date: '02 Jun, 10:04', customer: 'Ava Anderson', email: 'ava.anderson@example.com', phone: '+1 555 0138', location: 'Jersey City, NJ', total: 34.5, payment: 'Pending', delivery: 'Unfulfilled', items: 3, note: 'Call before delivery.', paymentMethod: 'COD', shippingPartner: '', trackingId: '', lineItems: [{ name: 'Free Range Brown Eggs', quantity: 1, price: 5.5, total: 5.5 }, { name: 'Sun-Kissed Navel Oranges', quantity: 2, price: 4.2, total: 8.4 }] },
+  { id: '#LY1045', date: '01 Jun, 18:32', customer: 'Liam Johnson', email: 'liam.johnson@example.com', phone: '+1 555 0119', location: 'Manhattan, NY', total: 96.4, payment: 'Paid', delivery: 'Delivered', items: 9, note: 'Delivered by local courier.', paymentMethod: 'VNPay', shippingPartner: 'Viettel Post', trackingId: 'VTP8834510', lineItems: [{ name: 'Atlantic Salmon Fillet', quantity: 3, price: 14.5, total: 43.5 }, { name: 'Organic Hass Avocados', quantity: 3, price: 5.9, total: 17.7 }] },
+  { id: '#LY1044', date: '01 Jun, 16:21', customer: 'Mia Brown', email: 'mia.brown@example.com', phone: '+1 555 0144', location: 'Hoboken, NJ', total: 41.85, payment: 'Refunded', delivery: 'Cancelled', items: 4, note: 'Customer requested cancellation.', paymentMethod: 'Bank Transfer', shippingPartner: '', trackingId: '', lineItems: [{ name: 'Fresh Rigatoni Pasta', quantity: 2, price: 4.9, total: 9.8 }, { name: 'Artisan Sourdough Loaf', quantity: 2, price: 6.5, total: 13 }] },
+  { id: '#LY1043', date: '01 Jun, 14:47', customer: 'Oliver Davis', email: 'oliver.davis@example.com', phone: '+1 555 0157', location: 'Brooklyn, NY', total: 67.1, payment: 'Paid', delivery: 'Delivered', items: 6, note: 'No substitutions.', paymentMethod: 'COD', shippingPartner: 'GHN', trackingId: 'GHN9982341', lineItems: [{ name: 'Sweet Garden Strawberries', quantity: 4, price: 4.75, total: 19 }, { name: 'Farm Fresh Whole Milk', quantity: 2, price: 3.25, total: 6.5 }] },
+  { id: '#LY1042', date: '01 Jun, 11:20', customer: 'Sophia Martinez', email: 'sophia.m@example.com', phone: '+1 555 0198', location: 'Bronx, NY', total: 28.6, payment: 'Refunded', delivery: 'Returned', items: 3, note: 'Hàng bị dập, khách trả lại.', paymentMethod: 'MoMo', shippingPartner: 'GHTK', trackingId: 'GHTK4412309', lineItems: [{ name: 'Organic Hass Avocados', quantity: 2, price: 5.9, total: 11.8 }, { name: 'Farm Fresh Whole Milk', quantity: 2, price: 3.25, total: 6.5 }] },
+  { id: '#LY1041', date: '31 May, 17:05', customer: 'James Lee', email: 'james.lee@example.com', phone: '+1 555 0173', location: 'Staten Island, NY', total: 52.3, payment: 'Pending', delivery: 'Failed Delivery', items: 4, note: 'Shipper gọi không nghe máy. Đang hoàn hàng về kho.', paymentMethod: 'COD', shippingPartner: 'Ninja Van', trackingId: 'NV7741228', lineItems: [{ name: 'Atlantic Salmon Fillet', quantity: 2, price: 14.5, total: 29 }, { name: 'Free Range Brown Eggs', quantity: 1, price: 5.5, total: 5.5 }] },
 ]
 
 const customers = [
@@ -993,35 +997,56 @@ function OrdersPage({ meta, orders, onUpdate, onBulkUpdate }) {
   const [tab, setTab] = useState('all')
   const [deliveryFilter, setDeliveryFilter] = useState('all')
   const [paymentFilter, setPaymentFilter] = useState('all')
+  const [shippingFilter, setShippingFilter] = useState('all')
+  const [priceMin, setPriceMin] = useState('')
+  const [priceMax, setPriceMax] = useState('')
   const [sort, setSort] = useState('newest')
   const [selected, setSelected] = useState([])
   const [filterOpen, setFilterOpen] = useState(false)
   const [detailOrder, setDetailOrder] = useState(null)
   const [notice, setNotice] = useState('')
+
+  const shippingPartners = [...new Set(orders.map((o) => o.shippingPartner).filter(Boolean))]
+
   const visible = orders.filter((order) => {
-    const text = `${order.id} ${order.customer} ${order.email || ''} ${order.phone || ''} ${order.location || ''}`.toLowerCase()
+    const text = `${order.id} ${order.customer} ${order.email || ''} ${order.phone || ''} ${order.location || ''} ${order.trackingId || ''}`.toLowerCase()
+    const dl = order.delivery.toLowerCase()
+    const pm = order.payment.toLowerCase()
     const matchesQuery = text.includes(query.toLowerCase())
-    const matchesDelivery = deliveryFilter === 'all' || order.delivery.toLowerCase() === deliveryFilter
-    const matchesPayment = paymentFilter === 'all' || order.payment.toLowerCase() === paymentFilter
+    const matchesDelivery = deliveryFilter === 'all' || dl === deliveryFilter
+    const matchesPayment = paymentFilter === 'all' || pm === paymentFilter
+    const matchesShipping = shippingFilter === 'all' || (order.shippingPartner || '').toLowerCase() === shippingFilter
+    const matchesPriceMin = !priceMin || order.total >= Number(priceMin)
+    const matchesPriceMax = !priceMax || order.total <= Number(priceMax)
     const matchesTab =
       tab === 'all'
-      || (tab === 'open' && !['delivered', 'cancelled'].includes(order.delivery.toLowerCase()))
-      || (tab === 'unpaid' && order.payment.toLowerCase() === 'pending')
-      || (tab === 'fulfilled' && order.delivery.toLowerCase() === 'delivered')
-    return matchesQuery && matchesDelivery && matchesPayment && matchesTab
+      || (tab === 'open' && !['delivered', 'cancelled', 'returned', 'failed delivery'].includes(dl))
+      || (tab === 'unpaid' && pm === 'pending')
+      || (tab === 'fulfilled' && dl === 'delivered')
+      || (tab === 'cancelled' && dl === 'cancelled')
+      || (tab === 'returned' && (dl === 'returned' || pm === 'refunded'))
+      || (tab === 'failed' && dl === 'failed delivery')
+    return matchesQuery && matchesDelivery && matchesPayment && matchesShipping && matchesPriceMin && matchesPriceMax && matchesTab
   }).sort((a, b) => {
     if (sort === 'total-desc') return b.total - a.total
     if (sort === 'total-asc') return a.total - b.total
     return String(b.createdAt || b.date).localeCompare(String(a.createdAt || a.date))
   })
+
   const selectedOrders = visible.filter((order) => selected.includes(order.id))
   const allSelected = visible.length > 0 && selected.length === visible.length
-  const openCount = orders.filter((order) => !['delivered', 'cancelled'].includes(order.delivery.toLowerCase())).length
-  const unpaidCount = orders.filter((order) => order.payment.toLowerCase() === 'pending').length
-  const deliveredCount = orders.filter((order) => order.delivery.toLowerCase() === 'delivered').length
+  const openCount = orders.filter((o) => !['delivered', 'cancelled', 'returned', 'failed delivery'].includes(o.delivery.toLowerCase())).length
+  const unpaidCount = orders.filter((o) => o.payment.toLowerCase() === 'pending').length
+  const deliveredCount = orders.filter((o) => o.delivery.toLowerCase() === 'delivered').length
+  const cancelledCount = orders.filter((o) => o.delivery.toLowerCase() === 'cancelled').length
+  const returnedCount = orders.filter((o) => o.delivery.toLowerCase() === 'returned' || o.payment.toLowerCase() === 'refunded').length
+  const failedCount = orders.filter((o) => o.delivery.toLowerCase() === 'failed delivery').length
+  const revenue = orders
+    .filter((o) => o.payment === 'Paid' && !['Cancelled', 'Returned'].includes(o.delivery))
+    .reduce((s, o) => s + o.total, 0)
 
-  const toggleAll = () => setSelected(allSelected ? [] : visible.map((order) => order.id))
-  const toggleSelected = (id) => setSelected((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])
+  const toggleAll = () => setSelected(allSelected ? [] : visible.map((o) => o.id))
+  const toggleSelected = (id) => setSelected((c) => c.includes(id) ? c.filter((i) => i !== id) : [...c, id])
   const updateOrder = async (order, changes) => {
     const updated = await onUpdate({ ...order, ...changes })
     setDetailOrder((current) => current?.id === updated.id ? updated : current)
@@ -1033,6 +1058,13 @@ function OrdersPage({ meta, orders, onUpdate, onBulkUpdate }) {
     setNotice(`Đã cập nhật ${selectedOrders.length} đơn hàng.`)
     setSelected([])
   }
+  const printSelected = () => {
+    const lines = selectedOrders.map((o) => `${o.id}  ${o.customer}  ${o.date}  ${money(o.total)}  [${o.delivery}]`).join('\n')
+    const w = window.open('', '_blank')
+    w.document.write(`<pre style="font:14px/1.8 monospace;padding:24px">${lines}</pre>`)
+    w.print()
+  }
+  const clearFilters = () => { setPaymentFilter('all'); setDeliveryFilter('all'); setShippingFilter('all'); setPriceMin(''); setPriceMax('') }
 
   return (
     <>
@@ -1040,7 +1072,7 @@ function OrdersPage({ meta, orders, onUpdate, onBulkUpdate }) {
       <section className="metrics-grid">
         <MetricCard label="Tổng đơn" value={orders.length} note={`${openCount} đơn đang xử lý`} />
         <MetricCard label="Cần thanh toán" value={unpaidCount} note="Theo dõi trước khi đóng gói" />
-        <MetricCard label="Doanh thu" value={money(orders.reduce((total, order) => total + order.total, 0))} note={`${deliveredCount} đơn đã giao`} />
+        <MetricCard label="Doanh thu thực" value={money(revenue)} note={`${deliveredCount} đơn đã giao • chỉ tính đơn Đã thanh toán`} />
       </section>
       {notice && <div className="product-notice"><span>{notice}</span><button type="button" onClick={() => setNotice('')}><X size={14} /></button></div>}
       <section className="admin-panel data-panel">
@@ -1049,10 +1081,13 @@ function OrdersPage({ meta, orders, onUpdate, onBulkUpdate }) {
           <button className={tab === 'open' ? 'active' : ''} type="button" onClick={() => setTab('open')}>Đang xử lý <em>{openCount}</em></button>
           <button className={tab === 'unpaid' ? 'active' : ''} type="button" onClick={() => setTab('unpaid')}>Chưa thanh toán <em>{unpaidCount}</em></button>
           <button className={tab === 'fulfilled' ? 'active' : ''} type="button" onClick={() => setTab('fulfilled')}>Đã giao <em>{deliveredCount}</em></button>
+          {cancelledCount > 0 && <button className={tab === 'cancelled' ? 'active' : ''} type="button" onClick={() => setTab('cancelled')}>Đã hủy <em>{cancelledCount}</em></button>}
+          {returnedCount > 0 && <button className={tab === 'returned' ? 'active' : ''} type="button" onClick={() => setTab('returned')}>Trả hàng / Hoàn tiền <em>{returnedCount}</em></button>}
+          {failedCount > 0 && <button className={tab === 'failed' ? 'active' : ''} type="button" onClick={() => setTab('failed')}>Giao thất bại <em>{failedCount}</em></button>}
         </div>
         <div className="table-toolbar">
-          <label><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm theo mã đơn, khách hàng, email hoặc SĐT" /></label>
-          <select value={sort} onChange={(event) => setSort(event.target.value)}><option value="newest">Mới nhất</option><option value="total-desc">Tổng cao nhất</option><option value="total-asc">Tổng thấp nhất</option></select>
+          <label><Search size={16} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Tìm mã đơn, khách hàng, email, SĐT hoặc mã vận đơn" /></label>
+          <select value={sort} onChange={(e) => setSort(e.target.value)}><option value="newest">Mới nhất</option><option value="total-desc">Tổng cao nhất</option><option value="total-asc">Tổng thấp nhất</option></select>
           <button className={filterOpen ? 'filter-active' : ''} type="button" onClick={() => setFilterOpen(!filterOpen)}><Filter size={15} /> Bộ lọc</button>
           <button type="button" onClick={() => downloadOrdersCsv(visible)}><Download size={15} /> Xuất</button>
         </div>
@@ -1060,35 +1095,133 @@ function OrdersPage({ meta, orders, onUpdate, onBulkUpdate }) {
           <div className="order-bulk-bar">
             <span>{selected.length} đơn đã chọn</span>
             <button type="button" onClick={() => bulkUpdate({ payment: 'Paid' })}>Đã thanh toán</button>
-            <button type="button" onClick={() => bulkUpdate({ delivery: 'Packing' })}>Đóng gói</button>
+            <button type="button" onClick={() => bulkUpdate({ delivery: 'Packing' })}>Đang đóng gói</button>
             <button type="button" onClick={() => bulkUpdate({ delivery: 'Ready' })}>Sẵn sàng giao</button>
             <button type="button" onClick={() => bulkUpdate({ delivery: 'Delivered' })}>Đã giao</button>
+            <button type="button" onClick={() => bulkUpdate({ delivery: 'Returned' })}>Trả hàng</button>
+            <button type="button" onClick={printSelected}><Printer size={13} /> In phiếu</button>
             <button className="danger-button" type="button" onClick={() => bulkUpdate({ delivery: 'Cancelled' })}>Hủy đơn</button>
           </div>
         )}
         {filterOpen && (
           <div className="order-filter-panel">
-            <label><span>Thanh toán</span><select value={paymentFilter} onChange={(event) => setPaymentFilter(event.target.value)}><option value="all">Tất cả</option><option value="pending">Pending</option><option value="paid">Paid</option><option value="refunded">Refunded</option></select></label>
-            <label><span>Giao hàng</span><select value={deliveryFilter} onChange={(event) => setDeliveryFilter(event.target.value)}><option value="all">Tất cả</option><option value="unfulfilled">Unfulfilled</option><option value="packing">Packing</option><option value="ready">Ready</option><option value="delivered">Delivered</option><option value="cancelled">Cancelled</option></select></label>
-            <div className="category-filter-actions"><button className="admin-secondary" type="button" onClick={() => { setPaymentFilter('all'); setDeliveryFilter('all') }}>Xóa lọc</button></div>
+            <label>
+              <span>Thanh toán</span>
+              <select value={paymentFilter} onChange={(e) => setPaymentFilter(e.target.value)}>
+                <option value="all">Tất cả</option>
+                <option value="pending">Chờ thanh toán</option>
+                <option value="paid">Đã thanh toán</option>
+                <option value="refunded">Đã hoàn tiền</option>
+              </select>
+            </label>
+            <label>
+              <span>Giao hàng</span>
+              <select value={deliveryFilter} onChange={(e) => setDeliveryFilter(e.target.value)}>
+                <option value="all">Tất cả</option>
+                <option value="unfulfilled">Chưa xử lý</option>
+                <option value="packing">Đang đóng gói</option>
+                <option value="ready">Sẵn sàng giao</option>
+                <option value="delivered">Đã giao</option>
+                <option value="cancelled">Đã hủy</option>
+                <option value="returned">Trả hàng</option>
+                <option value="failed delivery">Giao thất bại</option>
+              </select>
+            </label>
+            {shippingPartners.length > 0 && (
+              <label>
+                <span>Đơn vị vận chuyển</span>
+                <select value={shippingFilter} onChange={(e) => setShippingFilter(e.target.value)}>
+                  <option value="all">Tất cả</option>
+                  {shippingPartners.map((p) => <option key={p} value={p.toLowerCase()}>{p}</option>)}
+                </select>
+              </label>
+            )}
+            <label>
+              <span>Giá trị đơn (đ)</span>
+              <div className="price-range-inputs">
+                <input type="number" placeholder="Từ" value={priceMin} onChange={(e) => setPriceMin(e.target.value)} min="0" />
+                <span>–</span>
+                <input type="number" placeholder="Đến" value={priceMax} onChange={(e) => setPriceMax(e.target.value)} min="0" />
+              </div>
+            </label>
+            <div className="category-filter-actions">
+              <button className="admin-secondary" type="button" onClick={clearFilters}>Xóa lọc</button>
+            </div>
           </div>
         )}
         <div className="admin-table-wrap">
-          <table className="admin-table">
-            <thead><tr><th><input type="checkbox" checked={allSelected} onChange={toggleAll} /></th><th>Đơn hàng</th><th>Ngày</th><th>Khách hàng</th><th>Thanh toán</th><th>Giao hàng</th><th>Số món</th><th>Tổng</th><th></th></tr></thead>
-            <tbody>{visible.map((order) => (
-              <tr key={order.id}>
-                <td><input type="checkbox" checked={selected.includes(order.id)} onChange={() => toggleSelected(order.id)} /></td>
-                <td><button className="order-link" type="button" onClick={() => setDetailOrder(order)}>{order.id}</button></td>
-                <td>{order.date}</td>
-                <td><div className="customer-cell"><span>{order.customer.split(' ').map((part) => part[0]).join('').slice(0, 2)}</span><div><b>{order.customer}</b><small>{order.email || order.location}</small></div></div></td>
-                <td><StatusPill>{order.payment}</StatusPill></td>
-                <td><StatusPill>{order.delivery}</StatusPill></td>
-                <td>{order.items}</td>
-                <td><b>{money(order.total)}</b></td>
-                <td><div className="row-actions"><button className="row-icon" type="button" onClick={() => setDetailOrder(order)} title="Xem đơn"><Eye size={15} /></button><button className="row-icon" type="button" onClick={() => updateOrder(order, { delivery: 'Packing' })} title="Đóng gói"><Package size={15} /></button></div></td>
+          <table className="admin-table orders-table">
+            <thead>
+              <tr>
+                <th><input type="checkbox" checked={allSelected} onChange={toggleAll} /></th>
+                <th>Đơn hàng</th>
+                <th>Ngày</th>
+                <th>Khách hàng</th>
+                <th>Phương thức TT</th>
+                <th>Trạng thái TT</th>
+                <th>Trạng thái GH</th>
+                <th>Vận chuyển</th>
+                <th>Tổng</th>
+                <th></th>
               </tr>
-            ))}</tbody>
+            </thead>
+            <tbody>
+              {visible.map((order) => (
+                <tr key={order.id}>
+                  <td><input type="checkbox" checked={selected.includes(order.id)} onChange={() => toggleSelected(order.id)} /></td>
+                  <td><button className="order-link" type="button" onClick={() => setDetailOrder(order)}>{order.id}</button></td>
+                  <td className="date-cell">{order.date}</td>
+                  <td>
+                    <div className="customer-cell">
+                      <span>{order.customer.split(' ').map((p) => p[0]).join('').slice(0, 2)}</span>
+                      <div><b>{order.customer}</b><small>{order.email || order.location}</small></div>
+                    </div>
+                  </td>
+                  <td>{order.paymentMethod ? <span className="payment-method-tag">{order.paymentMethod}</span> : <span className="muted-dash">—</span>}</td>
+                  <td>
+                    <select
+                      className={`inline-status-select payment-${order.payment.toLowerCase()}`}
+                      value={order.payment}
+                      onChange={(e) => updateOrder(order, { payment: e.target.value })}
+                    >
+                      <option value="Pending">Chờ thanh toán</option>
+                      <option value="Paid">Đã thanh toán</option>
+                      <option value="Refunded">Đã hoàn tiền</option>
+                    </select>
+                  </td>
+                  <td>
+                    <select
+                      className={`inline-status-select delivery-${order.delivery.toLowerCase().replaceAll(' ', '-')}`}
+                      value={order.delivery}
+                      onChange={(e) => updateOrder(order, { delivery: e.target.value })}
+                    >
+                      <option value="Unfulfilled">Chưa xử lý</option>
+                      <option value="Packing">Đang đóng gói</option>
+                      <option value="Ready">Sẵn sàng giao</option>
+                      <option value="Delivered">Đã giao</option>
+                      <option value="Cancelled">Đã hủy</option>
+                      <option value="Returned">Trả hàng</option>
+                      <option value="Failed Delivery">Giao thất bại</option>
+                    </select>
+                  </td>
+                  <td>
+                    {order.shippingPartner ? (
+                      <div className="shipping-cell">
+                        <b>{order.shippingPartner}</b>
+                        {order.trackingId && <small className="tracking-id">{order.trackingId}</small>}
+                      </div>
+                    ) : <span className="muted-dash">—</span>}
+                  </td>
+                  <td><b>{money(order.total)}</b></td>
+                  <td>
+                    <div className="row-actions">
+                      <button className="row-icon" type="button" onClick={() => setDetailOrder(order)} title="Xem đơn"><Eye size={15} /></button>
+                      {order.note && <button className="row-icon note-icon" type="button" title={order.note}><MessageSquare size={14} /></button>}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
           </table>
           {!visible.length && <EmptyHint icon={ShoppingCart} title="Không tìm thấy đơn hàng" copy="Thử đổi từ khóa, bộ lọc hoặc trạng thái đơn." />}
         </div>
@@ -1101,7 +1234,9 @@ function OrdersPage({ meta, orders, onUpdate, onBulkUpdate }) {
 function OrderDetailModal({ order, onClose, onUpdate }) {
   const [payment, setPayment] = useState(order.payment)
   const [delivery, setDelivery] = useState(order.delivery)
-  const save = () => onUpdate(order, { payment, delivery })
+  const [shippingPartner, setShippingPartner] = useState(order.shippingPartner || '')
+  const [trackingId, setTrackingId] = useState(order.trackingId || '')
+  const save = () => onUpdate(order, { payment, delivery, shippingPartner, trackingId })
   const subtotal = order.lineItems?.reduce((total, item) => total + item.total, 0) || order.total
 
   return (
@@ -1109,9 +1244,9 @@ function OrderDetailModal({ order, onClose, onUpdate }) {
       <div className="order-detail">
         <section className="order-detail-main">
           <div className="order-card">
-            <div className="order-card-title"><h3>Items</h3><StatusPill>{delivery}</StatusPill></div>
+            <div className="order-card-title"><h3>Sản phẩm</h3><StatusPill>{delivery}</StatusPill></div>
             <div className="order-line-list">
-              {(order.lineItems?.length ? order.lineItems : [{ name: 'Order items', quantity: order.items, price: order.total, total: order.total }]).map((item, index) => (
+              {(order.lineItems?.length ? order.lineItems : [{ name: 'Sản phẩm', quantity: order.items, price: order.total, total: order.total }]).map((item, index) => (
                 <div className="order-line-item" key={`${item.name}-${index}`}>
                   <div><b>{item.name}</b><small>{item.quantity} x {money(item.price)}</small></div>
                   <strong>{money(item.total)}</strong>
@@ -1119,32 +1254,53 @@ function OrderDetailModal({ order, onClose, onUpdate }) {
               ))}
             </div>
             <div className="order-total-box">
-              <p><span>Subtotal</span><b>{money(subtotal)}</b></p>
-              <p><span>Shipping</span><b>Calculated</b></p>
-              <p><span>Total</span><strong>{money(order.total)}</strong></p>
+              <p><span>Tạm tính</span><b>{money(subtotal)}</b></p>
+              <p><span>Vận chuyển</span><b>Tính khi giao</b></p>
+              <p><span>Tổng cộng</span><strong>{money(order.total)}</strong></p>
             </div>
           </div>
 
           <div className="order-card">
-            <div className="order-card-title"><h3>Timeline</h3><button className="admin-secondary" type="button">Add note</button></div>
+            <div className="order-card-title"><h3>Lịch sử</h3></div>
             <div className="order-timeline">
-              <p><CheckCircle2 size={15} /> Order created on {order.date}</p>
-              <p><Package size={15} /> Fulfillment status is {delivery}</p>
-              <p><ShoppingBag size={15} /> Payment status is {payment}</p>
+              <p><CheckCircle2 size={15} /> Đơn hàng tạo lúc {order.date}</p>
+              <p><Package size={15} /> Trạng thái giao hàng: {delivery}</p>
+              <p><ShoppingBag size={15} /> Trạng thái thanh toán: {payment}</p>
+              {order.paymentMethod && <p><Truck size={15} /> Phương thức: {order.paymentMethod}</p>}
             </div>
-            {order.note && <div className="order-note"><b>Customer note</b><span>{order.note}</span></div>}
+            {order.note && <div className="order-note"><b>Ghi chú khách hàng</b><span>{order.note}</span></div>}
           </div>
         </section>
 
         <aside className="order-detail-side">
           <div className="order-card">
-            <h3>Actions</h3>
-            <label><span>Payment</span><select value={payment} onChange={(event) => setPayment(event.target.value)}><option>Pending</option><option>Paid</option><option>Refunded</option></select></label>
-            <label><span>Fulfillment</span><select value={delivery} onChange={(event) => setDelivery(event.target.value)}><option>Unfulfilled</option><option>Packing</option><option>Ready</option><option>Delivered</option><option>Cancelled</option></select></label>
-            <button className="admin-primary" type="button" onClick={save}><CheckCircle2 size={15} /> Save status</button>
+            <h3>Cập nhật đơn</h3>
+            <label>
+              <span>Thanh toán</span>
+              <select value={payment} onChange={(e) => setPayment(e.target.value)}>
+                <option value="Pending">Chờ thanh toán</option>
+                <option value="Paid">Đã thanh toán</option>
+                <option value="Refunded">Đã hoàn tiền</option>
+              </select>
+            </label>
+            <label>
+              <span>Giao hàng</span>
+              <select value={delivery} onChange={(e) => setDelivery(e.target.value)}>
+                <option value="Unfulfilled">Chưa xử lý</option>
+                <option value="Packing">Đang đóng gói</option>
+                <option value="Ready">Sẵn sàng giao</option>
+                <option value="Delivered">Đã giao</option>
+                <option value="Cancelled">Đã hủy</option>
+                <option value="Returned">Trả hàng</option>
+                <option value="Failed Delivery">Giao thất bại</option>
+              </select>
+            </label>
+            <label><span>Đơn vị vận chuyển</span><input value={shippingPartner} onChange={(e) => setShippingPartner(e.target.value)} placeholder="GHN, GHTK, Viettel Post..." /></label>
+            <label><span>Mã vận đơn</span><input value={trackingId} onChange={(e) => setTrackingId(e.target.value)} placeholder="Nhập mã tracking" /></label>
+            <button className="admin-primary" type="button" onClick={save}><CheckCircle2 size={15} /> Lưu thay đổi</button>
           </div>
           <div className="order-card">
-            <h3>Customer</h3>
+            <h3>Khách hàng</h3>
             <div className="order-contact">
               <b>{order.customer}</b>
               {order.email && <a href={`mailto:${order.email}`}>{order.email}</a>}
@@ -1153,8 +1309,8 @@ function OrderDetailModal({ order, onClose, onUpdate }) {
             </div>
           </div>
           <div className="order-card">
-            <h3>Fraud analysis</h3>
-            <p className="order-risk"><ShieldCheck size={16} /> Low risk · Billing and delivery details look consistent.</p>
+            <h3>Đánh giá rủi ro</h3>
+            <p className="order-risk"><ShieldCheck size={16} /> Rủi ro thấp · Thông tin thanh toán và giao hàng hợp lệ.</p>
           </div>
         </aside>
       </div>

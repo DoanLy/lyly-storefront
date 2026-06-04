@@ -8,6 +8,7 @@ import {
   Eye,
   Filter,
   Heart,
+  HelpCircle,
   Leaf,
   Mail,
   MapPin,
@@ -1864,6 +1865,41 @@ function CheckoutModal({ items, discounts, initialDiscountCode = '', onClose, on
   )
 }
 
+const storefrontI18n = {
+  en: {
+    langLabel: 'English', langCode: 'EN',
+    announcement: 'Save 20% with code:',
+    nav: { categories: 'Categories', aboutUs: 'About us', ourStores: 'Our stores', ourStoresSub: 'Find locations near you', faq: 'FAQ', faqSub: 'Common questions answered', recipes: 'Recipes', blog: 'Blog' },
+    hero: { h1: ['Fresh.', 'Organic.', 'Delivered.'], sub: 'Thoughtfully sourced groceries for everyday living.', cta: 'Shop now' },
+    benefits: [
+      { label: 'Free local delivery', sub: 'On orders over $75' },
+      { label: 'Freshness guaranteed', sub: 'From trusted growers' },
+      { label: 'Pickup when it suits', sub: '7 days a week' },
+      { label: 'Secure checkout', sub: 'Simple and protected' },
+    ],
+    sections: { findFav: 'Find your favorites', byCategory: 'Shop by Category', viewAllCat: 'View all categories', lovedBy: 'Loved by locals', bestSellers: 'Best Sellers', shopAll: 'Shop all products', arrowRight: '' },
+    search: { placeholder: 'Search for fresh products...', suggestions: 'Product suggestions', noResults: 'No products found.' },
+    service: { pickup: 'Picking up?', delivery: 'Need delivery?', seeEstimates: 'See estimates' },
+    account: 'Account',
+  },
+  vi: {
+    langLabel: 'Tiếng Việt', langCode: 'VI',
+    announcement: 'Tiết kiệm 20% với mã:',
+    nav: { categories: 'Danh mục', aboutUs: 'Về chúng tôi', ourStores: 'Cửa hàng', ourStoresSub: 'Tìm địa điểm gần bạn', faq: 'FAQ', faqSub: 'Câu hỏi thường gặp', recipes: 'Công thức', blog: 'Blog' },
+    hero: { h1: ['Tươi.', 'Organic.', 'Giao tận nơi.'], sub: 'Thực phẩm tươi sạch, chọn lọc tỉ mỉ cho cuộc sống hàng ngày.', cta: 'Mua ngay' },
+    benefits: [
+      { label: 'Giao hàng miễn phí', sub: 'Đơn từ $75' },
+      { label: 'Đảm bảo tươi sạch', sub: 'Từ nhà vườn uy tín' },
+      { label: 'Nhận hàng linh hoạt', sub: '7 ngày trong tuần' },
+      { label: 'Thanh toán an toàn', sub: 'Đơn giản & bảo mật' },
+    ],
+    sections: { findFav: 'Tìm món yêu thích', byCategory: 'Mua theo danh mục', viewAllCat: 'Xem tất cả danh mục', lovedBy: 'Được yêu thích nhất', bestSellers: 'Bán chạy nhất', shopAll: 'Xem tất cả sản phẩm', arrowRight: '' },
+    search: { placeholder: 'Tìm kiếm thực phẩm tươi...', suggestions: 'Gợi ý sản phẩm', noResults: 'Không tìm thấy sản phẩm.' },
+    service: { pickup: 'Nhận tại cửa hàng?', delivery: 'Giao hàng?', seeEstimates: 'Xem ước tính' },
+    account: 'Tài khoản',
+  },
+}
+
 function App() {
   const currentPath = window.location.pathname
   const productDetailMatch = currentPath.match(/^\/products\/([^/]+)/)
@@ -1879,6 +1915,13 @@ function App() {
   const isBlogPage = currentPath === '/blog' || currentPath === '/blogs/news'
   const recipeMatch = currentPath.match(/^\/blogs\/recipes\/([^/]+)/)
   const newsMatch = currentPath.match(/^\/blogs\/news\/([^/]+)/)
+  const [lang, setLang] = useState(() => localStorage.getItem('lyly-lang') || 'en')
+  const t = storefrontI18n[lang]
+  const toggleLang = () => {
+    const next = lang === 'en' ? 'vi' : 'en'
+    setLang(next)
+    localStorage.setItem('lyly-lang', next)
+  }
   const [products, setProducts] = useState(fallbackProducts)
   const [categories, setCategories] = useState(fallbackCategories)
   const [discounts, setDiscounts] = useState(fallbackDiscounts)
@@ -2137,8 +2180,8 @@ function App() {
           <b className="social-mark">f</b>
           <b className="social-mark">ig</b>
         </div>
-        <p><ChevronLeft size={16} /> Save 20% with code: <b>FRESH20</b> <ChevronRight size={16} /></p>
-        <span>English <ChevronDown size={14} /></span>
+        <p><ChevronLeft size={16} /> {t.announcement} <b>FRESH20</b> <ChevronRight size={16} /></p>
+        <button className="lang-toggle" type="button" onClick={toggleLang}>{t.langCode} <ChevronDown size={13} /></button>
       </div>
 
       <header>
@@ -2153,25 +2196,25 @@ function App() {
               value={search}
               onFocus={() => setSearchOpen(true)}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search for fresh products..."
-              aria-label="Search products"
+              placeholder={t.search.placeholder}
+              aria-label={t.search.placeholder}
             />
             {searchOpen && search && (
               <div className="search-results">
-                <div className="search-heading">Product suggestions</div>
+                <div className="search-heading">{t.search.suggestions}</div>
                 {searchResults.length ? searchResults.slice(0, 5).map((product) => (
                   <button type="button" disabled={product.stock === 0} key={product.id} onClick={() => addToCart(product)}>
                     <img src={product.image} alt="" />
                     <span><b>{product.name}</b><small>{product.category}</small></span>
-                    <strong>{product.stock === 0 ? 'Sold out' : formatPrice(product.price)}</strong>
+                    <strong>{product.stock === 0 ? (lang === 'vi' ? 'Hết hàng' : 'Sold out') : formatPrice(product.price)}</strong>
                   </button>
-                )) : <p>No products found.</p>}
+                )) : <p>{t.search.noResults}</p>}
               </div>
             )}
           </div>
           <div className="header-actions">
             <button className="account-button desktop-only" type="button" onClick={() => setAccountOpen(true)}>
-              <User size={21} /> {storefrontUser ? getAccountName(storefrontUser, accountProfile) : 'Account'}
+              <User size={21} /> {storefrontUser ? getAccountName(storefrontUser, accountProfile) : t.account}
             </button>
             <button className="cart-button" type="button" onClick={() => setCartOpen(true)}>
               <ShoppingCart size={20} />
@@ -2197,7 +2240,7 @@ function App() {
                 aria-controls="categories-mega-menu"
                 onClick={closeCategories}
               >
-                Categories <ChevronDown size={15} />
+                {t.nav.categories} <ChevronDown size={15} />
               </a>
               <div className="categories-mega" id="categories-mega-menu">
                 <div className="mega-menu-inner">
@@ -2225,18 +2268,24 @@ function App() {
               </div>
             </div>
             <div className="simple-nav-menu">
-              <a href="/about-us">About us <ChevronDown size={15} /></a>
-              <div>
-                <a href="/our-stores">Our stores</a>
-                <a href="/faq">FAQ</a>
+              <a href="/about-us">{t.nav.aboutUs} <ChevronDown size={15} /></a>
+              <div className="about-dropdown">
+                <a href="/our-stores" className="about-menu-item">
+                  <span className="about-menu-icon"><Store size={17} /></span>
+                  <span><b>{t.nav.ourStores}</b><small>{t.nav.ourStoresSub}</small></span>
+                </a>
+                <a href="/faq" className="about-menu-item">
+                  <span className="about-menu-icon"><HelpCircle size={17} /></span>
+                  <span><b>{t.nav.faq}</b><small>{t.nav.faqSub}</small></span>
+                </a>
               </div>
             </div>
-            <a href="/recipes">Recipes</a>
-            <a href="/blog">Blog</a>
+            <a href="/recipes">{t.nav.recipes}</a>
+            <a href="/blog">{t.nav.blog}</a>
           </nav>
           <div className="service-links">
-            <button type="button" onClick={() => setPickupOpen(true)}><Store size={28} /><span><small>Picking up?</small>{selectedPickup?.name || 'Select store'} <ChevronDown size={14} /></span></button>
-            <a href="/delivery"><Package size={28} /><span><small>Need delivery?</small>See estimates</span></a>
+            <button type="button" onClick={() => setPickupOpen(true)}><Store size={28} /><span><small>{t.service.pickup}</small>{selectedPickup?.name || 'Select store'} <ChevronDown size={14} /></span></button>
+            <a href="/delivery"><Package size={28} /><span><small>{t.service.delivery}</small>{t.service.seeEstimates}</span></a>
           </div>
         </div>
       </header>
@@ -2295,27 +2344,27 @@ function App() {
           <img className="hero-image" src="/images/lyly-hero.png" alt="Fresh grocery basket filled with fruit and vegetables" />
           <div className="hero-content">
             <p className="rating"><span>★★★★★</span> 4.9 (589)</p>
-            <h1>Fresh.<br />Organic.<br />Delivered.</h1>
-            <p className="hero-copy">Thoughtfully sourced groceries for everyday living.</p>
-            <a className="dark-button" href="/products">Shop now</a>
+            <h1>{t.hero.h1[0]}<br />{t.hero.h1[1]}<br />{t.hero.h1[2]}</h1>
+            <p className="hero-copy">{t.hero.sub}</p>
+            <a className="dark-button" href="/products">{t.hero.cta}</a>
           </div>
           <div className="hero-dots"><i></i><i className="active"></i><i></i></div>
         </section>
 
         <section className="benefit-bar">
-          <div><Truck size={25} /><span><b>Free local delivery</b><small>On orders over $75</small></span></div>
-          <div><Leaf size={25} /><span><b>Freshness guaranteed</b><small>From trusted growers</small></span></div>
-          <div><Clock3 size={25} /><span><b>Pickup when it suits</b><small>7 days a week</small></span></div>
-          <div><ShieldCheck size={25} /><span><b>Secure checkout</b><small>Simple and protected</small></span></div>
+          <div><Truck size={25} /><span><b>{t.benefits[0].label}</b><small>{t.benefits[0].sub}</small></span></div>
+          <div><Leaf size={25} /><span><b>{t.benefits[1].label}</b><small>{t.benefits[1].sub}</small></span></div>
+          <div><Clock3 size={25} /><span><b>{t.benefits[2].label}</b><small>{t.benefits[2].sub}</small></span></div>
+          <div><ShieldCheck size={25} /><span><b>{t.benefits[3].label}</b><small>{t.benefits[3].sub}</small></span></div>
         </section>
 
         <section className="section container" id="categories">
           <div className="section-heading">
             <div>
-              <p className="eyebrow">Find your favorites</p>
-              <h2>Shop by Category</h2>
+              <p className="eyebrow">{t.sections.findFav}</p>
+              <h2>{t.sections.byCategory}</h2>
             </div>
-            <a href="/collections">View all categories <ArrowRight size={17} /></a>
+            <a href="/collections">{t.sections.viewAllCat} <ArrowRight size={17} /></a>
           </div>
           <div className="category-grid">
             {homepageCategories.map((category, index) => (
@@ -2342,10 +2391,10 @@ function App() {
         <section className="section products-section" id="bestsellers">
           <div className="container section-heading">
             <div>
-              <p className="eyebrow">Loved by locals</p>
-              <h2>Best Sellers</h2>
+              <p className="eyebrow">{t.sections.lovedBy}</p>
+              <h2>{t.sections.bestSellers}</h2>
             </div>
-            <a href="/products">Shop all products <ArrowRight size={17} /></a>
+            <a href="/products">{t.sections.shopAll} <ArrowRight size={17} /></a>
           </div>
           <div className="container product-grid">
             {products.filter((product) => product.stock !== 0).map((product) => <ProductCard product={product} onAdd={openQuickProduct} key={product.id} />)}
