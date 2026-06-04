@@ -374,6 +374,19 @@ const DELIVERY_LABELS = {
 }
 function deliveryLabel(value) { return DELIVERY_LABELS[value] || value }
 
+function adminOrderBucket(order) {
+  const dl = order.delivery.toLowerCase()
+  const pm = order.payment.toLowerCase()
+  if (order.returnReason) return { key: 'return_requested', label: 'Yêu cầu trả hàng' }
+  if (dl === 'returned' || pm === 'refunded') return { key: 'returned', label: 'Trả hàng / Hoàn tiền' }
+  if (dl === 'delivered') return { key: 'delivered', label: 'Đã giao' }
+  if (dl === 'cancelled') return { key: 'cancelled', label: 'Đã hủy' }
+  if (dl === 'failed delivery' || dl === 'failed_delivery') return { key: 'failed', label: 'Giao thất bại' }
+  if (pm === 'pending') return { key: 'unpaid', label: 'Chưa thanh toán' }
+  if (['in transit', 'in_transit'].includes(dl)) return { key: 'transit', label: 'Đang giao hàng' }
+  return { key: 'open', label: 'Đang xử lý' }
+}
+
 function generateTrackingId(carrier) {
   const prefix = carrier.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4)
   const now = new Date()
@@ -1295,6 +1308,7 @@ function OrdersPage({ meta, orders, focusedOrderId = '', onFocusedOrderHandled, 
                 <th>Đơn hàng</th>
                 <th>Ngày</th>
                 <th>Khách hàng</th>
+                <th>Trạng thái</th>
                 <th>Phương thức TT</th>
                 <th>Trạng thái TT</th>
                 <th>Trạng thái GH</th>
@@ -1315,6 +1329,7 @@ function OrdersPage({ meta, orders, focusedOrderId = '', onFocusedOrderHandled, 
                       <div><b>{order.customer}</b><small>{order.email || order.location}</small></div>
                     </div>
                   </td>
+                  <td>{(() => { const b = adminOrderBucket(order); return <span className={`order-status-badge status-${b.key}`}>{b.label}</span> })()}</td>
                   <td>{order.paymentMethod ? <span className="payment-method-tag">{order.paymentMethod}</span> : <span className="muted-dash">—</span>}</td>
                   <td>
                     <span className={`status-tag payment-${order.payment.toLowerCase()}`}>{order.payment === 'Pending' ? 'Chờ thanh toán' : order.payment === 'Paid' ? 'Đã thanh toán' : 'Đã hoàn tiền'}</span>

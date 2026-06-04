@@ -226,6 +226,15 @@
 .inline-status-select.delivery-cancelled { color: #a9554a; background-color: #fae4df; }
 .inline-status-select.delivery-returned { color: #6d4a8a; background-color: #ede8f5; }
 .inline-status-select.delivery-failed-delivery { color: #a9554a; background-color: #fae4df; }
+.order-status-badge { display: inline-block; border-radius: 11px; padding: 4px 9px; font-size: 10px; font-weight: 700; letter-spacing: .02em; white-space: nowrap; }
+.order-status-badge.status-open        { color: #7a5c1a; background: #fdf3d8; }
+.order-status-badge.status-unpaid      { color: #9b3f1a; background: #fde8d8; }
+.order-status-badge.status-transit     { color: #1d5f8a; background: #deeef8; }
+.order-status-badge.status-delivered   { color: #3e7156; background: #e1f0df; }
+.order-status-badge.status-cancelled   { color: #a9554a; background: #fae4df; }
+.order-status-badge.status-failed      { color: #a9554a; background: #fae4df; }
+.order-status-badge.status-return_requested { color: #92400e; background: #fed7aa; }
+.order-status-badge.status-returned    { color: #6d4a8a; background: #ede8f5; }
 .status-tag { display: inline-block; border-radius: 11px; padding: 4px 8px; font-size: 9px; font-weight: 700; letter-spacing: .03em; white-space: nowrap; }
 .status-tag.payment-paid { color: #3e7156; background-color: #e1f0df; }
 .status-tag.payment-pending { color: #8d6a2f; background-color: #f8edcf; }
