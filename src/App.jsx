@@ -1049,6 +1049,17 @@ const accountOrderTabs = [
   ['cancelled', 'Cancelled'],
 ]
 
+const accountOrderTabLabels = {
+  vi: {
+    all: 'T\u1ea5t c\u1ea3',
+    unpaid: 'Ch\u1edd thanh to\u00e1n',
+    processing: '\u0110ang x\u1eed l\u00fd',
+    transit: '\u0110ang giao',
+    delivered: '\u0110\u00e3 giao',
+    cancelled: '\u0110\u00e3 h\u1ee7y',
+  },
+}
+
 function normalizedOrderStatus(value) {
   return String(value || '').trim().toLowerCase()
 }
@@ -1110,6 +1121,8 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
   const loyaltyPoints = Math.min(500, Math.round(totalSpent * 4))
   const remainingPoints = Math.max(0, 500 - loyaltyPoints)
   const progressPercent = Math.min(100, (loyaltyPoints / 500) * 100)
+  const activeOrderCount = orders.filter((order) => !['delivered', 'cancelled'].includes(accountOrderBucket(order))).length
+  const latestOrder = orders[0]?.id || '-'
   const productsById = useMemo(() => new Map(products.map((product) => [String(product.id), product])), [products])
   const findOrderProduct = (item) =>
     productsById.get(String(item.productId)) ||
@@ -1223,7 +1236,6 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
       </header>
 
       <section className="account-content">
-        {tab === 'orders' && <h1>{accountText.ordersTab}</h1>}
         {tab === 'orders' ? (
           ordersStatus === 'loading' ? (
             <div className="account-card account-empty-row">
@@ -1238,16 +1250,39 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
           ) : orders.length ? (
             <>
               <div className="account-order-tools">
-                <label className="account-order-search">
-                  <Search size={18} />
-                  <input value={orderQuery} onChange={(event) => setOrderQuery(event.target.value)} placeholder="Search by order number or product" />
-                </label>
-                <div className="account-order-tabs">
-                  {accountOrderTabs.map(([id, label]) => (
-                    <button className={orderFilter === id ? 'active' : ''} type="button" onClick={() => setOrderFilter(id)} key={id}>
-                      {label}<em>{orderCounts[id] || 0}</em>
-                    </button>
-                  ))}
+                <div className="account-order-hero">
+                  <div>
+                    <span>{copy.langCode === 'VI' ? 'Trung t\u00e2m \u0111\u01a1n h\u00e0ng' : 'Order center'}</span>
+                    <h2>{accountText.ordersTab}</h2>
+                    <p>{copy.langCode === 'VI' ? 'Theo d\u00f5i tr\u1ea1ng th\u00e1i, t\u00ecm nhanh \u0111\u01a1n h\u00e0ng v\u00e0 x\u1eed l\u00fd c\u00e1c y\u00eau c\u1ea7u mua l\u1ea1i trong m\u1ed9t n\u01a1i.' : 'Track status, search purchases and manage reorder actions from one focused view.'}</p>
+                  </div>
+                  <dl className="account-order-summary">
+                    <div>
+                      <dt>{copy.langCode === 'VI' ? 'T\u1ed5ng \u0111\u01a1n' : 'Orders'}</dt>
+                      <dd>{orders.length}</dd>
+                    </div>
+                    <div>
+                      <dt>{copy.langCode === 'VI' ? '\u0110ang x\u1eed l\u00fd' : 'Active'}</dt>
+                      <dd>{activeOrderCount}</dd>
+                    </div>
+                    <div>
+                      <dt>{copy.langCode === 'VI' ? 'G\u1ea7n nh\u1ea5t' : 'Latest'}</dt>
+                      <dd>{latestOrder}</dd>
+                    </div>
+                  </dl>
+                </div>
+                <div className="account-order-filter-panel">
+                  <label className="account-order-search">
+                    <Search size={18} />
+                    <input value={orderQuery} onChange={(event) => setOrderQuery(event.target.value)} placeholder={copy.langCode === 'VI' ? 'T\u00ecm theo m\u00e3 \u0111\u01a1n ho\u1eb7c s\u1ea3n ph\u1ea9m' : 'Search by order number or product'} />
+                  </label>
+                  <div className="account-order-tabs">
+                    {accountOrderTabs.map(([id, label]) => (
+                      <button className={orderFilter === id ? 'active' : ''} type="button" onClick={() => setOrderFilter(id)} key={id}>
+                        {(copy.langCode === 'VI' ? accountOrderTabLabels.vi[id] : label) || label}<em>{orderCounts[id] || 0}</em>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
               {actionNotice && <p className="account-action-notice">{actionNotice}</p>}
