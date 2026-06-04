@@ -2,8 +2,8 @@ import { isSupabaseConfigured, supabase } from './supabase'
 
 const productColumns = 'id, name, category, sku, price, old_price, stock, status, unit, badge, image_url, manufacturer, vendor, warehouse, product_type, description, images, options, variants'
 const categoryColumns = 'id, parent_id, name, slug, description, image_url, active, show_on_home, include_in_menu, display_order, home_display_order'
-const orderColumns = 'id, order_number, total, subtotal, discount_total, delivery_fee, tax_total, delivery_method, payment_method, shipping_address, shipping_partner, tracking_id, notes, return_reason, return_notes, return_requested_at, payment_status, delivery_status, created_at, customers(full_name, email, phone, location), order_items(product_id, product_name, unit_price, quantity, line_total, variant_label)'
-const storefrontOrderColumns = 'id, order_number, total, subtotal, discount_total, delivery_fee, tax_total, delivery_method, payment_method, shipping_address, shipping_partner, tracking_id, notes, return_reason, return_requested_at, payment_status, delivery_status, created_at, customers!inner(full_name, email, phone, location), order_items(product_id, product_name, unit_price, quantity, line_total, variant_label)'
+const orderColumns = 'id, order_number, total, subtotal, discount_total, delivery_fee, tax_total, delivery_method, payment_method, shipping_address, shipping_partner, tracking_id, notes, return_reason, return_notes, return_requested_at, payment_status, delivery_status, created_at, customers(full_name, email, phone, location), order_items(product_id, product_name, unit_price, quantity, line_total, variant_label), order_events(id, actor, event_type, message, created_at)'
+const storefrontOrderColumns = 'id, order_number, total, subtotal, discount_total, delivery_fee, tax_total, delivery_method, payment_method, shipping_address, shipping_partner, tracking_id, notes, return_reason, return_requested_at, payment_status, delivery_status, created_at, customers!inner(full_name, email, phone, location), order_items(product_id, product_name, unit_price, quantity, line_total, variant_label), order_events(id, actor, event_type, message, created_at)'
 const discountColumns = 'id, code, percent_off, active, ends_at, title, method, discount_type, value_type, value_amount, applies_to, minimum_type, minimum_value, usage_limit, once_per_customer, combines, starts_at'
 const customerColumns = 'id, email, full_name, phone, location, created_at, updated_at'
 const articleColumns = 'id, title, slug, category, excerpt, image_url, status, published_at, author, content, tags, type, created_at, updated_at'
@@ -157,6 +157,16 @@ function mapOrder(order) {
       price: Number(item.unit_price),
       total: Number(item.line_total),
     })),
+    events: (order.order_events || [])
+      .map(e => ({
+        id: e.id,
+        actor: e.actor,
+        eventType: e.event_type,
+        message: e.message,
+        createdAt: e.created_at,
+        date: new Intl.DateTimeFormat('en-US', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(e.created_at)),
+      }))
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
   }
 }
 
@@ -842,6 +852,14 @@ export async function updateStorefrontOrderAction(orderId, action, paymentMethod
   }
 }
 
+export async function logOrderEvents(orderId, events) {
+  if (!supabase || !events.length) return
+  const { error } = await supabase.from('order_events').insert(
+    events.map(e => ({ order_id: orderId, actor: e.actor || 'system', event_type: e.eventType, message: e.message }))
+  )
+  if (error) console.warn('Failed to log order events:', error.message)
+}
+
 export async function submitStorefrontReturnRequest(orderId, reason, notes) {
   if (!supabase) throw new Error('Supabase is not configured.')
 
@@ -855,6 +873,7 @@ export async function submitStorefrontReturnRequest(orderId, reason, notes) {
     .eq('id', orderId)
 
   if (error) throw error
+  await logOrderEvents(orderId, [{ actor: 'customer', eventType: 'return_requested', message: `Yêu cầu trả hàng: ${reason}` }])
 }
 
 export async function resolveReturnRequest(orderId, approve) {
@@ -878,6 +897,11 @@ export async function resolveReturnRequest(orderId, approve) {
     .single()
 
   if (error) throw error
+  await logOrderEvents(orderId, [{
+    actor: 'admin',
+    eventType: approve ? 'return_approved' : 'return_rejected',
+    message: approve ? 'Admin đã duyệt yêu cầu trả hàng' : 'Admin đã từ chối yêu cầu trả hàng',
+  }])
   return mapOrder(data)
 }
 

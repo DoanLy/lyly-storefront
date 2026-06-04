@@ -551,6 +551,15 @@
 .order-timeline { display: grid; gap: 9px; }
 .order-timeline p { display: flex; align-items: center; gap: 7px; margin: 0; color: #5c6f66; font-size: 11px; }
 .order-note { display: grid; gap: 5px; padding: 10px; border-radius: 6px; color: #596c63; background: #f6f8f5; font-size: 11px; }
+.admin-event-list { display: grid; gap: 0; margin-top: 8px; border-top: 1px solid #e8eee9; padding-top: 8px; }
+.admin-event-item { display: grid; grid-template-columns: 80px 40px 1fr; gap: 6px; align-items: start; padding: 5px 0; border-bottom: 1px solid #f0f4f0; font-size: 11px; }
+.admin-event-item:last-child { border-bottom: none; }
+.admin-event-date { color: #8a9e92; }
+.admin-event-actor { font-weight: 700; }
+.actor-admin .admin-event-actor { color: #315846; }
+.actor-customer .admin-event-actor { color: #1d5f8a; }
+.actor-system .admin-event-actor { color: #8a9e92; }
+.admin-event-msg { color: #3d5248; }
 .order-risk { display: flex; gap: 7px; margin: 0; color: #5d796c; font-size: 11px; line-height: 1.5; }
 .order-return-request-card { border: 1px solid #fed7aa !important; background: #fff7ed !important; }
 .order-return-request-card h3 { display: flex; align-items: center; gap: 6px; color: #92400e; }
