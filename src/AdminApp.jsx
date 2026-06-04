@@ -1080,7 +1080,7 @@ function CategoriesPage({ meta, categories, products, onCreate, onEdit, onRemove
   )
 }
 
-function OrdersPage({ meta, orders, onUpdate, onBulkUpdate, shippingSettings = {} }) {
+function OrdersPage({ meta, orders, focusedOrderId = '', onFocusedOrderHandled, onUpdate, onBulkUpdate, shippingSettings = {} }) {
   const [query, setQuery] = useState('')
   const [tab, setTab] = useState('all')
   const [deliveryFilter, setDeliveryFilter] = useState('all')
@@ -1096,6 +1096,20 @@ function OrdersPage({ meta, orders, onUpdate, onBulkUpdate, shippingSettings = {
 
   const carrierOptions = (shippingSettings.carriers?.length ? shippingSettings.carriers : defaultShippingCarriers).filter((carrier) => carrier.enabled !== false)
   const shippingPartners = [...new Set([...carrierOptions.map((carrier) => carrier.name), ...orders.map((o) => o.shippingPartner)].filter(Boolean))]
+
+  useEffect(() => {
+    if (!focusedOrderId) return
+    Promise.resolve().then(() => {
+      const matchingOrder = orders.find((order) => order.id === focusedOrderId)
+      if (matchingOrder) {
+        setDetailOrder(matchingOrder)
+        onFocusedOrderHandled?.()
+        return
+      }
+      setNotice(`Không tìm thấy đơn hàng ${focusedOrderId}.`)
+      onFocusedOrderHandled?.()
+    })
+  }, [focusedOrderId, orders, onFocusedOrderHandled])
 
   const visible = orders.filter((order) => {
     const text = `${order.id} ${order.customer} ${order.email || ''} ${order.phone || ''} ${order.location || ''} ${order.paymentMethod || ''} ${order.trackingId || ''}`.toLowerCase()
@@ -3157,6 +3171,7 @@ function AdminApp() {
   const [articleDetail, setArticleDetail] = useState(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [focusedOrderId, setFocusedOrderId] = useState('')
   const [tasks, setTasks] = useState(['name'])
   const [globalSearch, setGlobalSearch] = useState('')
   const [adminLanguage, setAdminLanguage] = useState(() => localStorage.getItem('lyly-admin-language') || 'vi')
@@ -3225,6 +3240,7 @@ function AdminApp() {
       .slice(0, 8)
       .map((order) => ({
         id: order.id,
+        orderId: order.id,
         title: `Đơn hàng ${order.id} cần xử lý`,
         message: `${order.customer} · ${money(order.total)} · ${order.delivery}`,
         page: 'orders',
@@ -3304,6 +3320,12 @@ function AdminApp() {
     window.history.pushState({}, '', nextPage === 'dashboard' ? '/admin' : `/admin/${nextPage}`)
     setPage(nextPage)
     setMenuOpen(false)
+  }
+
+  const openNotification = (item) => {
+    if (item.orderId) setFocusedOrderId(item.orderId)
+    navigate(item.page)
+    setNotificationsOpen(false)
   }
 
   const login = async (email, password) => {
@@ -3636,7 +3658,7 @@ function AdminApp() {
     if (page === 'dashboard') return <Dashboard tasks={tasks} setTasks={setTasks} orders={adminOrders} />
     if (page === 'products') return <ProductsPage meta={localizedMeta} categories={categories} products={products} onBulkEdit={bulkEditProducts} onCreate={() => { setProductEditing(null); setProductModal(true) }} onEdit={(product) => { setProductEditing(product); setProductModal(true) }} onImport={importProducts} onRemove={removeProducts} />
     if (page === 'categories') return <CategoriesPage meta={localizedMeta} categories={categories} products={products} onCreate={() => { setCategoryEditing(null); setCategoryModal(true) }} onEdit={(category) => { setCategoryEditing(category); setCategoryModal(true) }} onRemove={removeCategory} onToggle={toggleCategory} />
-    if (page === 'orders') return <OrdersPage meta={localizedMeta} orders={adminOrders} shippingSettings={storeSettings.shipping || {}} onUpdate={saveOrder} onBulkUpdate={bulkSaveOrders} />
+    if (page === 'orders') return <OrdersPage meta={localizedMeta} orders={adminOrders} focusedOrderId={focusedOrderId} onFocusedOrderHandled={() => setFocusedOrderId('')} shippingSettings={storeSettings.shipping || {}} onUpdate={saveOrder} onBulkUpdate={bulkSaveOrders} />
     if (page === 'customers') return <CustomersManagePage meta={localizedMeta} customers={adminCustomers} onCreate={() => { setCustomerEditing(null); setCustomerModal(true) }} onEdit={(customer) => { setCustomerDetail(null); setCustomerEditing(customer); setCustomerModal(true) }} onView={setCustomerDetail} onRemove={removeCustomer} />
     if (page === 'marketing') return <MarketingPage meta={localizedMeta} />
     if (page === 'discounts') return <DiscountsManagePage meta={localizedMeta} discounts={discounts} onCreate={() => { setDiscountEditing(null); setDiscountModal(true) }} onEdit={editDiscount} onView={setDiscountDetail} onRemove={removeDiscount} />
@@ -3674,7 +3696,7 @@ function AdminApp() {
           {isSupabaseConfigured && <button type="button" onClick={logout} title="Đăng xuất"><LogOut size={18} /></button>}
           <button className="store-switcher" type="button"><span>LY</span><b>LyLy Market</b><ChevronDown size={14} /></button>
         </div>
-        {notificationsOpen && <div className="notification-popover"><div><b>{adminCopy.notifications}</b><button type="button" onClick={() => setNotificationsOpen(false)}><X size={14} /></button></div>{adminNotifications.length ? adminNotifications.map((item) => <button className="notification-item" type="button" key={item.id} onClick={() => { navigate(item.page); setNotificationsOpen(false) }}><ShoppingCart size={16} /><span><b>{item.title}</b><small>{item.message}</small></span></button>) : <p><CheckCircle2 size={16} /> Không có thông báo mới.</p>}</div>}
+        {notificationsOpen && <div className="notification-popover"><div><b>{adminCopy.notifications}</b><button type="button" onClick={() => setNotificationsOpen(false)}><X size={14} /></button></div>{adminNotifications.length ? adminNotifications.map((item) => <button className="notification-item" type="button" key={item.id} onClick={() => openNotification(item)}><ShoppingCart size={16} /><span><b>{item.title}</b><small>{item.message}</small></span></button>) : <p><CheckCircle2 size={16} /> Không có thông báo mới.</p>}</div>}
       </header>
 
       <aside className={`admin-sidebar ${menuOpen ? 'open' : ''}`}>
