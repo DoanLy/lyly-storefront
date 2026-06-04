@@ -1488,7 +1488,12 @@ function OrderDetailModal({ order, carriers = [], onClose, onUpdate, onResolveRe
                     {shippingPartner && !selectedCarrier && <option value={shippingPartner}>{shippingPartner}</option>}
                   </select>
                 </label>
-                <label><span>Mã vận đơn</span><input value={trackingId} onChange={(e) => setTrackingId(e.target.value)} placeholder="Nhập mã tracking" /></label>
+                {trackingId && (
+                  <div className="tracking-display">
+                    <span className="tracking-display-label">Mã vận đơn</span>
+                    <span className="tracking-display-value">{trackingId}</span>
+                  </div>
+                )}
                 {selectedCarrier && <p className="carrier-order-note">{selectedCarrier.service}{selectedCarrier.cod ? ' · Hỗ trợ COD' : ''}</p>}
                 {trackingHref && <a className="tracking-link" href={trackingHref} target="_blank" rel="noreferrer">Mở trang tra cứu vận đơn <ArrowUpRight size={13} /></a>}
                 <button className="admin-primary" type="button" onClick={save}><CheckCircle2 size={15} /> Lưu thay đổi</button>

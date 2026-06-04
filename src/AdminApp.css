@@ -240,6 +240,9 @@
 .status-tag.delivery-failed-delivery { color: #a9554a; background-color: #fae4df; }
 .carrier-pickup-btn { display: flex; align-items: center; justify-content: center; gap: 7px; width: 100%; height: 38px; padding: 0 16px; border: 1px solid #c2d0e0; border-radius: 8px; color: #1d5f8a; background: #f0f7fd; font-size: 12px; font-weight: 700; cursor: pointer; margin-top: 2px; }
 .carrier-pickup-btn:hover { background: #deeef8; }
+.tracking-display { display: grid; gap: 5px; }
+.tracking-display-label { font-size: 10px; font-weight: 700; color: #6b8176; text-transform: uppercase; letter-spacing: .05em; }
+.tracking-display-value { font-family: monospace; font-size: 13px; font-weight: 700; color: #1e3a2d; padding: 8px 10px; background: #f3f6f4; border-radius: 6px; letter-spacing: .04em; }
 .pickup-icon { color: #1d5f8a !important; }
 .payment-method-tag { display: inline-block; padding: 3px 7px; background: #f0f4f2; border-radius: 6px; font-size: 10px; font-weight: 600; color: #3a5044; white-space: nowrap; }
 .shipping-cell { display: flex; flex-direction: column; gap: 2px; }
