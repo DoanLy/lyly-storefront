@@ -1228,6 +1228,7 @@ function OrdersPage({ meta, orders, focusedOrderId = '', onFocusedOrderHandled, 
             <button type="button" onClick={() => bulkUpdate({ payment: 'Paid' })}>Đã thanh toán</button>
             <button type="button" onClick={() => bulkUpdate({ delivery: 'Packing' })}>Đang đóng gói</button>
             <button type="button" onClick={() => bulkUpdate({ delivery: 'Ready' })}>Sẵn sàng giao</button>
+            <button type="button" onClick={() => bulkUpdate({ delivery: 'In Transit' })}><Truck size={13} /> Đang giao hàng</button>
             <button type="button" onClick={() => bulkUpdate({ delivery: 'Delivered' })}>Đã giao</button>
             <button type="button" onClick={() => bulkUpdate({ delivery: 'Returned' })}>Trả hàng</button>
             <button type="button" onClick={printSelected}><Printer size={13} /> In phiếu</button>
@@ -1331,6 +1332,9 @@ function OrdersPage({ meta, orders, focusedOrderId = '', onFocusedOrderHandled, 
                   <td>
                     <div className="row-actions">
                       <button className="row-icon" type="button" onClick={() => setDetailOrder(order)} title="Xem đơn"><Eye size={15} /></button>
+                      {!order.returnReason && order.delivery === 'Ready' && order.shippingPartner && (
+                        <button className="row-icon pickup-icon" type="button" title="Đơn vị vận chuyển đã lấy hàng" onClick={() => updateOrder(order, { delivery: 'In Transit' })}><Truck size={14} /></button>
+                      )}
                     </div>
                   </td>
                 </tr>
