@@ -2467,7 +2467,36 @@ function CategoryTreeSelect({ categories, value, onChange }) {
   )
 }
 
-function ProductModal({ categories, products, product, onClose, onSubmit, copy }) {
+function ProductModal({ categories, products, product, onClose, onSubmit, copy: incomingCopy }) {
+  const copy = {
+    ...incomingCopy,
+    create: 'Thêm sản phẩm mới',
+    edit: 'Sửa sản phẩm',
+    name: 'Tên sản phẩm',
+    namePlaceholder: 'Ví dụ: Rau chân vịt hữu cơ',
+    category: 'Danh mục',
+    price: 'Giá bán',
+    oldPrice: 'Giá trước giảm',
+    oldPricePlaceholder: 'Để trống nếu không giảm giá',
+    stock: 'Tồn kho',
+    status: 'Trạng thái',
+    active: 'Đang hiển thị',
+    draft: 'Bản nháp',
+    unit: 'Quy cách',
+    unitPlaceholder: 'Ví dụ: 250g',
+    badge: 'Nhãn sản phẩm',
+    badgePlaceholder: 'Ví dụ: Hữu cơ',
+    chooseImage: 'Chọn ảnh từ máy',
+    imageHelp: 'JPG, PNG hoặc WebP. Tối đa 5MB.',
+    manufacturer: 'Nhà sản xuất',
+    vendor: 'Nhà cung cấp',
+    warehouse: 'Kho hàng',
+    productType: 'Loại sản phẩm',
+    regenerate: 'Tạo lại',
+    cancel: 'Hủy',
+    save: 'Lưu thay đổi',
+    add: 'Thêm sản phẩm',
+  }
   const activeCategories = categories.filter((c) => c.active)
   const initialCategory = product?.category || activeCategories[0]?.name || ''
   const hasExistingVariants = product?.variants?.length > 0
@@ -2477,7 +2506,7 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy }
     name: '', category: initialCategory, sku: generateProductSku(initialCategory, products),
     price: '', oldPrice: '', stock: '', status: 'active', unit: '', badge: '',
     image: defaultProductImage, manufacturer: 'LyLy Market', vendor: 'LyLy Market',
-    warehouse: 'Main Store', productType: 'Grocery', description: '', images: [], options: [], variants: [],
+    warehouse: 'Kho chính', productType: 'Thực phẩm', description: '', images: [], options: [], variants: [],
     weight: '', weightUnit: 'g', length: '', width: '', height: '',
     mfgDate: '', expDate: '', shelfLife: '', barcode: '', purchaseLimit: '',
     metaSlug: '', metaTitle: '', metaDescription: '',
@@ -2544,9 +2573,9 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy }
     <Modal wide title={product ? copy.edit : copy.create} onClose={onClose}>
       <form className="modal-form product-tabbed-form" onSubmit={submit}>
         <div className="product-modal-tabs">
-          {[['general', 'Thông tin chung'], ['pricing', 'Giá & Kho vận'], ['variants', 'Biến thể'], ['seo', 'SEO']].map(([id, label]) => (
+          {[['general', 'Thông tin chung'], ['pricing', 'Giá và kho'], ['variants', 'Biến thể'], ['seo', 'Tối ưu tìm kiếm']].map(([id, label]) => (
             <button key={id} type="button" className={activeTab === id ? 'active' : ''} onClick={() => setActiveTab(id)}>
-              {label}{id === 'variants' && productMode === 'variants' && <em>ON</em>}
+              {label}{id === 'variants' && productMode === 'variants' && <em>Bật</em>}
             </button>
           ))}
         </div>
@@ -2558,13 +2587,13 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy }
               <span>{copy.category} *</span>
               <CategoryTreeSelect categories={activeCategories} value={form.category} onChange={(val) => change({ target: { name: 'category', value: val } })} />
             </label>
-            <label><span>Tiêu đề mô tả</span><input name="descriptionTitle" value={descriptionTitle} onChange={(e) => setDescriptionTitle(e.target.value)} placeholder="Ví dụ: Rich, smooth texture" /></label>
+            <label><span>Tiêu đề mô tả</span><input name="descriptionTitle" value={descriptionTitle} onChange={(e) => setDescriptionTitle(e.target.value)} placeholder="Ví dụ: Kết cấu mềm mịn, hương vị tự nhiên" /></label>
             <div className="rich-editor-wrap">
               <span className="form-label">Nội dung mô tả</span>
               <div className="rich-editor-toolbar">
                 <button type="button" title="In đậm" onClick={() => insertFormat('**', '**')}><b>B</b></button>
                 <button type="button" title="In nghiêng" onClick={() => insertFormat('_', '_')}><i>I</i></button>
-                <button type="button" title="Gạch đầu dòng" onClick={() => insertFormat('\n• ')}>• List</button>
+                <button type="button" title="Gạch đầu dòng" onClick={() => insertFormat('\n• ')}>• Danh sách</button>
                 <button type="button" title="Tiêu đề" onClick={() => insertFormat('\n### ')}>H3</button>
               </div>
               <textarea ref={descRef} name="description" value={descriptionBody} onChange={(e) => setDescriptionBody(e.target.value)} placeholder="Nội dung mô tả chi tiết sản phẩm..." rows={6} />
@@ -2578,7 +2607,7 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy }
               </div>
             </label>
             <div className="gallery-dropzone-wrap">
-              <div className="variant-editor-head"><b>Ảnh phụ (gallery)</b><small>Kéo thả hoặc bấm + để upload nhiều ảnh</small></div>
+              <div className="variant-editor-head"><b>Ảnh phụ</b><small>Kéo thả hoặc bấm + để tải nhiều ảnh</small></div>
               <div className="gallery-dropzone" onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); addGalleryFiles(e.dataTransfer.files) }}>
                 {galleryImages.map((item, index) => (
                   <div className="gallery-thumb" key={index}>
@@ -2610,7 +2639,7 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy }
                 <label><span>{copy.unit} *</span><input required name="unit" value={form.unit} onChange={change} placeholder={copy.unitPlaceholder} /></label>
                 <label><span>{copy.badge}</span><input name="badge" value={form.badge || ''} onChange={change} placeholder={copy.badgePlaceholder} /></label>
                 <div className="sku-field"><span>SKU</span><div><strong>{form.sku}</strong><button type="button" onClick={regenerateSku}>{copy.regenerate}</button></div></div>
-                <label><span>Barcode (EAN/UPC)</span><input name="barcode" value={form.barcode || ''} onChange={change} placeholder="0123456789012" /></label>
+                <label><span>Mã vạch (EAN/UPC)</span><input name="barcode" value={form.barcode || ''} onChange={change} placeholder="0123456789012" /></label>
                 <label className="section-wide"><span>Giới hạn mua tối đa / đơn</span><input min="1" type="number" name="purchaseLimit" value={form.purchaseLimit || ''} onChange={change} placeholder="Không giới hạn" /></label>
               </div>
             </section>
@@ -2739,12 +2768,12 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy }
               <small className="field-hint">Tự động sinh từ tên. Bấm 🔓 để sửa tay.</small>
             </label>
             <label>
-              <span>Meta Title</span>
+              <span>Tiêu đề SEO</span>
               <input name="metaTitle" value={form.metaTitle || ''} onChange={change} placeholder={form.name || 'Tiêu đề SEO (tối đa 60 ký tự)'} maxLength={60} />
               <small className="char-count">{(form.metaTitle || '').length}/60</small>
             </label>
             <label>
-              <span>Meta Description</span>
+              <span>Mô tả SEO</span>
               <textarea name="metaDescription" value={form.metaDescription || ''} onChange={change} placeholder="Mô tả ngắn hiển thị dưới tiêu đề trên Google (150–160 ký tự)" maxLength={160} rows={3} />
               <small className="char-count">{(form.metaDescription || '').length}/160</small>
             </label>
