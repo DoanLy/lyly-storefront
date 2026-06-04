@@ -1370,17 +1370,19 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
                           {order.returnRejectedMessage && <span>{order.returnRejectedMessage}</span>}
                         </div>
                       )}
-                      {order.events?.length > 0 && (
-                        <div className="order-history-list">
-                          <p className="order-history-title"><RotateCcw size={12} /> Order history</p>
-                          {order.events.map((event) => (
-                            <div key={event.id} className="order-history-item">
-                              <span className="order-history-date">{event.date}</span>
-                              <span className="order-history-msg">{event.message}</span>
-                            </div>
-                          ))}
+                      <div className="order-history-list">
+                        <p className="order-history-title"><RotateCcw size={12} /> Order history</p>
+                        <div className="order-history-item">
+                          <span className="order-history-date">{order.date}</span>
+                          <span className="order-history-msg">Đơn hàng được đặt</span>
                         </div>
-                      )}
+                        {order.events.map((event) => (
+                          <div key={event.id} className="order-history-item">
+                            <span className="order-history-date">{event.date}</span>
+                            <span className="order-history-msg">{event.message}</span>
+                          </div>
+                        ))}
+                      </div>
                       <div className="account-order-actions">
                         {bucket === 'unpaid' && <button type="button" disabled={Boolean(orderActionKey)} onClick={() => { setPayMethod(null); setPayOrderModal(order) }}>{orderActionKey === `${order.uuid}-pay` ? 'Processing...' : 'Pay now'}</button>}
                         {!['delivered', 'cancelled', 'transit'].includes(bucket) && <button type="button" disabled={Boolean(orderActionKey)} onClick={() => setCancelOrderModal(order)}>{orderActionKey === `${order.uuid}-cancel` ? 'Cancelling...' : 'Cancel order'}</button>}

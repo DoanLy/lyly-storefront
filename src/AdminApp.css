@@ -560,7 +560,8 @@
 .order-timeline { display: grid; gap: 9px; }
 .order-timeline p { display: flex; align-items: center; gap: 7px; margin: 0; color: #5c6f66; font-size: 11px; }
 .order-note { display: grid; gap: 5px; padding: 10px; border-radius: 6px; color: #596c63; background: #f6f8f5; font-size: 11px; }
-.admin-event-list { display: grid; gap: 0; margin-top: 8px; border-top: 1px solid #e8eee9; padding-top: 8px; }
+.admin-event-list-title { margin: 10px 0 4px; font-size: 10px; font-weight: 700; color: #8a9e92; text-transform: uppercase; letter-spacing: .05em; }
+.admin-event-list { display: grid; gap: 0; border-top: 1px solid #e8eee9; padding-top: 6px; }
 .admin-event-item { display: grid; grid-template-columns: 80px 40px 1fr; gap: 6px; align-items: start; padding: 5px 0; border-bottom: 1px solid #f0f4f0; font-size: 11px; }
 .admin-event-item:last-child { border-bottom: none; }
 .admin-event-date { color: #8a9e92; }

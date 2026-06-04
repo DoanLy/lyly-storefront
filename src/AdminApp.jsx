@@ -1441,18 +1441,23 @@ function OrderDetailModal({ order, carriers = [], onClose, onUpdate, onResolveRe
             <div className="order-timeline">
               <p><CheckCircle2 size={15} /> Đơn hàng tạo lúc {order.date}</p>
               {order.deliveryMethod && <p><Truck size={15} /> Hình thức nhận hàng: {order.deliveryMethod}</p>}
+              <p><Package size={15} /> Trạng thái giao hàng: {delivery}</p>
+              <p><ShoppingBag size={15} /> Trạng thái thanh toán: {payment}</p>
               {order.paymentMethod && <p><BadgePercent size={15} /> Phương thức thanh toán: {order.paymentMethod}</p>}
             </div>
             {order.events?.length > 0 && (
-              <div className="admin-event-list">
-                {[...order.events].reverse().map((event) => (
-                  <div key={event.id} className={`admin-event-item actor-${event.actor}`}>
-                    <span className="admin-event-date">{event.date}</span>
-                    <span className="admin-event-actor">{event.actor === 'customer' ? 'Khách' : event.actor === 'admin' ? 'Admin' : 'Hệ thống'}</span>
-                    <span className="admin-event-msg">{event.message}</span>
-                  </div>
-                ))}
-              </div>
+              <>
+                <p className="admin-event-list-title">Nhật ký thay đổi</p>
+                <div className="admin-event-list">
+                  {[...order.events].reverse().map((event) => (
+                    <div key={event.id} className={`admin-event-item actor-${event.actor}`}>
+                      <span className="admin-event-date">{event.date}</span>
+                      <span className="admin-event-actor">{event.actor === 'customer' ? 'Khách' : event.actor === 'admin' ? 'Admin' : 'Hệ thống'}</span>
+                      <span className="admin-event-msg">{event.message}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
             {order.note && <div className="order-note"><b>Ghi chú khách hàng</b><span>{order.note}</span></div>}
           </div>
