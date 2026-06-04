@@ -389,6 +389,12 @@
 .admin-form textarea { resize: vertical; line-height: 1.5; }
 .compact-form { min-width: min(520px, 88vw); }
 .article-form { grid-template-columns: 1.25fr .75fr; align-items: start; }
+.article-form > section:first-of-type { grid-column: 1; grid-row: 1 / span 2; }
+.article-form > section:nth-of-type(2) { grid-column: 2; grid-row: 2; }
+.article-form section label:has(input[name="image"]) { display: none; }
+.article-image-upload { grid-column: 2; grid-row: 1; padding: 15px; }
+.article-image-upload .product-image-picker { grid-template-columns: 86px 1fr; min-height: 104px; }
+.article-image-upload .product-image-picker img { width: 86px; height: 78px; }
 .article-form section, .settings-editor > section { display: grid; gap: 11px; padding: 15px; }
 .article-form h3, .settings-editor h3 { margin: 0; color: #344f43; font-size: 13px; }
 .article-form .modal-actions { grid-column: 1 / -1; }

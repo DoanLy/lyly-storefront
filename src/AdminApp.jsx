@@ -79,6 +79,7 @@ import {
   updateAdminOrders,
   updateAdminProduct,
   updateAdminProducts,
+  uploadAdminArticleImage,
   uploadAdminProductImage,
 } from './lib/storeApi'
 
@@ -1385,6 +1386,8 @@ function ArticleModal({ article, defaultType = 'news', onClose, onSubmit }) {
     author: article?.author || 'LyLy Editorial',
     tags: article?.tags?.join(', ') || '',
   })
+  const [imageFile, setImageFile] = useState(null)
+  const [imagePreview, setImagePreview] = useState(form.image || '')
   const change = (event) => {
     const { name, value } = event.target
     setForm((current) => ({
@@ -1394,13 +1397,21 @@ function ArticleModal({ article, defaultType = 'news', onClose, onSubmit }) {
       ...(name === 'title' && !article ? { slug: slugify(value) } : {}),
     }))
   }
+  const chooseImage = (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    setImageFile(file)
+    setForm((current) => ({ ...current, image: current.image || 'upload-selected' }))
+    imageFilePreview(file, setImagePreview)
+  }
   const submit = (event) => {
     event.preventDefault()
-    onSubmit({ ...article, ...form, tags: form.tags.split(',').map((tag) => tag.trim()).filter(Boolean), category: form.type === 'recipe' ? 'Recipes' : form.category })
+    onSubmit({ ...article, ...form, imageFile, tags: form.tags.split(',').map((tag) => tag.trim()).filter(Boolean), category: form.type === 'recipe' ? 'Recipes' : form.category })
   }
   return (
     <Modal title={article ? 'Sửa bài viết' : 'Thêm bài viết'} onClose={onClose} wide>
       <form className="admin-form article-form" onSubmit={submit}>
+        <label className="product-upload-field article-image-upload"><span>Image</span><div className="product-image-picker"><img src={imagePreview || defaultProductImage} alt="" /><div><Upload size={21} /><b>{imageFile ? imageFile.name : 'Choose image from device'}</b><small>Upload the cover image for recipe/blog. Maximum 5MB.</small></div><input required={!form.image && !imageFile} accept="image/*" type="file" onChange={chooseImage} /></div></label>
         <section><h3>Nội dung</h3><label><span>Tiêu đề</span><input required name="title" value={form.title} onChange={change} /></label><label><span>Slug</span><input required name="slug" value={form.slug} onChange={change} /></label><label><span>Đoạn trích</span><textarea name="excerpt" value={form.excerpt} onChange={change} /></label><label><span>Nội dung bài viết</span><textarea name="content" value={form.content} onChange={change} rows={7} /></label></section>
         <section><h3>Hiển thị</h3><label><span>Loại</span><select name="type" value={form.type} onChange={change}><option value="news">Blog/news</option><option value="recipe">Recipe</option></select></label><label><span>Trạng thái</span><select name="status" value={form.status} onChange={change}><option>Published</option><option>Draft</option></select></label><label><span>Tác giả</span><input name="author" value={form.author} onChange={change} /></label><label><span>Ảnh</span><input required name="image" value={form.image} onChange={change} placeholder="https://..." /></label><label><span>Thẻ</span><input name="tags" value={form.tags} onChange={change} placeholder="Fresh, Recipe" /></label></section>
         <div className="modal-actions"><button className="admin-secondary" type="button" onClick={onClose}>Hủy</button><button className="admin-primary" type="submit">Lưu bài viết</button></div>
@@ -2858,7 +2869,10 @@ function AdminApp() {
   const saveArticle = async (article) => {
     setAdminError('')
     try {
-      const payload = { ...article, slug: article.slug || slugify(article.title) }
+      const { imageFile, ...articleFields } = article
+      const slug = articleFields.slug || slugify(articleFields.title)
+      const image = imageFile ? await uploadAdminArticleImage(imageFile, slug) : articleFields.image
+      const payload = { ...articleFields, slug, image }
       if (payload.id) {
         const updatedArticle = await updateAdminArticle(payload)
         setAdminArticles((current) => current.map((item) => item.id === updatedArticle.id ? updatedArticle : item))

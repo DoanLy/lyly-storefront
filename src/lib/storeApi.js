@@ -657,15 +657,16 @@ function fileToDataUrl(file) {
   })
 }
 
-export async function uploadAdminProductImage(file, sku) {
+async function uploadAdminImage(file, owner, folder = 'products') {
   if (!file) return null
   if (!file.type.startsWith('image/')) throw new Error('Chỉ hỗ trợ upload file hình ảnh.')
   if (file.size > 5 * 1024 * 1024) throw new Error('Ảnh sản phẩm không được vượt quá 5MB.')
   if (!supabase) return fileToDataUrl(file)
 
   const extension = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg'
-  const safeSku = String(sku || 'product').toLowerCase().replace(/[^a-z0-9-]/g, '-')
-  const path = `${safeSku}/${Date.now()}.${extension}`
+  const safeFolder = String(folder || 'uploads').toLowerCase().replace(/[^a-z0-9-]/g, '-')
+  const safeOwner = String(owner || 'image').toLowerCase().replace(/[^a-z0-9-]/g, '-')
+  const path = `${safeFolder}/${safeOwner}/${Date.now()}.${extension}`
   const { error } = await supabase.storage
     .from('product-images')
     .upload(path, file, { cacheControl: '3600', upsert: false, contentType: file.type })
@@ -674,6 +675,14 @@ export async function uploadAdminProductImage(file, sku) {
 
   const { data } = supabase.storage.from('product-images').getPublicUrl(path)
   return data.publicUrl
+}
+
+export async function uploadAdminProductImage(file, sku) {
+  return uploadAdminImage(file, sku || 'product', 'products')
+}
+
+export async function uploadAdminArticleImage(file, slug) {
+  return uploadAdminImage(file, slug || 'article', 'articles')
 }
 
 export async function loadAdminOrders() {
