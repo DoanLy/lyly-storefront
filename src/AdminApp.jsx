@@ -2527,6 +2527,12 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy }
   const removeOption = (index) => setOptions((cur) => cur.filter((_, i) => i !== index))
   const removeVariant = (index) => setVariants((cur) => cur.filter((_, i) => i !== index))
   const regenerateSku = () => setForm((cur) => ({ ...cur, sku: generateProductSku(cur.category, products, product?.id, cur.sku) }))
+  const productTabs = [
+    { id: 'general', label: 'Thông tin chung' },
+    { id: 'pricing', label: 'Giá & Kho vận' },
+    { id: 'variants', label: 'Biến thể' },
+    { id: 'seo', label: 'SEO' },
+  ]
   const insertFormat = (before, after = '') => {
     const el = descRef.current
     if (!el) return
@@ -2544,9 +2550,10 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy }
     <Modal wide title={product ? copy.edit : copy.create} onClose={onClose}>
       <form className="modal-form product-tabbed-form" onSubmit={submit}>
         <div className="product-modal-tabs">
-          {[['general', 'Thông tin chung'], ['pricing', 'Giá & Kho vận'], ['variants', 'Biến thể'], ['seo', 'SEO']].map(([id, label]) => (
+          {productTabs.map(({ id, label }) => (
             <button key={id} type="button" className={activeTab === id ? 'active' : ''} onClick={() => setActiveTab(id)}>
-              {label}{id === 'variants' && productMode === 'variants' && <em>ON</em>}
+              <span>{label}</span>
+              {id === 'variants' && productMode === 'variants' && <em>ON</em>}
             </button>
           ))}
         </div>

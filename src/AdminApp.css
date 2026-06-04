@@ -579,6 +579,8 @@
   .carrier-row-main > span:nth-child(2), .carrier-row-main > span:nth-child(3), .carrier-row-main > span:nth-child(4) { grid-column: 1 / -1; }
   .carrier-actions { grid-column: 2; grid-row: 1; }
   .carrier-inline-flags { flex-wrap: wrap; }
+  .product-modal-tabs { gap: 8px; padding-bottom: 14px; margin-bottom: 15px; }
+  .product-modal-tabs button { min-width: 130px; height: 46px; gap: 8px; padding: 0 13px; border-radius: 10px; font-size: 13px; }
   .setup-card, .setup-card.wide { min-height: 220px; }
   .compact-order { grid-template-columns: 1fr 60px 76px; }
   .sales-summary { min-height: 190px; }
@@ -610,11 +612,11 @@
 }
 
 /* ── PRODUCT MODAL TABS ───────────────────────────────────────── */
-.product-modal-tabs { display: flex; gap: 2px; padding: 0 0 16px; border-bottom: 1px solid var(--admin-line); margin-bottom: 18px; overflow-x: auto; }
-.product-modal-tabs button { flex-shrink: 0; height: 34px; padding: 0 14px; border: 1px solid var(--admin-line); border-radius: 8px; color: #5a716a; background: white; font-size: 11px; font-weight: 600; cursor: pointer; transition: all .15s; display: flex; align-items: center; gap: 5px; }
-.product-modal-tabs button:hover { background: #f2f7f4; }
-.product-modal-tabs button.active { color: #2d5241; background: #e6f0ea; border-color: #b8d4c2; }
-.product-modal-tabs button em { padding: 1px 5px; border-radius: 5px; color: white; background: #4e7d60; font-size: 8px; font-style: normal; }
+.product-modal-tabs { display: flex; align-items: center; gap: 20px; padding: 0 0 22px; border-bottom: 1px solid var(--admin-line); margin-bottom: 20px; overflow-x: auto; }
+.product-modal-tabs button { flex-shrink: 0; min-width: 170px; height: 58px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 24px; border: 1px solid transparent; border-radius: 14px; color: #536173; background: transparent; font-size: 18px; font-weight: 700; cursor: pointer; transition: all .15s ease; white-space: nowrap; }
+.product-modal-tabs button:hover { color: #315846; background: #f7fbf8; }
+.product-modal-tabs button.active { color: #24483a; border-color: #b9d7c4; background: #f7fcf8; box-shadow: 0 8px 18px #24483a14; }
+.product-modal-tabs button em { display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 9px; color: white; background: #4e7d60; font-size: 9px; font-style: normal; }
 .tab-pane { display: grid; gap: 13px; }
 .tab-empty-hint { padding: 24px; border: 1px dashed #d2ddd7; border-radius: 10px; color: #7a9082; font-size: 12px; text-align: center; }
 .form-section-head { margin: 4px 0 0; padding: 8px 10px; border-radius: 6px; color: #4e6b5d; background: #f2f7f4; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
