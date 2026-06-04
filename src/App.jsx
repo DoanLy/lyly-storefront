@@ -1362,8 +1362,7 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
                       {order.trackingId && <p className="account-order-tracking">Tracking: {order.trackingId}</p>}
                       <div className="account-order-actions">
                         {bucket === 'unpaid' && <button type="button" disabled={Boolean(orderActionKey)} onClick={() => { setPayMethod(null); setPayOrderModal(order) }}>{orderActionKey === `${order.uuid}-pay` ? 'Processing...' : 'Pay now'}</button>}
-                        {!['delivered', 'cancelled'].includes(bucket) && <button type="button" disabled={Boolean(orderActionKey)} onClick={() => bucket === 'transit' ? showActionNotice(`Cannot cancel ${order.id} — it is already in transit.`) : setCancelOrderModal(order)}>{orderActionKey === `${order.uuid}-cancel` ? 'Cancelling...' : 'Cancel order'}</button>}
-                        {bucket === 'transit' && <button type="button" onClick={() => showActionNotice(order.trackingId ? `Tracking ${order.trackingId}` : `Tracking for ${order.id} will update soon.`)}>Track order</button>}
+                        {!['delivered', 'cancelled', 'transit'].includes(bucket) && <button type="button" disabled={Boolean(orderActionKey)} onClick={() => setCancelOrderModal(order)}>{orderActionKey === `${order.uuid}-cancel` ? 'Cancelling...' : 'Cancel order'}</button>}
                         {bucket === 'delivered' && <button type="button" onClick={() => onReorder?.(order)}>Reorder</button>}
                         {bucket === 'delivered' && <button type="button" onClick={() => showActionNotice(`Review form for ${order.id} will be available soon.`)}>Review products</button>}
                       </div>
