@@ -3792,6 +3792,13 @@ function AdminApp() {
       const updatedOrders = await updateAdminOrders(updates)
       const updatedById = new Map(updatedOrders.map((order) => [order.id, order]))
       setAdminOrders((current) => current.map((order) => updatedById.get(order.id) ? { ...order, ...updatedById.get(order.id) } : order))
+      for (const update of updates) {
+        const oldOrder = adminOrders.find((o) => o.uuid === update.uuid)
+        const events = []
+        if (oldOrder && oldOrder.payment !== update.payment) events.push({ actor: 'admin', eventType: 'payment_updated', message: `Thanh toán: ${oldOrder.payment} → ${update.payment}` })
+        if (oldOrder && oldOrder.delivery !== update.delivery) events.push({ actor: 'admin', eventType: 'delivery_updated', message: `Giao hàng: ${oldOrder.delivery} → ${update.delivery}` })
+        if (events.length > 0) logOrderEvents(update.uuid, events)
+      }
     } catch (error) {
       console.error(error)
       setAdminError(error.message)

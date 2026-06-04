@@ -856,6 +856,14 @@ export async function updateStorefrontOrderAction(orderId, action, paymentMethod
       .eq('id', orderId)
     if (methodError) throw methodError
   }
+
+  await logOrderEvents(orderId, [{
+    actor: 'customer',
+    eventType: normalizedAction === 'pay' ? 'payment_updated' : 'order_cancelled',
+    message: normalizedAction === 'pay'
+      ? `Khách đã thanh toán đơn hàng${paymentMethod ? ' qua ' + paymentMethodLabel(paymentMethod) : ''}`
+      : 'Khách đã hủy đơn hàng',
+  }])
 }
 
 export async function logOrderEvents(orderId, events) {
