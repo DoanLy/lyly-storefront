@@ -1071,14 +1071,14 @@ function accountOrderBucket(order) {
   if (['cancelled', 'returned', 'failed delivery'].includes(delivery)) return 'cancelled'
   if (delivery === 'delivered') return 'delivered'
   if (payment === 'pending') return 'unpaid'
-  if (['ready'].includes(delivery) || order.trackingId) return 'transit'
+  if (['ready', 'in transit'].includes(delivery) || order.trackingId) return 'transit'
   return 'processing'
 }
 
 function accountOrderStage(order) {
   const delivery = normalizedOrderStatus(order.delivery)
   if (delivery === 'delivered') return 3
-  if (['ready'].includes(delivery) || order.trackingId) return 2
+  if (['ready', 'in transit'].includes(delivery) || order.trackingId) return 2
   if (['packing'].includes(delivery)) return 1
   return 0
 }

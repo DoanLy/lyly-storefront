@@ -361,6 +361,28 @@ const adminI18n = {
   },
 }
 
+const DELIVERY_LABELS = {
+  'Unfulfilled': 'Chưa xử lý',
+  'Packing': 'Đang đóng gói',
+  'Ready': 'Sẵn sàng giao',
+  'In Transit': 'Đang giao hàng',
+  'Delivered': 'Đã giao',
+  'Cancelled': 'Đã hủy',
+  'Returned': 'Trả hàng',
+  'Failed Delivery': 'Giao thất bại',
+}
+function deliveryLabel(value) { return DELIVERY_LABELS[value] || value }
+
+function generateTrackingId(carrier) {
+  const prefix = carrier.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4)
+  const now = new Date()
+  const yy = String(now.getFullYear()).slice(2)
+  const mm = String(now.getMonth() + 1).padStart(2, '0')
+  const dd = String(now.getDate()).padStart(2, '0')
+  const rand = Math.random().toString(36).slice(2, 8).toUpperCase()
+  return `${prefix}${yy}${mm}${dd}${rand}`
+}
+
 function money(value) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)
 }
@@ -1230,6 +1252,7 @@ function OrdersPage({ meta, orders, focusedOrderId = '', onFocusedOrderHandled, 
                 <option value="unfulfilled">Chưa xử lý</option>
                 <option value="packing">Đang đóng gói</option>
                 <option value="ready">Sẵn sàng giao</option>
+                <option value="in transit">Đang giao hàng</option>
                 <option value="delivered">Đã giao</option>
                 <option value="cancelled">Đã hủy</option>
                 <option value="returned">Trả hàng</option>
@@ -1288,34 +1311,13 @@ function OrdersPage({ meta, orders, focusedOrderId = '', onFocusedOrderHandled, 
                   </td>
                   <td>{order.paymentMethod ? <span className="payment-method-tag">{order.paymentMethod}</span> : <span className="muted-dash">—</span>}</td>
                   <td>
-                    <select
-                      className={`inline-status-select payment-${order.payment.toLowerCase()}`}
-                      value={order.payment}
-                      onChange={(e) => updateOrder(order, { payment: e.target.value })}
-                    >
-                      <option value="Pending">Chờ thanh toán</option>
-                      <option value="Paid">Đã thanh toán</option>
-                      <option value="Refunded">Đã hoàn tiền</option>
-                    </select>
+                    <span className={`status-tag payment-${order.payment.toLowerCase()}`}>{order.payment === 'Pending' ? 'Chờ thanh toán' : order.payment === 'Paid' ? 'Đã thanh toán' : 'Đã hoàn tiền'}</span>
                   </td>
                   <td>
-                    {order.returnReason ? (
-                      <span className="return-requested-badge">Yêu cầu trả hàng</span>
-                    ) : (
-                      <select
-                        className={`inline-status-select delivery-${order.delivery.toLowerCase().replaceAll(' ', '-')}`}
-                        value={order.delivery}
-                        onChange={(e) => updateOrder(order, { delivery: e.target.value })}
-                      >
-                        <option value="Unfulfilled">Chưa xử lý</option>
-                        <option value="Packing">Đang đóng gói</option>
-                        <option value="Ready">Sẵn sàng giao</option>
-                        <option value="Delivered">Đã giao</option>
-                        <option value="Cancelled">Đã hủy</option>
-                        <option value="Returned">Trả hàng</option>
-                        <option value="Failed Delivery">Giao thất bại</option>
-                      </select>
-                    )}
+                    {order.returnReason
+                      ? <span className="return-requested-badge">Yêu cầu trả hàng</span>
+                      : <span className={`status-tag delivery-${order.delivery.toLowerCase().replaceAll(' ', '-')}`}>{deliveryLabel(order.delivery)}</span>
+                    }
                   </td>
                   <td>
                     {order.shippingPartner ? (
@@ -1363,7 +1365,9 @@ function OrderDetailModal({ order, carriers = [], onClose, onUpdate, onResolveRe
   const [trackingId, setTrackingId] = useState(order.trackingId || '')
   const [resolving, setResolving] = useState(false)
   const hasReturnRequest = Boolean(order.returnReason)
+  const canMarkPickup = !hasReturnRequest && delivery === 'Ready' && Boolean(shippingPartner)
   const save = () => onUpdate(order, { payment, delivery, shippingPartner, trackingId })
+  const markCarrierPickup = () => onUpdate(order, { payment, delivery: 'In Transit', shippingPartner, trackingId })
   const handleResolveReturn = async (approve) => {
     setResolving(true)
     try {
@@ -1457,6 +1461,7 @@ function OrderDetailModal({ order, carriers = [], onClose, onUpdate, onResolveRe
                     <option value="Unfulfilled">Chưa xử lý</option>
                     <option value="Packing">Đang đóng gói</option>
                     <option value="Ready">Sẵn sàng giao</option>
+                    <option value="In Transit">Đang giao hàng</option>
                     <option value="Delivered">Đã giao</option>
                     <option value="Cancelled">Đã hủy</option>
                     <option value="Returned">Trả hàng</option>
@@ -1465,7 +1470,11 @@ function OrderDetailModal({ order, carriers = [], onClose, onUpdate, onResolveRe
                 </label>
                 <label>
                   <span>Đơn vị vận chuyển</span>
-                  <select value={shippingPartner} onChange={(e) => setShippingPartner(e.target.value)}>
+                  <select value={shippingPartner} onChange={(e) => {
+                    const partner = e.target.value
+                    setShippingPartner(partner)
+                    if (partner && !trackingId) setTrackingId(generateTrackingId(partner))
+                  }}>
                     <option value="">Chọn đơn vị</option>
                     {carriers.map((carrier) => <option key={carrier.id || carrier.name} value={carrier.name}>{carrier.name} - {carrier.service}</option>)}
                     {shippingPartner && !selectedCarrier && <option value={shippingPartner}>{shippingPartner}</option>}
@@ -1475,6 +1484,11 @@ function OrderDetailModal({ order, carriers = [], onClose, onUpdate, onResolveRe
                 {selectedCarrier && <p className="carrier-order-note">{selectedCarrier.service}{selectedCarrier.cod ? ' · Hỗ trợ COD' : ''}</p>}
                 {trackingHref && <a className="tracking-link" href={trackingHref} target="_blank" rel="noreferrer">Mở trang tra cứu vận đơn <ArrowUpRight size={13} /></a>}
                 <button className="admin-primary" type="button" onClick={save}><CheckCircle2 size={15} /> Lưu thay đổi</button>
+                {canMarkPickup && (
+                  <button className="carrier-pickup-btn" type="button" onClick={markCarrierPickup}>
+                    <Truck size={15} /> Đơn vị vận chuyển đã lấy hàng
+                  </button>
+                )}
               </>
             )}
           </div>

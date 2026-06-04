@@ -226,6 +226,20 @@
 .inline-status-select.delivery-cancelled { color: #a9554a; background-color: #fae4df; }
 .inline-status-select.delivery-returned { color: #6d4a8a; background-color: #ede8f5; }
 .inline-status-select.delivery-failed-delivery { color: #a9554a; background-color: #fae4df; }
+.status-tag { display: inline-block; border-radius: 11px; padding: 4px 8px; font-size: 9px; font-weight: 700; letter-spacing: .03em; white-space: nowrap; }
+.status-tag.payment-paid { color: #3e7156; background-color: #e1f0df; }
+.status-tag.payment-pending { color: #8d6a2f; background-color: #f8edcf; }
+.status-tag.payment-refunded { color: #a9554a; background-color: #fae4df; }
+.status-tag.delivery-unfulfilled { color: #7b6a54; background-color: #eeeae3; }
+.status-tag.delivery-packing { color: #8d6a2f; background-color: #f8edcf; }
+.status-tag.delivery-ready { color: #446f7b; background-color: #e0f0f1; }
+.status-tag.delivery-in-transit { color: #1d5f8a; background-color: #deeef8; }
+.status-tag.delivery-delivered { color: #3e7156; background-color: #e1f0df; }
+.status-tag.delivery-cancelled { color: #a9554a; background-color: #fae4df; }
+.status-tag.delivery-returned { color: #6d4a8a; background-color: #ede8f5; }
+.status-tag.delivery-failed-delivery { color: #a9554a; background-color: #fae4df; }
+.carrier-pickup-btn { display: flex; align-items: center; justify-content: center; gap: 7px; width: 100%; height: 38px; padding: 0 16px; border: 1px solid #c2d0e0; border-radius: 8px; color: #1d5f8a; background: #f0f7fd; font-size: 12px; font-weight: 700; cursor: pointer; margin-top: 2px; }
+.carrier-pickup-btn:hover { background: #deeef8; }
 .payment-method-tag { display: inline-block; padding: 3px 7px; background: #f0f4f2; border-radius: 6px; font-size: 10px; font-weight: 600; color: #3a5044; white-space: nowrap; }
 .shipping-cell { display: flex; flex-direction: column; gap: 2px; }
 .shipping-cell b { font-size: 11px; color: #2a3d33; }
