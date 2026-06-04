@@ -32,6 +32,7 @@ import {
   Pencil,
   Plus,
   Printer,
+  RotateCcw,
   Search,
   Send,
   Settings,
@@ -46,6 +47,7 @@ import {
   Upload,
   Users,
   X,
+  XCircle,
 } from 'lucide-react'
 import './AdminApp.css'
 import {
@@ -77,6 +79,7 @@ import {
   updateAdminCategory,
   updateAdminCustomer,
   updateAdminDiscount,
+  resolveReturnRequest,
   updateAdminOrder,
   updateAdminOrders,
   updateAdminProduct,
@@ -1127,6 +1130,7 @@ function OrdersPage({ meta, orders, focusedOrderId = '', onFocusedOrderHandled, 
       || (tab === 'unpaid' && pm === 'pending')
       || (tab === 'fulfilled' && dl === 'delivered')
       || (tab === 'cancelled' && dl === 'cancelled')
+      || (tab === 'return_requested' && Boolean(order.returnReason))
       || (tab === 'returned' && (dl === 'returned' || pm === 'refunded'))
       || (tab === 'failed' && dl === 'failed delivery')
     return matchesQuery && matchesDelivery && matchesPayment && matchesShipping && matchesPriceMin && matchesPriceMax && matchesTab
@@ -1142,6 +1146,7 @@ function OrdersPage({ meta, orders, focusedOrderId = '', onFocusedOrderHandled, 
   const unpaidCount = orders.filter((o) => o.payment.toLowerCase() === 'pending').length
   const deliveredCount = orders.filter((o) => o.delivery.toLowerCase() === 'delivered').length
   const cancelledCount = orders.filter((o) => o.delivery.toLowerCase() === 'cancelled').length
+  const returnRequestedCount = orders.filter((o) => Boolean(o.returnReason)).length
   const returnedCount = orders.filter((o) => o.delivery.toLowerCase() === 'returned' || o.payment.toLowerCase() === 'refunded').length
   const failedCount = orders.filter((o) => o.delivery.toLowerCase() === 'failed delivery').length
   const revenue = orders
@@ -1184,6 +1189,7 @@ function OrdersPage({ meta, orders, focusedOrderId = '', onFocusedOrderHandled, 
           <button className={tab === 'open' ? 'active' : ''} type="button" onClick={() => setTab('open')}>Đang xử lý <em>{openCount}</em></button>
           <button className={tab === 'unpaid' ? 'active' : ''} type="button" onClick={() => setTab('unpaid')}>Chưa thanh toán <em>{unpaidCount}</em></button>
           <button className={tab === 'fulfilled' ? 'active' : ''} type="button" onClick={() => setTab('fulfilled')}>Đã giao <em>{deliveredCount}</em></button>
+          {returnRequestedCount > 0 && <button className={`${tab === 'return_requested' ? 'active' : ''} tab-return-requested`} type="button" onClick={() => setTab('return_requested')}>Yêu cầu trả hàng <em>{returnRequestedCount}</em></button>}
           {cancelledCount > 0 && <button className={tab === 'cancelled' ? 'active' : ''} type="button" onClick={() => setTab('cancelled')}>Đã hủy <em>{cancelledCount}</em></button>}
           {returnedCount > 0 && <button className={tab === 'returned' ? 'active' : ''} type="button" onClick={() => setTab('returned')}>Trả hàng / Hoàn tiền <em>{returnedCount}</em></button>}
           {failedCount > 0 && <button className={tab === 'failed' ? 'active' : ''} type="button" onClick={() => setTab('failed')}>Giao thất bại <em>{failedCount}</em></button>}
@@ -1293,19 +1299,23 @@ function OrdersPage({ meta, orders, focusedOrderId = '', onFocusedOrderHandled, 
                     </select>
                   </td>
                   <td>
-                    <select
-                      className={`inline-status-select delivery-${order.delivery.toLowerCase().replaceAll(' ', '-')}`}
-                      value={order.delivery}
-                      onChange={(e) => updateOrder(order, { delivery: e.target.value })}
-                    >
-                      <option value="Unfulfilled">Chưa xử lý</option>
-                      <option value="Packing">Đang đóng gói</option>
-                      <option value="Ready">Sẵn sàng giao</option>
-                      <option value="Delivered">Đã giao</option>
-                      <option value="Cancelled">Đã hủy</option>
-                      <option value="Returned">Trả hàng</option>
-                      <option value="Failed Delivery">Giao thất bại</option>
-                    </select>
+                    {order.returnReason ? (
+                      <span className="return-requested-badge">Yêu cầu trả hàng</span>
+                    ) : (
+                      <select
+                        className={`inline-status-select delivery-${order.delivery.toLowerCase().replaceAll(' ', '-')}`}
+                        value={order.delivery}
+                        onChange={(e) => updateOrder(order, { delivery: e.target.value })}
+                      >
+                        <option value="Unfulfilled">Chưa xử lý</option>
+                        <option value="Packing">Đang đóng gói</option>
+                        <option value="Ready">Sẵn sàng giao</option>
+                        <option value="Delivered">Đã giao</option>
+                        <option value="Cancelled">Đã hủy</option>
+                        <option value="Returned">Trả hàng</option>
+                        <option value="Failed Delivery">Giao thất bại</option>
+                      </select>
+                    )}
                   </td>
                   <td>
                     {order.shippingPartner ? (
@@ -1319,7 +1329,6 @@ function OrdersPage({ meta, orders, focusedOrderId = '', onFocusedOrderHandled, 
                   <td>
                     <div className="row-actions">
                       <button className="row-icon" type="button" onClick={() => setDetailOrder(order)} title="Xem đơn"><Eye size={15} /></button>
-                      {order.note && <button className="row-icon note-icon" type="button" title={order.note}><MessageSquare size={14} /></button>}
                     </div>
                   </td>
                 </tr>
@@ -1329,17 +1338,40 @@ function OrdersPage({ meta, orders, focusedOrderId = '', onFocusedOrderHandled, 
           {!visible.length && <EmptyHint icon={ShoppingCart} title="Không tìm thấy đơn hàng" copy="Thử đổi từ khóa, bộ lọc hoặc trạng thái đơn." />}
         </div>
       </section>
-      {detailOrder && <OrderDetailModal order={detailOrder} carriers={carrierOptions} onClose={() => setDetailOrder(null)} onUpdate={updateOrder} />}
+      {detailOrder && (
+        <OrderDetailModal
+          order={detailOrder}
+          carriers={carrierOptions}
+          onClose={() => setDetailOrder(null)}
+          onUpdate={updateOrder}
+          onResolveReturn={async (uuid, approve) => {
+            const updated = await resolveReturnRequest(uuid, approve)
+            await onUpdate(updated, {})
+            setDetailOrder(null)
+            setNotice(`${updated.id} ${approve ? 'đã được duyệt trả hàng.' : 'đã từ chối trả hàng.'}`)
+          }}
+        />
+      )}
     </>
   )
 }
 
-function OrderDetailModal({ order, carriers = [], onClose, onUpdate }) {
+function OrderDetailModal({ order, carriers = [], onClose, onUpdate, onResolveReturn }) {
   const [payment, setPayment] = useState(order.payment)
   const [delivery, setDelivery] = useState(order.delivery)
   const [shippingPartner, setShippingPartner] = useState(order.shippingPartner || '')
   const [trackingId, setTrackingId] = useState(order.trackingId || '')
+  const [resolving, setResolving] = useState(false)
+  const hasReturnRequest = Boolean(order.returnReason)
   const save = () => onUpdate(order, { payment, delivery, shippingPartner, trackingId })
+  const handleResolveReturn = async (approve) => {
+    setResolving(true)
+    try {
+      await onResolveReturn(order.uuid, approve)
+    } finally {
+      setResolving(false)
+    }
+  }
   const subtotal = Number(order.subtotal || 0) || order.lineItems?.reduce((total, item) => total + item.total, 0) || order.total
   const discountTotal = Number(order.discountTotal || 0)
   const deliveryFee = Number(order.deliveryFee || 0)
@@ -1383,43 +1415,68 @@ function OrderDetailModal({ order, carriers = [], onClose, onUpdate }) {
             </div>
             {order.note && <div className="order-note"><b>Ghi chú khách hàng</b><span>{order.note}</span></div>}
           </div>
+
+          {hasReturnRequest && (
+            <div className="order-card order-return-request-card">
+              <div className="order-card-title"><h3><RotateCcw size={14} /> Yêu cầu trả hàng</h3></div>
+              <div className="return-request-info">
+                <p><b>Lý do:</b> {order.returnReason}</p>
+                {order.returnNotes && <p><b>Chi tiết:</b> {order.returnNotes}</p>}
+                {order.returnRequestedAt && <p className="return-requested-time">Gửi lúc {new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(order.returnRequestedAt))}</p>}
+              </div>
+            </div>
+          )}
         </section>
 
         <aside className="order-detail-side">
           <div className="order-card">
             <h3>Cập nhật đơn</h3>
-            <label>
-              <span>Thanh toán</span>
-              <select value={payment} onChange={(e) => setPayment(e.target.value)}>
-                <option value="Pending">Chờ thanh toán</option>
-                <option value="Paid">Đã thanh toán</option>
-                <option value="Refunded">Đã hoàn tiền</option>
-              </select>
-            </label>
-            <label>
-              <span>Giao hàng</span>
-              <select value={delivery} onChange={(e) => setDelivery(e.target.value)}>
-                <option value="Unfulfilled">Chưa xử lý</option>
-                <option value="Packing">Đang đóng gói</option>
-                <option value="Ready">Sẵn sàng giao</option>
-                <option value="Delivered">Đã giao</option>
-                <option value="Cancelled">Đã hủy</option>
-                <option value="Returned">Trả hàng</option>
-                <option value="Failed Delivery">Giao thất bại</option>
-              </select>
-            </label>
-            <label>
-              <span>Đơn vị vận chuyển</span>
-              <select value={shippingPartner} onChange={(e) => setShippingPartner(e.target.value)}>
-                <option value="">Chọn đơn vị</option>
-                {carriers.map((carrier) => <option key={carrier.id || carrier.name} value={carrier.name}>{carrier.name} - {carrier.service}</option>)}
-                {shippingPartner && !selectedCarrier && <option value={shippingPartner}>{shippingPartner}</option>}
-              </select>
-            </label>
-            <label><span>Mã vận đơn</span><input value={trackingId} onChange={(e) => setTrackingId(e.target.value)} placeholder="Nhập mã tracking" /></label>
-            {selectedCarrier && <p className="carrier-order-note">{selectedCarrier.service}{selectedCarrier.cod ? ' · Hỗ trợ COD' : ''}</p>}
-            {trackingHref && <a className="tracking-link" href={trackingHref} target="_blank" rel="noreferrer">Mở trang tra cứu vận đơn <ArrowUpRight size={13} /></a>}
-            <button className="admin-primary" type="button" onClick={save}><CheckCircle2 size={15} /> Lưu thay đổi</button>
+            {hasReturnRequest ? (
+              <div className="return-action-panel">
+                <p className="return-action-notice">Đơn hàng đang có yêu cầu trả hàng. Vui lòng duyệt hoặc từ chối trước khi chỉnh sửa trạng thái.</p>
+                <button className="return-approve-btn" type="button" disabled={resolving} onClick={() => handleResolveReturn(true)}>
+                  <CheckCircle2 size={15} /> {resolving ? 'Đang xử lý...' : 'Duyệt trả hàng'}
+                </button>
+                <button className="return-reject-btn" type="button" disabled={resolving} onClick={() => handleResolveReturn(false)}>
+                  <XCircle size={15} /> Từ chối trả hàng
+                </button>
+              </div>
+            ) : (
+              <>
+                <label>
+                  <span>Thanh toán</span>
+                  <select value={payment} onChange={(e) => setPayment(e.target.value)}>
+                    <option value="Pending">Chờ thanh toán</option>
+                    <option value="Paid">Đã thanh toán</option>
+                    <option value="Refunded">Đã hoàn tiền</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Giao hàng</span>
+                  <select value={delivery} onChange={(e) => setDelivery(e.target.value)}>
+                    <option value="Unfulfilled">Chưa xử lý</option>
+                    <option value="Packing">Đang đóng gói</option>
+                    <option value="Ready">Sẵn sàng giao</option>
+                    <option value="Delivered">Đã giao</option>
+                    <option value="Cancelled">Đã hủy</option>
+                    <option value="Returned">Trả hàng</option>
+                    <option value="Failed Delivery">Giao thất bại</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Đơn vị vận chuyển</span>
+                  <select value={shippingPartner} onChange={(e) => setShippingPartner(e.target.value)}>
+                    <option value="">Chọn đơn vị</option>
+                    {carriers.map((carrier) => <option key={carrier.id || carrier.name} value={carrier.name}>{carrier.name} - {carrier.service}</option>)}
+                    {shippingPartner && !selectedCarrier && <option value={shippingPartner}>{shippingPartner}</option>}
+                  </select>
+                </label>
+                <label><span>Mã vận đơn</span><input value={trackingId} onChange={(e) => setTrackingId(e.target.value)} placeholder="Nhập mã tracking" /></label>
+                {selectedCarrier && <p className="carrier-order-note">{selectedCarrier.service}{selectedCarrier.cod ? ' · Hỗ trợ COD' : ''}</p>}
+                {trackingHref && <a className="tracking-link" href={trackingHref} target="_blank" rel="noreferrer">Mở trang tra cứu vận đơn <ArrowUpRight size={13} /></a>}
+                <button className="admin-primary" type="button" onClick={save}><CheckCircle2 size={15} /> Lưu thay đổi</button>
+              </>
+            )}
           </div>
           <div className="order-card">
             <h3>Khách hàng</h3>

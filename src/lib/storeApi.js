@@ -2,8 +2,8 @@ import { isSupabaseConfigured, supabase } from './supabase'
 
 const productColumns = 'id, name, category, sku, price, old_price, stock, status, unit, badge, image_url, manufacturer, vendor, warehouse, product_type, description, images, options, variants'
 const categoryColumns = 'id, parent_id, name, slug, description, image_url, active, show_on_home, include_in_menu, display_order, home_display_order'
-const orderColumns = 'id, order_number, total, subtotal, discount_total, delivery_fee, tax_total, delivery_method, payment_method, shipping_address, shipping_partner, tracking_id, notes, payment_status, delivery_status, created_at, customers(full_name, email, phone, location), order_items(product_id, product_name, unit_price, quantity, line_total, variant_label)'
-const storefrontOrderColumns = 'id, order_number, total, subtotal, discount_total, delivery_fee, tax_total, delivery_method, payment_method, shipping_address, shipping_partner, tracking_id, notes, payment_status, delivery_status, created_at, customers!inner(full_name, email, phone, location), order_items(product_id, product_name, unit_price, quantity, line_total, variant_label)'
+const orderColumns = 'id, order_number, total, subtotal, discount_total, delivery_fee, tax_total, delivery_method, payment_method, shipping_address, shipping_partner, tracking_id, notes, return_reason, return_notes, return_requested_at, payment_status, delivery_status, created_at, customers(full_name, email, phone, location), order_items(product_id, product_name, unit_price, quantity, line_total, variant_label)'
+const storefrontOrderColumns = 'id, order_number, total, subtotal, discount_total, delivery_fee, tax_total, delivery_method, payment_method, shipping_address, shipping_partner, tracking_id, notes, return_reason, return_notes, return_requested_at, payment_status, delivery_status, created_at, customers!inner(full_name, email, phone, location), order_items(product_id, product_name, unit_price, quantity, line_total, variant_label)'
 const discountColumns = 'id, code, percent_off, active, ends_at, title, method, discount_type, value_type, value_amount, applies_to, minimum_type, minimum_value, usage_limit, once_per_customer, combines, starts_at'
 const customerColumns = 'id, email, full_name, phone, location, created_at, updated_at'
 const articleColumns = 'id, title, slug, category, excerpt, image_url, status, published_at, author, content, tags, type, created_at, updated_at'
@@ -135,6 +135,9 @@ function mapOrder(order) {
     deliveryMethodCode: order.delivery_method || '',
     items: lineItems.reduce((total, item) => total + Number(item.quantity || 0), 0),
     note: order.notes || '',
+    returnReason: order.return_reason || '',
+    returnNotes: order.return_notes || '',
+    returnRequestedAt: order.return_requested_at || '',
     shippingAddress: order.shipping_address || order.customers?.location || '',
     shippingPartner: order.shipping_partner || '',
     trackingId: order.tracking_id || '',
@@ -833,14 +836,40 @@ export async function updateStorefrontOrderAction(orderId, action, paymentMethod
 export async function submitStorefrontReturnRequest(orderId, reason, notes) {
   if (!supabase) throw new Error('Supabase is not configured.')
 
-  const returnNote = `[Return Request] Reason: ${reason}${notes ? ` | Notes: ${notes}` : ''} | Submitted: ${new Date().toISOString()}`
-
   const { error } = await supabase
     .from('orders')
-    .update({ notes: returnNote })
+    .update({
+      return_reason: reason,
+      return_notes: notes || null,
+      return_requested_at: new Date().toISOString(),
+    })
     .eq('id', orderId)
 
   if (error) throw error
+}
+
+export async function resolveReturnRequest(orderId, approve) {
+  if (!supabase) throw new Error('Supabase is not configured.')
+
+  const updates = {
+    return_reason: null,
+    return_notes: null,
+    return_requested_at: null,
+  }
+  if (approve) {
+    updates.payment_status = 'refunded'
+    updates.delivery_status = 'returned'
+  }
+
+  const { data, error } = await supabase
+    .from('orders')
+    .update(updates)
+    .eq('id', orderId)
+    .select(orderColumns)
+    .single()
+
+  if (error) throw error
+  return mapOrder(data)
 }
 
 export async function signInAdmin(email, password) {

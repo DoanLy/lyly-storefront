@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  AlertTriangle,
   ArrowRight,
   Camera,
   ChevronDown,
@@ -1563,6 +1564,7 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
             <button className="account-modal-close" type="button" onClick={() => setReturnModal(null)} aria-label="Close"><X size={28} /></button>
             <h2>Request a return</h2>
             <p className="order-pay-modal-subtitle">{returnModal.id} · {formatPrice(returnModal.total)}</p>
+            <p className="order-return-warning"><AlertTriangle size={14} /> Yêu cầu này sẽ áp dụng hoàn trả cho toàn bộ sản phẩm có trong đơn hàng này.</p>
             <div className="order-return-form">
               <label className="order-return-label">
                 Reason for return
