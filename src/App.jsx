@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowRight,
+  Camera,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -15,6 +16,8 @@ import {
   Menu,
   Minus,
   Package,
+  Pencil,
+  Phone,
   Plus,
   RotateCcw,
   Search,
@@ -938,6 +941,105 @@ function AccountModal({ user, profile, onClose, onSignOut }) {
   )
 }
 
+const accountProfileText = {
+  en: {
+    settings: 'Account settings',
+    welcome: (name) => `Welcome back, ${name}. Manage your profile and orders.`,
+    profileTab: 'Profile',
+    ordersTab: 'My orders',
+    personal: 'Personal information',
+    edit: 'Edit',
+    fullName: 'Full name',
+    email: 'Email address',
+    verified: 'Securely verified',
+    nickname: 'Nickname',
+    phone: 'Phone number',
+    noPhone: 'Not added',
+    password: 'Password',
+    changePassword: 'Change password',
+    membership: 'LyLy Seedling member',
+    progress: 'Rewards progress',
+    points: 'points',
+    pointsHelp: (remaining) => `Earn ${remaining} more points to reach Fresh Master and unlock a 25% coupon.`,
+    stats: 'Purchase stats',
+    ordersPlaced: 'Orders placed',
+    totalSaved: 'Total saved',
+    addresses: 'Delivery addresses',
+    addressesHelp: 'Choose a default address for faster checkout.',
+    addAddress: 'Add new address',
+    default: 'Default',
+    home: 'Home',
+    office: 'Office',
+    setDefault: 'Set default',
+    delete: 'Delete',
+    noAddresses: 'No addresses added',
+    security: 'Information security zone',
+    securityHelp: 'Protect your account by signing out of old browser sessions.',
+    signOutAll: 'Sign out all devices',
+    signOut: 'Sign out',
+    editProfile: 'Edit profile',
+    firstName: 'First name',
+    lastName: 'Last name',
+    emailOffers: 'Email me with news and offers',
+    cancel: 'Cancel',
+    save: 'Save',
+    addAddressTitle: 'Add address',
+    country: 'Country/region',
+    city: 'City',
+    state: 'State',
+    zip: 'ZIP code',
+    defaultAddress: 'This is my default address',
+  },
+  vi: {
+    settings: 'Cài đặt tài khoản',
+    welcome: (name) => `Chào mừng quay trở lại, ${name}. Quản lý thông tin cá nhân và đơn hàng của bạn.`,
+    profileTab: 'Hồ sơ cá nhân',
+    ordersTab: 'Đơn hàng của tôi',
+    personal: 'Thông tin cá nhân',
+    edit: 'Chỉnh sửa',
+    fullName: 'Họ và tên',
+    email: 'Địa chỉ email',
+    verified: 'Đã xác thực bảo mật',
+    nickname: 'Nickname',
+    phone: 'Số điện thoại',
+    noPhone: 'Chưa cập nhật',
+    password: 'Mật khẩu',
+    changePassword: 'Thay đổi mật khẩu',
+    membership: 'Thành viên LyLy Seedling',
+    progress: 'Tiến trình tích điểm',
+    points: 'điểm',
+    pointsHelp: (remaining) => `Tích lũy thêm ${remaining} điểm nữa để thăng cấp Fresh Master và nhận coupon giảm giá 25%.`,
+    stats: 'Thống kê mua hàng',
+    ordersPlaced: 'Đơn hàng đã đặt',
+    totalSaved: 'Tổng tiết kiệm',
+    addresses: 'Sổ địa chỉ giao hàng',
+    addressesHelp: 'Chọn địa chỉ mặc định để đặt hàng nhanh hơn.',
+    addAddress: 'Thêm địa chỉ mới',
+    default: 'Mặc định',
+    home: 'Nhà riêng',
+    office: 'Văn phòng',
+    setDefault: 'Đặt mặc định',
+    delete: 'Xóa',
+    noAddresses: 'Chưa có địa chỉ',
+    security: 'Vùng bảo mật thông tin',
+    securityHelp: 'Bảo vệ tài khoản bằng cách đăng xuất khỏi các trình duyệt cũ hoặc lạ.',
+    signOutAll: 'Đăng xuất tất cả thiết bị',
+    signOut: 'Đăng xuất tài khoản',
+    editProfile: 'Chỉnh sửa hồ sơ',
+    firstName: 'Tên',
+    lastName: 'Họ',
+    emailOffers: 'Nhận tin tức và ưu đãi qua email',
+    cancel: 'Hủy',
+    save: 'Lưu',
+    addAddressTitle: 'Thêm địa chỉ',
+    country: 'Quốc gia/khu vực',
+    city: 'Thành phố',
+    state: 'Tỉnh/Bang',
+    zip: 'Mã bưu chính',
+    defaultAddress: 'Đặt làm địa chỉ mặc định',
+  },
+}
+
 const accountOrderTabs = [
   ['all', 'All'],
   ['unpaid', 'Awaiting payment'],
@@ -969,7 +1071,7 @@ function accountOrderStage(order) {
   return 0
 }
 
-function AccountPage({ user, profile, addresses, products = [], onOpenAccount, onSaveProfile, onSaveAddress, onReorder, onSignOut }) {
+function AccountPage({ user, profile, addresses, products = [], copy = storefrontI18n.en, onOpenAccount, onSaveProfile, onSaveAddress, onReorder, onSignOut }) {
   const initialTab = new URLSearchParams(window.location.search).get('tab') === 'orders' ? 'orders' : 'profile'
   const [tab, setTab] = useState(initialTab)
   const [orders, setOrders] = useState([])
@@ -984,6 +1086,7 @@ function AccountPage({ user, profile, addresses, products = [], onOpenAccount, o
   const [profileForm, setProfileForm] = useState({
     firstName: profile.firstName || '',
     lastName: profile.lastName || '',
+    phone: profile.phone || '',
     emailOffers: Boolean(profile.emailOffers),
   })
   const [addressForm, setAddressForm] = useState({
@@ -997,6 +1100,16 @@ function AccountPage({ user, profile, addresses, products = [], onOpenAccount, o
     zip: '',
     isDefault: true,
   })
+  const accountText = accountProfileText[copy.langCode === 'VI' ? 'vi' : 'en']
+  const accountName = getAccountName(user, profile)
+  const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(' ') || accountName
+  const nickname = accountName.split(' ').slice(0, 2).join(' ')
+  const initials = fullName.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase() || 'LY'
+  const totalSpent = orders.reduce((sum, order) => sum + Number(order.total || 0), 0)
+  const totalSaved = orders.reduce((sum, order) => sum + Number(order.discountTotal || 0), 0)
+  const loyaltyPoints = Math.min(500, Math.round(totalSpent * 4))
+  const remainingPoints = Math.max(0, 500 - loyaltyPoints)
+  const progressPercent = Math.min(100, (loyaltyPoints / 500) * 100)
   const productsById = useMemo(() => new Map(products.map((product) => [String(product.id), product])), [products])
   const findOrderProduct = (item) =>
     productsById.get(String(item.productId)) ||
@@ -1068,13 +1181,16 @@ function AccountPage({ user, profile, addresses, products = [], onOpenAccount, o
   if (!user) {
     return (
       <main className="account-page">
-        <header className="account-page-header">
-          <a href="/">LyLy Fresh Market</a>
+        <header className="account-page-header account-profile-header">
+          <div>
+            <h1>{accountText.settings}</h1>
+            <p>{accountText.welcome('LyLy')}</p>
+          </div>
         </header>
         <section className="account-empty-state">
-          <h1>Account</h1>
-          <p>Sign in or create an account to view orders, profile and saved addresses.</p>
-          <button type="button" onClick={onOpenAccount}>Sign in</button>
+          <h1>{copy.account}</h1>
+          <p>{copy.langCode === 'VI' ? 'Đăng nhập hoặc tạo tài khoản để xem đơn hàng, hồ sơ và địa chỉ đã lưu.' : 'Sign in or create an account to view orders, profile and saved addresses.'}</p>
+          <button type="button" onClick={onOpenAccount}>{copy.langCode === 'VI' ? 'Đăng nhập' : 'Sign in'}</button>
         </section>
       </main>
     )
@@ -1095,17 +1211,19 @@ function AccountPage({ user, profile, addresses, products = [], onOpenAccount, o
 
   return (
     <main className="account-page">
-      <header className="account-page-header">
-        <a href="/">LyLy Fresh Market</a>
+      <header className="account-page-header account-profile-header">
+        <div>
+          <h1>{tab === 'orders' ? accountText.ordersTab : accountText.settings}</h1>
+          <p>{accountText.welcome(accountName)}</p>
+        </div>
         <nav>
-          <button className={tab === 'orders' ? 'active' : ''} type="button" onClick={() => setTab('orders')}>Orders</button>
-          <button className={tab === 'profile' ? 'active' : ''} type="button" onClick={() => setTab('profile')}>Profile</button>
+          <button className={tab === 'profile' ? 'active' : ''} type="button" onClick={() => setTab('profile')}><User size={16} />{accountText.profileTab}</button>
+          <button className={tab === 'orders' ? 'active' : ''} type="button" onClick={() => setTab('orders')}><RotateCcw size={16} />{accountText.ordersTab}</button>
         </nav>
-        <button className="account-avatar" type="button" onClick={onOpenAccount}><User size={28} /></button>
       </header>
 
       <section className="account-content">
-        <h1>{tab === 'orders' ? 'Orders' : 'Profile'}</h1>
+        {tab === 'orders' && <h1>{accountText.ordersTab}</h1>}
         {tab === 'orders' ? (
           ordersStatus === 'loading' ? (
             <div className="account-card account-empty-row">
@@ -1209,43 +1327,113 @@ function AccountPage({ user, profile, addresses, products = [], onOpenAccount, o
             </div>
           )
         ) : (
-          <>
-            <div className="account-card profile-card">
-              <button
-                type="button"
-                onClick={() => {
-                  setProfileForm({
-                    firstName: profile.firstName || '',
-                    lastName: profile.lastName || '',
-                    emailOffers: Boolean(profile.emailOffers),
-                  })
-                  setProfileOpen(true)
-                }}
-                aria-label="Edit profile"
-              >
-                <span>Name</span><Plus size={18} />
-              </button>
-              <p>Email</p>
-              <strong>{user.email}</strong>
-              {getAccountName(user, profile) && <small>{getAccountName(user, profile)}</small>}
-            </div>
-            <div className="account-card address-card">
-              <h2>Addresses <button type="button" onClick={() => setAddressOpen(true)}>+ Add</button></h2>
-              {addresses.length ? addresses.map((address) => (
-                <div className="address-row" key={`${address.address}-${address.zip}`}>
-                  <b>{address.firstName} {address.lastName}</b>
-                  <span>{address.address}{address.apartment ? `, ${address.apartment}` : ''}</span>
-                  <small>{address.city}, {address.state} {address.zip}, {address.country}</small>
+          <div className="account-profile-layout">
+            <aside className="account-profile-side">
+              <div className="account-member-card">
+                <div className="account-member-cover"></div>
+                <div className="account-member-avatar">
+                  <span>{initials}</span>
+                  <button type="button" aria-label="Change avatar"><Camera size={15} /></button>
                 </div>
-              )) : (
-                <div className="account-empty-row"><ShieldCheck size={22} /><span>No addresses added</span></div>
-              )}
+                <h2>{fullName}</h2>
+                <p>{user.email}</p>
+                <em><Tag size={13} />{accountText.membership}</em>
+                <div className="account-reward">
+                  <div><span>{accountText.progress}</span><b>{loyaltyPoints} / 500 {accountText.points}</b></div>
+                  <i><span style={{ width: `${progressPercent}%` }}></span></i>
+                  <small>{accountText.pointsHelp(remainingPoints)}</small>
+                </div>
+              </div>
+              <div className="account-stat-card">
+                <h3><ShoppingBag size={17} />{accountText.stats}</h3>
+                <div>
+                  <span><b>{String(orders.length).padStart(2, '0')}</b><small>{accountText.ordersPlaced}</small></span>
+                  <span><b>{formatPrice(totalSaved)}</b><small>{accountText.totalSaved}</small></span>
+                </div>
+              </div>
+            </aside>
+            <div className="account-profile-main">
+              {actionNotice && <p className="account-action-notice">{actionNotice}</p>}
+              <section className="account-profile-panel">
+                <div className="account-panel-head">
+                  <h2><User size={19} />{accountText.personal}</h2>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProfileForm({
+                        firstName: profile.firstName || '',
+                        lastName: profile.lastName || '',
+                        phone: profile.phone || '',
+                        emailOffers: Boolean(profile.emailOffers),
+                      })
+                      setProfileOpen(true)
+                    }}
+                  >
+                    <Pencil size={15} />{accountText.edit}
+                  </button>
+                </div>
+                <div className="account-profile-fields">
+                  <div>
+                    <span>{accountText.fullName}</span>
+                    <b>{fullName}</b>
+                    <small>{accountText.nickname}: {nickname}</small>
+                  </div>
+                  <div>
+                    <span>{accountText.email}</span>
+                    <b>{user.email}</b>
+                    <small className="verified"><ShieldCheck size={13} />{accountText.verified}</small>
+                  </div>
+                  <div>
+                    <span>{accountText.phone}</span>
+                    <b>{profile.phone || accountText.noPhone}</b>
+                  </div>
+                  <div>
+                    <span>{accountText.password}</span>
+                    <b>••••••••••</b>
+                    <small>{accountText.changePassword}</small>
+                  </div>
+                </div>
+              </section>
+
+              <section className="account-profile-panel">
+                <div className="account-panel-head">
+                  <div>
+                    <h2><MapPin size={20} />{accountText.addresses}</h2>
+                    <p>{accountText.addressesHelp}</p>
+                  </div>
+                  <button type="button" onClick={() => setAddressOpen(true)}><Plus size={16} />{accountText.addAddress}</button>
+                </div>
+                <div className="account-address-grid">
+                  {addresses.length ? addresses.map((address, index) => (
+                    <article className={`account-address-tile ${address.isDefault || index === 0 ? 'default' : ''}`} key={address.id || `${address.address}-${address.zip}`}>
+                      <header>
+                        <b>{address.firstName} {address.lastName}</b>
+                        <em>{address.isDefault || index === 0 ? accountText.default : index % 2 ? accountText.office : accountText.home}</em>
+                      </header>
+                      {(address.phone || profile.phone) && <p><Phone size={14} />{address.phone || profile.phone}</p>}
+                      <p><MapPin size={14} />{address.address}{address.apartment ? `, ${address.apartment}` : ''}</p>
+                      <small>{[address.city, address.state, address.zip, address.country].filter(Boolean).join(', ')}</small>
+                      <footer>
+                        {!(address.isDefault || index === 0) && <button type="button" onClick={() => showActionNotice(accountText.setDefault)}>{accountText.setDefault}</button>}
+                        <button type="button" onClick={() => showActionNotice(accountText.delete)}>{accountText.delete}</button>
+                      </footer>
+                    </article>
+                  )) : (
+                    <div className="account-empty-row"><ShieldCheck size={22} /><span>{accountText.noAddresses}</span></div>
+                  )}
+                </div>
+              </section>
+
+              <section className="account-security-panel">
+                <div>
+                  <h2>{accountText.security}</h2>
+                  <p>{accountText.securityHelp}</p>
+                </div>
+                <button type="button" onClick={onSignOut}>{accountText.signOutAll}</button>
+                <button type="button" onClick={onSignOut}>{accountText.signOut}</button>
+              </section>
             </div>
-            <div className="account-signout-row">
-              <button type="button" onClick={onSignOut}>Sign out</button>
-              <button type="button" onClick={onSignOut}>Sign out of all devices</button>
-            </div>
-          </>
+          </div>
         )}
       </section>
 
@@ -1253,14 +1441,15 @@ function AccountPage({ user, profile, addresses, products = [], onOpenAccount, o
         <div className="account-overlay" onMouseDown={(event) => event.target === event.currentTarget && setProfileOpen(false)}>
           <form className="account-edit-modal" onSubmit={saveProfile}>
             <button className="account-modal-close" type="button" onClick={() => setProfileOpen(false)} aria-label="Close edit profile"><X size={28} /></button>
-            <h2>Edit profile</h2>
+            <h2>{accountText.editProfile}</h2>
             <div className="account-form-grid two">
-              <input value={profileForm.firstName} onChange={(event) => setProfileForm((current) => ({ ...current, firstName: event.target.value }))} placeholder="First name" autoFocus />
-              <input value={profileForm.lastName} onChange={(event) => setProfileForm((current) => ({ ...current, lastName: event.target.value }))} placeholder="Last name" />
+              <input value={profileForm.firstName} onChange={(event) => setProfileForm((current) => ({ ...current, firstName: event.target.value }))} placeholder={accountText.firstName} autoFocus />
+              <input value={profileForm.lastName} onChange={(event) => setProfileForm((current) => ({ ...current, lastName: event.target.value }))} placeholder={accountText.lastName} />
             </div>
-            <label className="stacked-input">Email<input value={user.email} disabled /></label>
-            <label className="account-check"><input type="checkbox" checked={profileForm.emailOffers} onChange={(event) => setProfileForm((current) => ({ ...current, emailOffers: event.target.checked }))} /> Email me with news and offers</label>
-            <div className="modal-button-row"><button type="button" onClick={() => setProfileOpen(false)}>Cancel</button><button type="submit">Save</button></div>
+            <label className="stacked-input">{accountText.phone}<input value={profileForm.phone} onChange={(event) => setProfileForm((current) => ({ ...current, phone: event.target.value }))} placeholder={accountText.phone} /></label>
+            <label className="stacked-input">{accountText.email}<input value={user.email} disabled /></label>
+            <label className="account-check"><input type="checkbox" checked={profileForm.emailOffers} onChange={(event) => setProfileForm((current) => ({ ...current, emailOffers: event.target.checked }))} /> {accountText.emailOffers}</label>
+            <div className="modal-button-row"><button type="button" onClick={() => setProfileOpen(false)}>{accountText.cancel}</button><button type="submit">{accountText.save}</button></div>
           </form>
         </div>
       )}
@@ -1269,21 +1458,21 @@ function AccountPage({ user, profile, addresses, products = [], onOpenAccount, o
         <div className="account-overlay" onMouseDown={(event) => event.target === event.currentTarget && setAddressOpen(false)}>
           <form className="account-edit-modal address-modal" onSubmit={saveAddress}>
             <button className="account-modal-close" type="button" onClick={() => setAddressOpen(false)} aria-label="Close add address"><X size={28} /></button>
-            <h2>Add address</h2>
-            <label className="stacked-input">Country/region<select value={addressForm.country} onChange={(event) => setAddressForm((current) => ({ ...current, country: event.target.value }))}><option>United States</option><option>Vietnam</option><option>France</option></select></label>
+            <h2>{accountText.addAddressTitle}</h2>
+            <label className="stacked-input">{accountText.country}<select value={addressForm.country} onChange={(event) => setAddressForm((current) => ({ ...current, country: event.target.value }))}><option>United States</option><option>Vietnam</option><option>France</option></select></label>
             <div className="account-form-grid two">
-              <input required value={addressForm.firstName} onChange={(event) => setAddressForm((current) => ({ ...current, firstName: event.target.value }))} placeholder="First name" />
-              <input required value={addressForm.lastName} onChange={(event) => setAddressForm((current) => ({ ...current, lastName: event.target.value }))} placeholder="Last name" />
+              <input required value={addressForm.firstName} onChange={(event) => setAddressForm((current) => ({ ...current, firstName: event.target.value }))} placeholder={accountText.firstName} />
+              <input required value={addressForm.lastName} onChange={(event) => setAddressForm((current) => ({ ...current, lastName: event.target.value }))} placeholder={accountText.lastName} />
             </div>
             <input required value={addressForm.address} onChange={(event) => setAddressForm((current) => ({ ...current, address: event.target.value }))} placeholder="Address" />
             <input value={addressForm.apartment} onChange={(event) => setAddressForm((current) => ({ ...current, apartment: event.target.value }))} placeholder="Apartment, suite, etc (optional)" />
             <div className="account-form-grid three">
-              <input required value={addressForm.city} onChange={(event) => setAddressForm((current) => ({ ...current, city: event.target.value }))} placeholder="City" />
+              <input required value={addressForm.city} onChange={(event) => setAddressForm((current) => ({ ...current, city: event.target.value }))} placeholder={accountText.city} />
               <select value={addressForm.state} onChange={(event) => setAddressForm((current) => ({ ...current, state: event.target.value }))}><option>Alabama</option><option>California</option><option>New York</option><option>Texas</option></select>
-              <input required value={addressForm.zip} onChange={(event) => setAddressForm((current) => ({ ...current, zip: event.target.value }))} placeholder="ZIP code" />
+              <input required value={addressForm.zip} onChange={(event) => setAddressForm((current) => ({ ...current, zip: event.target.value }))} placeholder={accountText.zip} />
             </div>
-            <label className="account-check"><input type="checkbox" checked={addressForm.isDefault} onChange={(event) => setAddressForm((current) => ({ ...current, isDefault: event.target.checked }))} /> This is my default address</label>
-            <div className="modal-button-row"><button type="button" onClick={() => setAddressOpen(false)}>Cancel</button><button type="submit">Save</button></div>
+            <label className="account-check"><input type="checkbox" checked={addressForm.isDefault} onChange={(event) => setAddressForm((current) => ({ ...current, isDefault: event.target.checked }))} /> {accountText.defaultAddress}</label>
+            <div className="modal-button-row"><button type="button" onClick={() => setAddressOpen(false)}>{accountText.cancel}</button><button type="submit">{accountText.save}</button></div>
           </form>
         </div>
       )}
@@ -2849,6 +3038,7 @@ function App() {
         profile={accountProfile}
         addresses={accountAddresses}
         products={products}
+        copy={t}
         onOpenAccount={() => setAccountOpen(true)}
         onSaveProfile={saveAccountProfile}
         onSaveAddress={saveAccountAddress}
