@@ -1686,13 +1686,56 @@ function CollectionsPage({ categories }) {
 }
 
 const PAYMENT_METHODS = [
-  { id: 'momo', label: 'MoMo', icon: '💜', promo: 'Giảm 10.000đ cho đơn từ 40.000đ', color: '#a50064' },
-  { id: 'zalopay', label: 'ZaloPay', icon: '💙', promo: 'Đồng giá ship 5.000đ khi thanh toán qua ZaloPay', color: '#0068ff' },
-  { id: 'shopeepay', label: 'ShopeePay', icon: '🧡', promo: 'Hoàn 5% cho lần đầu thanh toán qua ShopeePay', color: '#ee4d2d' },
-  { id: 'vnpay', label: 'VNPAY-QR', icon: '🏦', promo: 'Quét mã QR bằng mọi app ngân hàng', color: '#1a56a4' },
-  { id: 'cod', label: 'Thanh toán khi nhận hàng (COD)', icon: '📦', promo: null, color: null },
-  { id: 'transfer', label: 'Chuyển khoản ngân hàng', icon: '🔁', promo: 'Thông tin tài khoản hiển thị sau khi đặt hàng', color: null },
+  { id: 'momo', label: 'MoMo', logoType: 'momo', promo: 'Giảm 10.000đ cho đơn từ 40.000đ', promoColor: '#a50064' },
+  { id: 'zalopay', label: 'ZaloPay', logoType: 'zalopay', promo: 'Đồng giá ship 5.000đ khi thanh toán qua ZaloPay', promoColor: '#0068ff' },
+  { id: 'shopeepay', label: 'ShopeePay', logoType: 'shopeepay', promo: 'Hoàn 5% cho lần đầu thanh toán qua ShopeePay', promoColor: '#ee4d2d' },
+  { id: 'vnpay', label: 'VNPAY-QR', logoType: 'vnpay', promo: 'Quét mã QR bằng mọi app ngân hàng', promoColor: '#1a56a4' },
+  { id: 'cod', label: 'Thanh toán khi nhận hàng (COD)', logoType: 'cod', promo: null, promoColor: null },
+  { id: 'transfer', label: 'Chuyển khoản ngân hàng', logoType: 'transfer', promo: 'Thông tin tài khoản hiển thị sau khi đặt hàng', promoColor: null },
 ]
+
+function PaymentLogo({ type }) {
+  if (type === 'momo') return (
+    <svg className="pay-logo" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="40" height="40" rx="8" fill="#a50064"/>
+      <text x="20" y="26" textAnchor="middle" fill="white" fontSize="17" fontWeight="800" fontFamily="Arial,sans-serif">M</text>
+    </svg>
+  )
+  if (type === 'zalopay') return (
+    <svg className="pay-logo" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="40" height="40" rx="8" fill="#0068ff"/>
+      <text x="20" y="26" textAnchor="middle" fill="white" fontSize="17" fontWeight="800" fontFamily="Arial,sans-serif">Z</text>
+    </svg>
+  )
+  if (type === 'shopeepay') return (
+    <svg className="pay-logo" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="40" height="40" rx="8" fill="#ee4d2d"/>
+      <text x="20" y="27" textAnchor="middle" fill="white" fontSize="13" fontWeight="800" fontFamily="Arial,sans-serif">SPay</text>
+    </svg>
+  )
+  if (type === 'vnpay') return (
+    <svg className="pay-logo" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="40" height="40" rx="8" fill="#1a56a4"/>
+      <rect x="0" y="27" width="40" height="13" rx="0" fill="#d0001c" ry="0"/>
+      <rect x="0" y="27" width="40" height="13" rx="0" ry="8" fill="#d0001c"/>
+      <text x="20" y="21" textAnchor="middle" fill="white" fontSize="11" fontWeight="900" fontFamily="Arial,sans-serif">VN</text>
+      <text x="20" y="36" textAnchor="middle" fill="white" fontSize="9" fontWeight="700" fontFamily="Arial,sans-serif">PAY</text>
+    </svg>
+  )
+  if (type === 'cod') return (
+    <svg className="pay-logo pay-logo-light" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="40" height="40" rx="8" fill="#e8f3ec"/>
+      <path d="M10 15h20M10 15v12h20V15M10 15l3-4h14l3 4M16 24v-4h8v4" stroke="#4e795d" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+  if (type === 'transfer') return (
+    <svg className="pay-logo pay-logo-light" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="40" height="40" rx="8" fill="#eef0f5"/>
+      <path d="M9 20h22M9 20l4-4M9 20l4 4M31 14H18M31 26H18" stroke="#4a5568" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+  return null
+}
 
 const DELIVERY_SLOTS = [
   'Sớm nhất có thể (30–60 phút)',
@@ -1878,10 +1921,10 @@ function CheckoutModal({ items, discounts, initialDiscountCode = '', onClose, on
                     {PAYMENT_METHODS.map((method) => (
                       <label key={method.id} className={`checkout-payment-option ${form.paymentMethod === method.id ? 'selected' : ''}`}>
                         <input type="radio" name="paymentMethod" value={method.id} checked={form.paymentMethod === method.id} onChange={change} />
-                        <span className="payment-icon">{method.icon}</span>
+                        <PaymentLogo type={method.logoType} />
                         <div className="payment-info">
                           <b>{method.label}</b>
-                          {method.promo && <small style={method.color ? { color: method.color } : {}}>{method.promo}</small>}
+                          {method.promo && <small style={method.promoColor ? { color: method.promoColor } : {}}>{method.promo}</small>}
                         </div>
                       </label>
                     ))}
