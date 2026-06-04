@@ -32,7 +32,7 @@ import {
   X,
 } from 'lucide-react'
 import './App.css'
-import { createStorefrontOrder, loadPublicArticles, loadPublicCategories, loadPublicDiscounts, loadPublicProducts, loadStoreSettings, loadStorefrontOrders, subscribeToNewsletter, updateStorefrontOrderAction } from './lib/storeApi'
+import { createStorefrontOrder, loadPublicArticles, loadPublicCategories, loadPublicDiscounts, loadPublicProducts, loadStoreSettings, loadStorefrontOrders, subscribeToNewsletter, submitStorefrontReturnRequest, updateStorefrontOrderAction } from './lib/storeApi'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 
 const fallbackCategories = [
@@ -1096,6 +1096,9 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
   const [payOrderModal, setPayOrderModal] = useState(null)
   const [payMethod, setPayMethod] = useState(null)
   const [cancelOrderModal, setCancelOrderModal] = useState(null)
+  const [returnModal, setReturnModal] = useState(null)
+  const [returnReason, setReturnReason] = useState('')
+  const [returnNotes, setReturnNotes] = useState('')
   const [profileOpen, setProfileOpen] = useState(false)
   const [addressOpen, setAddressOpen] = useState(false)
   const [profileForm, setProfileForm] = useState({
@@ -1364,7 +1367,7 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
                         {bucket === 'unpaid' && <button type="button" disabled={Boolean(orderActionKey)} onClick={() => { setPayMethod(null); setPayOrderModal(order) }}>{orderActionKey === `${order.uuid}-pay` ? 'Processing...' : 'Pay now'}</button>}
                         {!['delivered', 'cancelled', 'transit'].includes(bucket) && <button type="button" disabled={Boolean(orderActionKey)} onClick={() => setCancelOrderModal(order)}>{orderActionKey === `${order.uuid}-cancel` ? 'Cancelling...' : 'Cancel order'}</button>}
                         {bucket === 'delivered' && <button type="button" onClick={() => onReorder?.(order)}>Reorder</button>}
-                        {bucket === 'delivered' && <button type="button" onClick={() => showActionNotice(`Review form for ${order.id} will be available soon.`)}>Review products</button>}
+                        {bucket === 'delivered' && <button type="button" onClick={() => { setReturnReason(''); setReturnNotes(''); setReturnModal(order) }}>Return items</button>}
                       </div>
                     </article>
                   )
@@ -1549,6 +1552,61 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
             <div className="order-pay-modal-actions">
               <button type="button" className="order-pay-cancel-btn" onClick={() => setCancelOrderModal(null)}>Keep order</button>
               <button type="button" className="order-cancel-confirm-btn" disabled={Boolean(orderActionKey)} onClick={async () => { const order = cancelOrderModal; setCancelOrderModal(null); await runOrderAction(order, 'cancel') }}>{orderActionKey ? 'Cancelling...' : 'Yes, cancel order'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {returnModal && (
+        <div className="account-overlay" onMouseDown={(event) => event.target === event.currentTarget && setReturnModal(null)}>
+          <div className="account-edit-modal order-return-modal">
+            <button className="account-modal-close" type="button" onClick={() => setReturnModal(null)} aria-label="Close"><X size={28} /></button>
+            <h2>Request a return</h2>
+            <p className="order-pay-modal-subtitle">{returnModal.id} · {formatPrice(returnModal.total)}</p>
+            <div className="order-return-form">
+              <label className="order-return-label">
+                Reason for return
+                <select value={returnReason} onChange={(e) => setReturnReason(e.target.value)} className="order-return-select">
+                  <option value="">Select a reason...</option>
+                  <option value="damaged">Item arrived damaged or defective</option>
+                  <option value="wrong_item">Wrong item received</option>
+                  <option value="not_as_described">Item not as described</option>
+                  <option value="changed_mind">Changed my mind</option>
+                  <option value="missing_items">Missing items in order</option>
+                </select>
+              </label>
+              <label className="order-return-label">
+                Additional details <span className="order-return-optional">(optional)</span>
+                <textarea value={returnNotes} onChange={(e) => setReturnNotes(e.target.value)} className="order-return-textarea" placeholder="Describe the issue in more detail..." rows={3} />
+              </label>
+            </div>
+            <div className="order-pay-modal-actions">
+              <button type="button" className="order-pay-cancel-btn" onClick={() => setReturnModal(null)}>Keep order</button>
+              <button
+                type="button"
+                className="order-return-confirm-btn"
+                disabled={!returnReason || Boolean(orderActionKey)}
+                onClick={async () => {
+                  const order = returnModal
+                  const reason = returnReason
+                  const notes = returnNotes
+                  setReturnModal(null)
+                  setOrderActionKey(`${order.uuid}-return`)
+                  try {
+                    await submitStorefrontReturnRequest(order.uuid, reason, notes)
+                    const refreshedOrders = await loadStorefrontOrders(user.email)
+                    setOrders(refreshedOrders)
+                    showActionNotice(`Return request for ${order.id} submitted. We'll contact you within 2–3 business days.`)
+                  } catch (error) {
+                    console.error('Unable to submit return request.', error)
+                    showActionNotice(`Unable to submit return request for ${order.id}. Please try again or contact support.`)
+                  } finally {
+                    setOrderActionKey('')
+                  }
+                }}
+              >
+                {orderActionKey ? 'Submitting...' : 'Submit return request'}
+              </button>
             </div>
           </div>
         </div>

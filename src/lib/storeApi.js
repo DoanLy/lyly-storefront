@@ -830,6 +830,19 @@ export async function updateStorefrontOrderAction(orderId, action, paymentMethod
   }
 }
 
+export async function submitStorefrontReturnRequest(orderId, reason, notes) {
+  if (!supabase) throw new Error('Supabase is not configured.')
+
+  const returnNote = `[Return Request] Reason: ${reason}${notes ? ` | Notes: ${notes}` : ''} | Submitted: ${new Date().toISOString()}`
+
+  const { error } = await supabase
+    .from('orders')
+    .update({ notes: returnNote })
+    .eq('id', orderId)
+
+  if (error) throw error
+}
+
 export async function signInAdmin(email, password) {
   if (!supabase) return null
 

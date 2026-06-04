@@ -730,6 +730,17 @@ footer { color: #dfe9e2; background: #1e392e; }
 .order-cancel-confirm-btn { height: 42px; padding: 0 20px; border: 0; border-radius: 22px; color: white; background: #c0392b; font-size: 13px; font-weight: 800; cursor: pointer; }
 .order-cancel-confirm-btn:disabled { opacity: .6; cursor: wait; }
 .order-cancel-modal-text { margin: 0 0 24px; color: #4b6257; font-size: 14px; line-height: 1.55; }
+.order-return-modal { width: min(100%, 520px); }
+.order-return-form { display: grid; gap: 16px; margin-bottom: 24px; }
+.order-return-label { display: grid; gap: 6px; color: #4b6257; font-size: 13px; font-weight: 700; }
+.order-return-optional { color: #94a39d; font-weight: 400; }
+.order-return-select { height: 40px; padding: 0 10px; border: 1px solid #d7dfd9; border-radius: 8px; color: #1e211f; background: white; font-size: 13px; cursor: pointer; }
+.order-return-select:focus { outline: none; border-color: #315846; box-shadow: 0 0 0 3px #e8f3ec; }
+.order-return-textarea { padding: 10px 12px; border: 1px solid #d7dfd9; border-radius: 8px; color: #1e211f; font-size: 13px; font-family: inherit; line-height: 1.5; resize: vertical; }
+.order-return-textarea:focus { outline: none; border-color: #315846; box-shadow: 0 0 0 3px #e8f3ec; }
+.order-return-confirm-btn { height: 42px; padding: 0 20px; border: 0; border-radius: 22px; color: white; background: #b45309; font-size: 13px; font-weight: 800; cursor: pointer; }
+.order-return-confirm-btn:hover:not(:disabled) { background: #92400e; }
+.order-return-confirm-btn:disabled { opacity: .45; cursor: not-allowed; }
 .account-order-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; padding-top: 4px; }
 .account-order-actions button { height: 40px; padding: 0 16px; border: 1px solid #d7dfd9; border-radius: 22px; color: #20362d; background: white; font-size: 12px; font-weight: 900; }
 .account-order-actions button:first-child, .account-order-actions button:hover { color: white; border-color: #1e211f; background: #1e211f; }
