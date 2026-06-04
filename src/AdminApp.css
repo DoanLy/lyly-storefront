@@ -677,8 +677,9 @@
 .product-tabbed-form .gallery-add-slot { flex: 1; min-width: 160px; min-height: 104px; border: 0; color: #9aa3af; background: transparent; }
 .product-tabbed-form .gallery-add-slot svg { width: 36px; height: 36px; padding: 8px; border: 1px solid #d5dbe3; border-radius: 7px; }
 .product-tabbed-form .gallery-add-slot small { font-size: 13px; font-weight: 800; }
-.product-tabbed-form .pricing-tab-pane { grid-template-columns: 1fr; gap: 16px; }
+.modal-form.product-tabbed-form > .pricing-tab-pane { display: grid !important; grid-template-columns: 1fr !important; gap: 16px; }
 .product-form-section { display: grid; gap: 16px; padding: 16px; border: 1px solid #dfe7e2; border-radius: 10px; background: #fbfdfb; }
+.pricing-tab-pane > .product-form-section { width: 100%; grid-column: 1 / -1; }
 .product-form-section-head { display: grid; gap: 4px; padding-bottom: 11px; border-bottom: 1px solid #e6ede8; }
 .product-form-section-head h3 { margin: 0; color: #2f5143; font-size: 13px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
 .product-form-section-head p { margin: 0; color: #849189; font-size: 11px; line-height: 1.45; }
