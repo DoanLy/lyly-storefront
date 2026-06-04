@@ -612,19 +612,49 @@ footer { color: #dfe9e2; background: #1e392e; }
 .account-content { display: grid; gap: 36px; }
 .account-content h1 { margin: 0 0 20px; font-size: 34px; font-weight: 800; }
 .account-card { padding: 36px; border: 1px solid #e1e1e1; border-radius: 18px; background: white; box-shadow: 0 10px 30px #11191608; }
-.account-orders-list { display: grid; gap: 16px; }
-.account-order-card { display: grid; gap: 18px; }
-.account-order-card header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
-.account-order-card header div { display: grid; gap: 6px; }
-.account-order-card header b { color: #111916; font-size: 22px; }
-.account-order-card header small { color: #6f7d75; font-size: 13px; }
-.account-order-card header strong { color: #111916; font-size: 22px; font-weight: 700; white-space: nowrap; }
+.account-order-tools { display: grid; gap: 14px; margin-top: -12px; }
+.account-order-search { height: 50px; display: flex; align-items: center; gap: 11px; padding: 0 16px; border: 1px solid #d9dfda; border-radius: 10px; color: #65756e; background: #fbfcfa; }
+.account-order-search input { width: 100%; border: 0; outline: 0; color: #111916; background: transparent; font-size: 15px; }
+.account-order-tabs { display: flex; flex-wrap: wrap; gap: 9px; }
+.account-order-tabs button { min-height: 38px; display: inline-flex; align-items: center; gap: 7px; padding: 0 14px; border: 1px solid #dfe6e1; border-radius: 20px; color: #50645a; background: white; font-size: 13px; font-weight: 800; }
+.account-order-tabs button.active { color: white; border-color: var(--green); background: var(--green); }
+.account-order-tabs em { min-width: 21px; height: 21px; display: grid; place-items: center; border-radius: 50%; background: #eef4ef; color: #50645a; font-size: 11px; font-style: normal; }
+.account-order-tabs button.active em { color: var(--green); background: white; }
+.account-action-notice { margin: -8px 0 0; padding: 12px 14px; border: 1px solid #dce9dc; border-radius: 8px; color: #355d48; background: #f4faf4; font-size: 13px; }
+.account-orders-list { display: grid; gap: 18px; }
+.account-order-card { display: grid; gap: 18px; padding: 28px; }
+.account-order-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.account-order-head div { display: grid; gap: 6px; }
+.account-order-head b { color: #111916; font-size: 22px; }
+.account-order-head small { color: #6f7d75; font-size: 13px; }
+.account-order-head strong { color: #111916; font-size: 22px; font-weight: 700; white-space: nowrap; }
 .account-order-meta { display: flex; flex-wrap: wrap; gap: 8px; }
 .account-order-meta span { padding: 7px 10px; border: 1px solid #dfe6e1; border-radius: 18px; color: #45594f; background: #f8faf7; font-size: 12px; font-weight: 700; }
-.account-order-card ul { display: grid; gap: 10px; margin: 0; padding: 14px 0 0; list-style: none; border-top: 1px solid #edf0ed; }
-.account-order-card li { display: flex; justify-content: space-between; gap: 16px; color: #36443f; font-size: 14px; }
-.account-order-card li b { color: #111916; font-weight: 700; white-space: nowrap; }
+.account-order-stepper { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; padding: 18px 0 8px; }
+.account-order-stepper span { position: relative; display: grid; justify-items: center; gap: 8px; color: #9aa69f; font-size: 11px; font-weight: 800; text-align: center; }
+.account-order-stepper span:before { content: ''; position: absolute; top: 8px; right: 50%; left: -50%; height: 2px; background: #e4ebe6; }
+.account-order-stepper span:first-child:before { display: none; }
+.account-order-stepper i { width: 18px; height: 18px; position: relative; z-index: 1; border: 2px solid #dbe6de; border-radius: 50%; background: white; }
+.account-order-stepper span.active { color: #2f654b; }
+.account-order-stepper span.active:before { background: #82ac8c; }
+.account-order-stepper span.active i { border-color: #2f654b; background: #2f654b; box-shadow: inset 0 0 0 4px white; }
+.account-order-items { display: grid; gap: 10px; margin: 0; padding: 14px 0 0; list-style: none; border-top: 1px solid #edf0ed; }
+.account-order-items li { display: grid; grid-template-columns: 54px 1fr auto; align-items: center; gap: 13px; color: #36443f; font-size: 14px; }
+.account-order-items img, .order-item-fallback { width: 54px; height: 54px; border: 1px solid #e4ebe6; border-radius: 8px; background: #f6f8f5; object-fit: cover; }
+.order-item-fallback { display: grid; place-items: center; color: #65756e; }
+.account-order-items div { display: grid; gap: 4px; }
+.account-order-items li b { color: #111916; font-size: 14px; }
+.account-order-items small { color: #728078; font-size: 12px; }
+.account-order-items strong { color: #111916; font-weight: 800; white-space: nowrap; }
+.account-show-more { width: max-content; padding: 0; border: 0; color: #315846; background: transparent; font-size: 13px; font-weight: 800; }
+.account-price-breakdown { display: grid; gap: 7px; margin-top: 2px; padding: 14px; border: 1px solid #e4ebe6; border-radius: 10px; background: #fbfcfa; }
+.account-price-breakdown p { display: flex; justify-content: space-between; gap: 18px; margin: 0; color: #68766f; font-size: 13px; }
+.account-price-breakdown p:last-child { padding-top: 8px; border-top: 1px solid #e4ebe6; color: #111916; font-weight: 900; }
+.account-price-breakdown b { color: inherit; }
 .account-order-tracking { margin: 0; color: #4b6759; font-size: 13px; font-weight: 700; }
+.account-order-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; padding-top: 4px; }
+.account-order-actions button { height: 40px; padding: 0 16px; border: 1px solid #d7dfd9; border-radius: 22px; color: #20362d; background: white; font-size: 12px; font-weight: 900; }
+.account-order-actions button:first-child, .account-order-actions button:hover { color: white; border-color: #1e211f; background: #1e211f; }
 .profile-card { min-height: 200px; }
 .profile-card button { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; border: 0; color: #69706c; background: transparent; font-size: 20px; }
 .profile-card p { margin: 0 0 8px; color: #69706c; font-size: 20px; }
@@ -959,9 +989,18 @@ footer { color: #dfe9e2; background: #1e392e; }
   .account-page-header > a { font-size: 23px; }
   .account-page-header nav { grid-column: 1/-1; order: 3; gap: 22px; }
   .account-card { padding: 22px 18px; border-radius: 14px; }
-  .account-order-card header { display: grid; gap: 8px; }
-  .account-order-card header strong { white-space: normal; }
-  .account-order-card li { display: grid; gap: 5px; }
+  .account-order-tabs { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 3px; }
+  .account-order-tabs button { flex: 0 0 auto; }
+  .account-order-card { gap: 16px; padding: 18px; }
+  .account-order-head { display: grid; gap: 8px; }
+  .account-order-head strong { white-space: normal; }
+  .account-order-stepper { overflow-x: auto; grid-template-columns: repeat(4, minmax(82px, 1fr)); }
+  .account-order-items li { grid-template-columns: 48px 1fr; }
+  .account-order-items img, .order-item-fallback { width: 48px; height: 48px; }
+  .account-order-items strong { grid-column: 2; }
+  .account-price-breakdown { padding: 12px; }
+  .account-order-actions { justify-content: stretch; }
+  .account-order-actions button { flex: 1 1 130px; }
   .account-form-grid.two, .account-form-grid.three { grid-template-columns: 1fr; gap: 14px; }
   .account-auth-form input, .account-edit-modal input, .account-edit-modal select { height: 50px; font-size: 16px; }
   .account-check { align-items: flex-start; font-size: 17px; }

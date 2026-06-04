@@ -938,12 +938,47 @@ function AccountModal({ user, profile, onClose, onSignOut }) {
   )
 }
 
-function AccountPage({ user, profile, addresses, onOpenAccount, onSaveProfile, onSaveAddress, onSignOut }) {
+const accountOrderTabs = [
+  ['all', 'All'],
+  ['unpaid', 'Awaiting payment'],
+  ['processing', 'Processing'],
+  ['transit', 'In transit'],
+  ['delivered', 'Delivered'],
+  ['cancelled', 'Cancelled'],
+]
+
+function normalizedOrderStatus(value) {
+  return String(value || '').trim().toLowerCase()
+}
+
+function accountOrderBucket(order) {
+  const payment = normalizedOrderStatus(order.payment)
+  const delivery = normalizedOrderStatus(order.delivery)
+  if (['cancelled', 'returned', 'failed delivery'].includes(delivery)) return 'cancelled'
+  if (delivery === 'delivered') return 'delivered'
+  if (payment === 'pending') return 'unpaid'
+  if (['ready'].includes(delivery) || order.trackingId) return 'transit'
+  return 'processing'
+}
+
+function accountOrderStage(order) {
+  const delivery = normalizedOrderStatus(order.delivery)
+  if (delivery === 'delivered') return 3
+  if (['ready'].includes(delivery) || order.trackingId) return 2
+  if (['packing'].includes(delivery)) return 1
+  return 0
+}
+
+function AccountPage({ user, profile, addresses, products = [], onOpenAccount, onSaveProfile, onSaveAddress, onReorder, onSignOut }) {
   const initialTab = new URLSearchParams(window.location.search).get('tab') === 'orders' ? 'orders' : 'profile'
   const [tab, setTab] = useState(initialTab)
   const [orders, setOrders] = useState([])
   const [ordersStatus, setOrdersStatus] = useState('idle')
   const [ordersMessage, setOrdersMessage] = useState('')
+  const [orderQuery, setOrderQuery] = useState('')
+  const [orderFilter, setOrderFilter] = useState('all')
+  const [expandedOrders, setExpandedOrders] = useState(() => new Set())
+  const [actionNotice, setActionNotice] = useState('')
   const [profileOpen, setProfileOpen] = useState(false)
   const [addressOpen, setAddressOpen] = useState(false)
   const [profileForm, setProfileForm] = useState({
@@ -962,6 +997,44 @@ function AccountPage({ user, profile, addresses, onOpenAccount, onSaveProfile, o
     zip: '',
     isDefault: true,
   })
+  const productsById = useMemo(() => new Map(products.map((product) => [String(product.id), product])), [products])
+  const findOrderProduct = (item) =>
+    productsById.get(String(item.productId)) ||
+    products.find((product) => product.name.toLowerCase() === String(item.name || '').split(' (')[0].toLowerCase()) ||
+    null
+  const orderCounts = useMemo(() => {
+    const counts = Object.fromEntries(accountOrderTabs.map(([id]) => [id, 0]))
+    orders.forEach((order) => {
+      counts.all += 1
+      counts[accountOrderBucket(order)] = (counts[accountOrderBucket(order)] || 0) + 1
+    })
+    return counts
+  }, [orders])
+  const visibleOrders = useMemo(() => {
+    const query = orderQuery.trim().toLowerCase()
+    return orders.filter((order) => {
+      const matchesTab = orderFilter === 'all' || accountOrderBucket(order) === orderFilter
+      const searchable = [
+        order.id,
+        order.payment,
+        order.delivery,
+        ...(order.lineItems || []).map((item) => item.name),
+      ].join(' ').toLowerCase()
+      return matchesTab && (!query || searchable.includes(query))
+    })
+  }, [orders, orderFilter, orderQuery])
+  const toggleExpandedOrder = (orderId) => {
+    setExpandedOrders((current) => {
+      const next = new Set(current)
+      if (next.has(orderId)) next.delete(orderId)
+      else next.add(orderId)
+      return next
+    })
+  }
+  const showActionNotice = (message) => {
+    setActionNotice(message)
+    window.setTimeout(() => setActionNotice(''), 3200)
+  }
 
   useEffect(() => {
     if (!user?.email) return undefined
@@ -1045,35 +1118,90 @@ function AccountPage({ user, profile, addresses, onOpenAccount, onSaveProfile, o
               <span>{ordersMessage}</span>
             </div>
           ) : orders.length ? (
-            <div className="account-orders-list">
-              {orders.map((order) => (
-                <article className="account-card account-order-card" key={order.uuid}>
-                  <header>
-                    <div>
-                      <b>{order.id}</b>
-                      <small>{order.date}</small>
-                    </div>
-                    <strong>{formatPrice(order.total)}</strong>
-                  </header>
-                  <div className="account-order-meta">
-                    <span>{order.items} items</span>
-                    <span>Payment: {order.payment}</span>
-                    <span>Delivery: {order.delivery}</span>
+            <>
+              <div className="account-order-tools">
+                <label className="account-order-search">
+                  <Search size={18} />
+                  <input value={orderQuery} onChange={(event) => setOrderQuery(event.target.value)} placeholder="Search by order number or product" />
+                </label>
+                <div className="account-order-tabs">
+                  {accountOrderTabs.map(([id, label]) => (
+                    <button className={orderFilter === id ? 'active' : ''} type="button" onClick={() => setOrderFilter(id)} key={id}>
+                      {label}<em>{orderCounts[id] || 0}</em>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {actionNotice && <p className="account-action-notice">{actionNotice}</p>}
+              <div className="account-orders-list">
+                {visibleOrders.length ? visibleOrders.map((order) => {
+                  const expanded = expandedOrders.has(order.uuid)
+                  const orderItems = order.lineItems || []
+                  const shownItems = expanded ? orderItems : orderItems.slice(0, 2)
+                  const hiddenCount = Math.max(0, orderItems.length - shownItems.length)
+                  const subtotalValue = order.subtotal || orderItems.reduce((sum, item) => sum + item.total, 0)
+                  const stage = accountOrderStage(order)
+                  const bucket = accountOrderBucket(order)
+                  return (
+                    <article className="account-card account-order-card" key={order.uuid}>
+                      <header className="account-order-head">
+                        <div>
+                          <b>{order.id}</b>
+                          <small>{order.date} · {order.deliveryMethod || 'Delivery'}</small>
+                        </div>
+                        <strong>{formatPrice(order.total)}</strong>
+                      </header>
+                      <div className="account-order-meta">
+                        <span>{order.items} items</span>
+                        <span>Payment: {order.payment}</span>
+                        <span>Delivery: {order.delivery}</span>
+                      </div>
+                      <div className={`account-order-stepper stage-${stage}`}>
+                        {['Ordered', 'Processing', 'In transit', 'Delivered'].map((label, index) => (
+                          <span className={index <= stage ? 'active' : ''} key={label}><i></i>{label}</span>
+                        ))}
+                      </div>
+                      {orderItems.length > 0 && (
+                        <ul className="account-order-items">
+                          {shownItems.map((item) => {
+                            const product = findOrderProduct(item)
+                            return (
+                              <li key={`${order.uuid}-${item.name}`}>
+                                {product?.image ? <img src={product.image} alt="" /> : <span className="order-item-fallback"><Package size={18} /></span>}
+                                <div><b>{item.name}</b><small>{item.quantity} x {formatPrice(item.price)}</small></div>
+                                <strong>{formatPrice(item.total)}</strong>
+                              </li>
+                            )
+                          })}
+                        </ul>
+                      )}
+                      {hiddenCount > 0 && <button className="account-show-more" type="button" onClick={() => toggleExpandedOrder(order.uuid)}>View {hiddenCount} more products</button>}
+                      {expanded && orderItems.length > 2 && <button className="account-show-more" type="button" onClick={() => toggleExpandedOrder(order.uuid)}>Show fewer products</button>}
+                      <div className="account-price-breakdown">
+                        <p><span>Subtotal</span><b>{formatPrice(subtotalValue)}</b></p>
+                        {order.discountTotal > 0 && <p><span>Discount</span><b>-{formatPrice(order.discountTotal)}</b></p>}
+                        <p><span>Delivery fee</span><b>{order.deliveryFee ? formatPrice(order.deliveryFee) : 'Free'}</b></p>
+                        <p><span>Tax</span><b>{formatPrice(order.taxTotal || Math.max(0, order.total - subtotalValue + order.discountTotal - order.deliveryFee))}</b></p>
+                        <p><span>Total</span><b>{formatPrice(order.total)}</b></p>
+                      </div>
+                      {order.trackingId && <p className="account-order-tracking">Tracking: {order.trackingId}</p>}
+                      <div className="account-order-actions">
+                        {bucket === 'unpaid' && <button type="button" onClick={() => showActionNotice(`Payment for ${order.id} will be available soon.`)}>Pay now</button>}
+                        {!['delivered', 'cancelled'].includes(bucket) && <button type="button" onClick={() => showActionNotice(`Cancellation request for ${order.id} has been noted.`)}>Cancel order</button>}
+                        {bucket === 'transit' && <button type="button" onClick={() => showActionNotice(order.trackingId ? `Tracking ${order.trackingId}` : `Tracking for ${order.id} will update soon.`)}>Track order</button>}
+                        {bucket === 'delivered' && <button type="button" onClick={() => onReorder?.(order)}>Reorder</button>}
+                        {bucket === 'delivered' && <button type="button" onClick={() => showActionNotice(`Review form for ${order.id} will be available soon.`)}>Review products</button>}
+                      </div>
+                    </article>
+                  )
+                }) : (
+                  <div className="account-card account-empty-row">
+                    <Search size={24} />
+                    <span>No orders match your filters</span>
                   </div>
-                  {order.lineItems?.length > 0 && (
-                    <ul>
-                      {order.lineItems.slice(0, 3).map((item) => (
-                        <li key={`${order.uuid}-${item.name}`}>
-                          <span>{item.quantity} x {item.name}</span>
-                          <b>{formatPrice(item.total)}</b>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {order.trackingId && <p className="account-order-tracking">Tracking: {order.trackingId}</p>}
-                </article>
-              ))}
-            </div>
+                )}
+              </div>
+            </>
           ) : (
             <div className="account-card account-empty-row">
               <Package size={24} />
@@ -2455,6 +2583,38 @@ function App() {
     setCheckoutOpen(true)
   }
 
+  const reorderAccountOrder = (order) => {
+    const orderProducts = (order.lineItems || [])
+      .map((item) => {
+        const product = products.find((candidate) =>
+          String(candidate.id) === String(item.productId) ||
+          candidate.name.toLowerCase() === String(item.name || '').split(' (')[0].toLowerCase(),
+        )
+        if (!product || productSelection(product).stock === 0) return null
+        return { product, quantity: item.quantity }
+      })
+      .filter(Boolean)
+
+    if (!orderProducts.length) return
+
+    setCart((current) => {
+      let next = [...current]
+      orderProducts.forEach(({ product, quantity }) => {
+        const variant = getDefaultVariant(product)
+        const selected = productSelection(product, variant)
+        const lineId = cartLineId(product, variant)
+        const found = next.find((item) => item.id === lineId)
+        if (found) {
+          next = next.map((item) => item.id === lineId ? { ...item, quantity: item.quantity + quantity } : item)
+        } else {
+          next.push({ ...product, ...selected, id: lineId, productId: product.id, quantity })
+        }
+      })
+      return next
+    })
+    setCartOpen(true)
+  }
+
   const openCheckout = () => {
     setCartOpen(false)
     setCheckoutOpen(true)
@@ -2688,9 +2848,11 @@ function App() {
         user={storefrontUser}
         profile={accountProfile}
         addresses={accountAddresses}
+        products={products}
         onOpenAccount={() => setAccountOpen(true)}
         onSaveProfile={saveAccountProfile}
         onSaveAddress={saveAccountAddress}
+        onReorder={reorderAccountOrder}
         onSignOut={signOutAccount}
       />
       ) : isCartPage ? (
