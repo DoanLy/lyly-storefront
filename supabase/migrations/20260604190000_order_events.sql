@@ -12,10 +12,12 @@ CREATE INDEX IF NOT EXISTS idx_order_events_order_id
 
 ALTER TABLE public.order_events ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "service_role_all_order_events" ON public.order_events;
 CREATE POLICY "service_role_all_order_events"
   ON public.order_events FOR ALL TO service_role
   USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "customers_read_own_order_events" ON public.order_events;
 CREATE POLICY "customers_read_own_order_events"
   ON public.order_events FOR SELECT TO authenticated
   USING (

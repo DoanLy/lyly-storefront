@@ -3094,7 +3094,7 @@ function App() {
         <button className="lang-toggle" type="button" onClick={toggleLang}>{t.langCode} <ChevronDown size={13} /></button>
       </div>
 
-      <header>
+      <header className="site-header">
         <div className="header-main">
           <button className="mobile-only icon-button" type="button" onClick={() => setMenuOpen(true)} aria-label="Open menu">
             <Menu />
