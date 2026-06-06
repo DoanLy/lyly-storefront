@@ -1750,7 +1750,7 @@ function OurStoresPage() {
 }
 
 function DeliveryPage({ onOpenPickup }) {
-  const [openId, setOpenId] = useState('domestic')
+  const [openId, setOpenId] = useState('')
   return (
     <main className="info-page container">
       <div className="breadcrumbs"><a href="/">Home</a><ChevronRight size={13} /><b>Shipping & Delivery</b></div>
