@@ -2794,6 +2794,135 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy: 
     add: 'Thêm sản phẩm',
     ...(incomingCopy || {}),
   }
+  const modalText = copy.lang === 'en' ? {
+    tabs: { general: 'General information', pricing: 'Pricing & inventory', variants: 'Variants', seo: 'Search optimization', enabled: 'On' },
+    descriptionTitle: 'Description title',
+    descriptionTitlePlaceholder: 'Example: Soft texture, natural flavor',
+    descriptionBody: 'Description content',
+    bold: 'Bold',
+    italic: 'Italic',
+    bullet: 'Bulleted list',
+    heading: 'Heading',
+    descriptionPlaceholder: 'Detailed product description...',
+    mainImage: 'Main image',
+    gallery: 'Gallery images',
+    galleryHelp: 'Drag and drop or click + to upload multiple images',
+    addImage: 'Add image',
+    pricingTitle: 'Pricing & inventory',
+    pricingHelp: 'Set default price, inventory, SKU, and purchase limits for this product.',
+    defaultSuffix: ' (default)',
+    barcode: 'Barcode (EAN/UPC)',
+    purchaseLimit: 'Maximum purchase limit / order',
+    unlimited: 'No limit',
+    shippingTitle: 'Shipping information',
+    shippingHelp: 'This data helps calculate shipping fees and packaging more accurately.',
+    weight: 'Weight',
+    length: 'Length (cm)',
+    width: 'Width (cm)',
+    height: 'Height (cm)',
+    supplierTitle: 'Shelf life & supplier',
+    supplierHelp: 'Manage sourcing, warehouse, and shelf-life information for this product.',
+    mfgDate: 'Manufacturing date (MFG)',
+    expDate: 'Expiry date (EXP)',
+    shelfLife: 'Shelf life (days from MFG)',
+    shelfLifePlaceholder: 'Example: 365',
+    productMode: 'Product type',
+    singleProduct: 'Single product',
+    variantProduct: 'Multiple options / variants',
+    singleHelp: 'Use when the product has one price, one SKU, and one inventory count.',
+    variantHelp: 'Use when the product has multiple options such as size, color, or weight.',
+    singleSalesTitle: 'Sales information for single product',
+    singleSalesHelp: 'Enter the main information for one sellable version.',
+    options: 'Options',
+    addOption: 'Add option',
+    optionName: 'Option name',
+    optionNamePlaceholder: 'Example: Size',
+    optionValues: 'Values (separated by commas)',
+    variantsTitle: 'Sellable variants',
+    addVariant: 'Add variant',
+    displayName: 'Display name',
+    variantPlaceholder: '500g / Red',
+    variantImage: 'Variant image',
+    chooseVariantImage: 'Choose variant image',
+    changeVariantImage: 'Change variant image',
+    variantImageHelp: 'Leave blank to use the main image',
+    removeImage: 'Remove image',
+    removeVariant: 'Remove variant',
+    seoProductFallback: 'Product title',
+    seoDescFallback: 'Short description shown in Google search results...',
+    slug: 'URL slug',
+    lock: 'Lock again',
+    unlock: 'Unlock to edit',
+    slugHint: 'Generated automatically from the name. Click the lock to edit manually.',
+    seoTitle: 'SEO title',
+    seoTitlePlaceholder: 'SEO title (max 60 characters)',
+    seoDescription: 'SEO description',
+    seoDescriptionPlaceholder: 'Short description shown under the title on Google (150-160 characters)',
+  } : {
+    tabs: { general: 'Thông tin chung', pricing: 'Giá và kho', variants: 'Biến thể', seo: 'Tối ưu tìm kiếm', enabled: 'Bật' },
+    descriptionTitle: 'Tiêu đề mô tả',
+    descriptionTitlePlaceholder: 'Ví dụ: Kết cấu mềm mịn, hương vị tự nhiên',
+    descriptionBody: 'Nội dung mô tả',
+    bold: 'In đậm',
+    italic: 'In nghiêng',
+    bullet: 'Danh sách',
+    heading: 'Tiêu đề',
+    descriptionPlaceholder: 'Nội dung mô tả chi tiết sản phẩm...',
+    mainImage: 'Ảnh chính',
+    gallery: 'Ảnh phụ',
+    galleryHelp: 'Kéo thả hoặc bấm + để tải nhiều ảnh',
+    addImage: 'Thêm ảnh',
+    pricingTitle: 'Giá bán & Tồn kho',
+    pricingHelp: 'Thiết lập giá mặc định, tồn kho, SKU và giới hạn mua cho sản phẩm.',
+    defaultSuffix: ' (mặc định)',
+    barcode: 'Mã vạch (EAN/UPC)',
+    purchaseLimit: 'Giới hạn mua tối đa / đơn',
+    unlimited: 'Không giới hạn',
+    shippingTitle: 'Thông tin vận chuyển',
+    shippingHelp: 'Dữ liệu này giúp tính phí giao hàng và đóng gói chính xác hơn.',
+    weight: 'Khối lượng',
+    length: 'Dài (cm)',
+    width: 'Rộng (cm)',
+    height: 'Cao (cm)',
+    supplierTitle: 'Hạn sử dụng & Nhà cung cấp',
+    supplierHelp: 'Quản lý thông tin nguồn hàng, kho và hạn sử dụng của sản phẩm.',
+    mfgDate: 'Ngày sản xuất (MFG)',
+    expDate: 'Hạn sử dụng (EXP)',
+    shelfLife: 'Thời hạn sử dụng (ngày kể từ SX)',
+    shelfLifePlaceholder: 'Ví dụ: 365',
+    productMode: 'Kiểu sản phẩm',
+    singleProduct: 'Sản phẩm đơn',
+    variantProduct: 'Có nhiều lựa chọn / biến thể',
+    singleHelp: 'Dùng khi sản phẩm chỉ có một giá, một SKU và một tồn kho.',
+    variantHelp: 'Dùng khi sản phẩm có nhiều lựa chọn như kích thước, màu sắc, khối lượng.',
+    singleSalesTitle: 'Thông tin bán hàng cho sản phẩm đơn',
+    singleSalesHelp: 'Nhập thông tin chính cho một phiên bản duy nhất.',
+    options: 'Tùy chọn',
+    addOption: 'Thêm tùy chọn',
+    optionName: 'Tên tùy chọn',
+    optionNamePlaceholder: 'Ví dụ: Kích thước',
+    optionValues: 'Giá trị (phân cách bởi dấu phẩy)',
+    variantsTitle: 'Biến thể bán hàng',
+    addVariant: 'Thêm biến thể',
+    displayName: 'Tên hiển thị',
+    variantPlaceholder: '500g / Đỏ',
+    variantImage: 'Ảnh biến thể',
+    chooseVariantImage: 'Chọn ảnh biến thể',
+    changeVariantImage: 'Đổi ảnh biến thể',
+    variantImageHelp: 'Để trống sẽ dùng ảnh chính',
+    removeImage: 'Xóa ảnh',
+    removeVariant: 'Xóa biến thể',
+    seoProductFallback: 'Tiêu đề sản phẩm',
+    seoDescFallback: 'Mô tả ngắn hiển thị trên kết quả tìm kiếm Google...',
+    slug: 'Đường dẫn (Slug)',
+    lock: 'Khóa lại',
+    unlock: 'Mở khóa để sửa',
+    slugHint: 'Tự động sinh từ tên. Bấm khóa để sửa tay.',
+    seoTitle: 'Tiêu đề SEO',
+    seoTitlePlaceholder: 'Tiêu đề SEO (tối đa 60 ký tự)',
+    seoDescription: 'Mô tả SEO',
+    seoDescriptionPlaceholder: 'Mô tả ngắn hiển thị dưới tiêu đề trên Google (150-160 ký tự)',
+  }
   const localizedCategory = (category) => categoryLabel(category, copy.lang)
   const activeCategories = categories.filter((c) => c.active)
   const initialCategory = product?.category || activeCategories[0]?.name || ''
@@ -2804,7 +2933,7 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy: 
     name: '', category: initialCategory, sku: generateProductSku(initialCategory, products),
     price: '', oldPrice: '', stock: '', status: 'active', unit: '', badge: '',
     image: defaultProductImage, manufacturer: 'LyLy Market', vendor: 'LyLy Market',
-    warehouse: 'Kho chính', productType: 'Thực phẩm', description: '', images: [], options: [], variants: [],
+    warehouse: copy.lang === 'en' ? 'Main warehouse' : 'Kho chính', productType: copy.lang === 'en' ? 'Grocery' : 'Thực phẩm', description: '', images: [], options: [], variants: [],
     weight: '', weightUnit: 'g', length: '', width: '', height: '',
     mfgDate: '', expDate: '', shelfLife: '', barcode: '', purchaseLimit: '',
     metaSlug: '', metaTitle: '', metaDescription: '',
@@ -2871,9 +3000,9 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy: 
     <Modal wide title={product ? copy.edit : copy.create} onClose={onClose}>
       <form className="modal-form product-tabbed-form" onSubmit={submit}>
         <div className="product-modal-tabs">
-          {[['general', 'Thông tin chung'], ['pricing', 'Giá và kho'], ['variants', 'Biến thể'], ['seo', 'Tối ưu tìm kiếm']].map(([id, label]) => (
+          {[['general', modalText.tabs.general], ['pricing', modalText.tabs.pricing], ['variants', modalText.tabs.variants], ['seo', modalText.tabs.seo]].map(([id, label]) => (
             <button key={id} type="button" className={activeTab === id ? 'active' : ''} onClick={() => setActiveTab(id)}>
-              {label}{id === 'variants' && productMode === 'variants' && <em>Bật</em>}
+              {label}{id === 'variants' && productMode === 'variants' && <em>{modalText.tabs.enabled}</em>}
             </button>
           ))}
         </div>
@@ -2885,19 +3014,19 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy: 
               <span>{copy.category} *</span>
               <CategoryTreeSelect categories={activeCategories} value={form.category} onChange={(val) => change({ target: { name: 'category', value: val } })} labelForCategory={localizedCategory} placeholder={copy.lang === 'en' ? 'Select category' : 'Chọn danh mục'} />
             </label>
-            <label><span>Tiêu đề mô tả</span><input name="descriptionTitle" value={descriptionTitle} onChange={(e) => setDescriptionTitle(e.target.value)} placeholder="Ví dụ: Kết cấu mềm mịn, hương vị tự nhiên" /></label>
+            <label><span>{modalText.descriptionTitle}</span><input name="descriptionTitle" value={descriptionTitle} onChange={(e) => setDescriptionTitle(e.target.value)} placeholder={modalText.descriptionTitlePlaceholder} /></label>
             <div className="rich-editor-wrap">
-              <span className="form-label">Nội dung mô tả</span>
+              <span className="form-label">{modalText.descriptionBody}</span>
               <div className="rich-editor-toolbar">
-                <button type="button" title="In đậm" onClick={() => insertFormat('**', '**')}><b>B</b></button>
-                <button type="button" title="In nghiêng" onClick={() => insertFormat('_', '_')}><i>I</i></button>
-                <button type="button" title="Gạch đầu dòng" onClick={() => insertFormat('\n• ')}>• Danh sách</button>
-                <button type="button" title="Tiêu đề" onClick={() => insertFormat('\n### ')}>H3</button>
+                <button type="button" title={modalText.bold} onClick={() => insertFormat('**', '**')}><b>B</b></button>
+                <button type="button" title={modalText.italic} onClick={() => insertFormat('_', '_')}><i>I</i></button>
+                <button type="button" title={modalText.bullet} onClick={() => insertFormat('\n• ')}>• {modalText.bullet}</button>
+                <button type="button" title={modalText.heading} onClick={() => insertFormat('\n### ')}>H3</button>
               </div>
-              <textarea ref={descRef} name="description" value={descriptionBody} onChange={(e) => setDescriptionBody(e.target.value)} placeholder="Nội dung mô tả chi tiết sản phẩm..." rows={6} />
+              <textarea ref={descRef} name="description" value={descriptionBody} onChange={(e) => setDescriptionBody(e.target.value)} placeholder={modalText.descriptionPlaceholder} rows={6} />
             </div>
             <label className="product-upload-field">
-              <span>Ảnh chính</span>
+              <span>{modalText.mainImage}</span>
               <div className="product-image-picker">
                 <img src={imagePreview || defaultProductImage} alt="" />
                 <div><Upload size={21} /><b>{imageFile ? imageFile.name : copy.chooseImage}</b><small>{copy.imageHelp}</small></div>
@@ -2905,7 +3034,7 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy: 
               </div>
             </label>
             <div className="gallery-dropzone-wrap">
-              <div className="variant-editor-head"><b>Ảnh phụ</b><small>Kéo thả hoặc bấm + để tải nhiều ảnh</small></div>
+              <div className="variant-editor-head"><b>{modalText.gallery}</b><small>{modalText.galleryHelp}</small></div>
               <div className="gallery-dropzone" onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); addGalleryFiles(e.dataTransfer.files) }}>
                 {galleryImages.map((item, index) => (
                   <div className="gallery-thumb" key={index}>
@@ -2914,7 +3043,7 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy: 
                   </div>
                 ))}
                 <label className="gallery-add-slot">
-                  <Plus size={20} /><small>Thêm ảnh</small>
+                  <Plus size={20} /><small>{modalText.addImage}</small>
                   <input accept="image/*" type="file" multiple onChange={(e) => addGalleryFiles(e.target.files)} />
                 </label>
               </div>
@@ -2926,49 +3055,49 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy: 
           <div className="tab-pane pricing-tab-pane">
             <section className="product-form-section">
               <div className="product-form-section-head">
-                <h3>Giá bán & Tồn kho</h3>
-                <p>Thiết lập giá mặc định, tồn kho, SKU và giới hạn mua cho sản phẩm.</p>
+                <h3>{modalText.pricingTitle}</h3>
+                <p>{modalText.pricingHelp}</p>
               </div>
               <div className="product-section-grid">
-                <label><span>{copy.price}{productMode === 'single' ? ' *' : ' (mặc định)'}</span><input min="0" step=".01" type="number" name="price" value={form.price} onChange={change} placeholder="0.00" required={productMode === 'single'} disabled={productMode === 'variants'} /></label>
+                <label><span>{copy.price}{productMode === 'single' ? ' *' : modalText.defaultSuffix}</span><input min="0" step=".01" type="number" name="price" value={form.price} onChange={change} placeholder="0.00" required={productMode === 'single'} disabled={productMode === 'variants'} /></label>
                 <label><span>{copy.oldPrice}</span><input min="0" step=".01" type="number" name="oldPrice" value={form.oldPrice || ''} onChange={change} placeholder={copy.oldPricePlaceholder} disabled={productMode === 'variants'} /></label>
-                <label><span>{copy.stock}{productMode === 'single' ? ' *' : ' (mặc định)'}</span><input min="0" type="number" name="stock" value={form.stock} onChange={change} placeholder="0" required={productMode === 'single'} disabled={productMode === 'variants'} /></label>
+                <label><span>{copy.stock}{productMode === 'single' ? ' *' : modalText.defaultSuffix}</span><input min="0" type="number" name="stock" value={form.stock} onChange={change} placeholder="0" required={productMode === 'single'} disabled={productMode === 'variants'} /></label>
                 <label><span>{copy.status}</span><select name="status" value={form.status} onChange={change}><option value="active">{copy.active}</option><option value="draft">{copy.draft}</option></select></label>
                 <label><span>{copy.unit} *</span><input required name="unit" value={form.unit} onChange={change} placeholder={copy.unitPlaceholder} /></label>
                 <label><span>{copy.badge}</span><input name="badge" value={form.badge || ''} onChange={change} placeholder={copy.badgePlaceholder} /></label>
                 <div className="sku-field"><span>SKU</span><div><strong>{form.sku}</strong><button type="button" onClick={regenerateSku}>{copy.regenerate}</button></div></div>
-                <label><span>Mã vạch (EAN/UPC)</span><input name="barcode" value={form.barcode || ''} onChange={change} placeholder="0123456789012" /></label>
-                <label className="section-wide"><span>Giới hạn mua tối đa / đơn</span><input min="1" type="number" name="purchaseLimit" value={form.purchaseLimit || ''} onChange={change} placeholder="Không giới hạn" /></label>
+                <label><span>{modalText.barcode}</span><input name="barcode" value={form.barcode || ''} onChange={change} placeholder="0123456789012" /></label>
+                <label className="section-wide"><span>{modalText.purchaseLimit}</span><input min="1" type="number" name="purchaseLimit" value={form.purchaseLimit || ''} onChange={change} placeholder={modalText.unlimited} /></label>
               </div>
             </section>
 
             <section className="product-form-section">
               <div className="product-form-section-head">
-                <h3>Thông tin vận chuyển</h3>
-                <p>Dữ liệu này giúp tính phí giao hàng và đóng gói chính xác hơn.</p>
+                <h3>{modalText.shippingTitle}</h3>
+                <p>{modalText.shippingHelp}</p>
               </div>
               <div className="product-section-grid shipping-dimensions-grid">
-                <label><span>Khối lượng</span>
+                <label><span>{modalText.weight}</span>
                   <div className="weight-input">
                     <input type="number" min="0" step=".01" name="weight" value={form.weight || ''} onChange={change} placeholder="0" />
                     <select name="weightUnit" value={form.weightUnit || 'g'} onChange={change}><option value="g">g</option><option value="kg">kg</option></select>
                   </div>
                 </label>
-                <label><span>Dài (cm)</span><input type="number" min="0" step=".1" name="length" value={form.length || ''} onChange={change} placeholder="0" /></label>
-                <label><span>Rộng (cm)</span><input type="number" min="0" step=".1" name="width" value={form.width || ''} onChange={change} placeholder="0" /></label>
-                <label><span>Cao (cm)</span><input type="number" min="0" step=".1" name="height" value={form.height || ''} onChange={change} placeholder="0" /></label>
+                <label><span>{modalText.length}</span><input type="number" min="0" step=".1" name="length" value={form.length || ''} onChange={change} placeholder="0" /></label>
+                <label><span>{modalText.width}</span><input type="number" min="0" step=".1" name="width" value={form.width || ''} onChange={change} placeholder="0" /></label>
+                <label><span>{modalText.height}</span><input type="number" min="0" step=".1" name="height" value={form.height || ''} onChange={change} placeholder="0" /></label>
               </div>
             </section>
 
             <section className="product-form-section">
               <div className="product-form-section-head">
-                <h3>Hạn sử dụng & Nhà cung cấp</h3>
-                <p>Quản lý thông tin nguồn hàng, kho và hạn sử dụng của sản phẩm.</p>
+                <h3>{modalText.supplierTitle}</h3>
+                <p>{modalText.supplierHelp}</p>
               </div>
               <div className="product-section-grid">
-                <label><span>Ngày sản xuất (MFG)</span><input type="date" name="mfgDate" value={form.mfgDate || ''} onChange={change} /></label>
-                <label><span>Hạn sử dụng (EXP)</span><input type="date" name="expDate" value={form.expDate || ''} onChange={change} /></label>
-                <label className="section-wide"><span>Thời hạn sử dụng (ngày kể từ SX)</span><input type="number" min="0" name="shelfLife" value={form.shelfLife || ''} onChange={change} placeholder="Ví dụ: 365" /></label>
+                <label><span>{modalText.mfgDate}</span><input type="date" name="mfgDate" value={form.mfgDate || ''} onChange={change} /></label>
+                <label><span>{modalText.expDate}</span><input type="date" name="expDate" value={form.expDate || ''} onChange={change} /></label>
+                <label className="section-wide"><span>{modalText.shelfLife}</span><input type="number" min="0" name="shelfLife" value={form.shelfLife || ''} onChange={change} placeholder={modalText.shelfLifePlaceholder} /></label>
                 <label><span>{copy.manufacturer} *</span><input required name="manufacturer" value={form.manufacturer} onChange={change} /></label>
                 <label><span>{copy.vendor} *</span><input required name="vendor" value={form.vendor} onChange={change} /></label>
                 <label><span>{copy.warehouse} *</span><input required name="warehouse" value={form.warehouse} onChange={change} /></label>
@@ -2981,18 +3110,18 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy: 
         {activeTab === 'variants' && (
           <div className="tab-pane">
             <label className="product-mode-select">
-              <span>Kiểu sản phẩm</span>
+              <span>{modalText.productMode}</span>
               <select value={productMode} onChange={(event) => setProductMode(event.target.value)}>
-                <option value="single">Sản phẩm đơn</option>
-                <option value="variants">Có nhiều lựa chọn / biến thể</option>
+                <option value="single">{modalText.singleProduct}</option>
+                <option value="variants">{modalText.variantProduct}</option>
               </select>
-              <small>{productMode === 'single' ? 'Dùng khi sản phẩm chỉ có một giá, một SKU và một tồn kho.' : 'Dùng khi sản phẩm có nhiều lựa chọn như kích thước, màu sắc, khối lượng.'}</small>
+              <small>{productMode === 'single' ? modalText.singleHelp : modalText.variantHelp}</small>
             </label>
             {productMode === 'single' && (
               <section className="single-product-editor">
                 <div className="variant-editor-head">
-                  <b>Thông tin bán hàng cho sản phẩm đơn</b>
-                  <small>Nhập thông tin chính cho một phiên bản duy nhất.</small>
+                  <b>{modalText.singleSalesTitle}</b>
+                  <small>{modalText.singleSalesHelp}</small>
                 </div>
                 <div>
                   <label><span>{copy.price} *</span><input min="0" step=".01" type="number" name="price" value={form.price} onChange={change} placeholder="0.00" required /></label>
@@ -3010,37 +3139,37 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy: 
             )}
             {productMode === 'variants' && (
               <section className="variant-editor">
-                <div className="variant-editor-head"><b>Tùy chọn</b><button type="button" onClick={addOption}><Plus size={13} /> Thêm tùy chọn</button></div>
+                <div className="variant-editor-head"><b>{modalText.options}</b><button type="button" onClick={addOption}><Plus size={13} /> {modalText.addOption}</button></div>
                 {options.map((option, index) => (
                   <div className="variant-row" key={index}>
-                    <label><span>Tên tùy chọn</span><input value={option.name} onChange={(e) => changeOption(index, 'name', e.target.value)} placeholder="Ví dụ: Kích thước" /></label>
-                    <label><span>Giá trị (phân cách bởi dấu phẩy)</span><input value={option.values} onChange={(e) => changeOption(index, 'values', e.target.value)} placeholder="250g, 500g, 1kg" /></label>
+                    <label><span>{modalText.optionName}</span><input value={option.name} onChange={(e) => changeOption(index, 'name', e.target.value)} placeholder={modalText.optionNamePlaceholder} /></label>
+                    <label><span>{modalText.optionValues}</span><input value={option.values} onChange={(e) => changeOption(index, 'values', e.target.value)} placeholder="250g, 500g, 1kg" /></label>
                     <button type="button" onClick={() => removeOption(index)}><Trash2 size={13} /></button>
                   </div>
                 ))}
-                <div className="variant-editor-head"><b>Biến thể bán hàng</b><button type="button" onClick={addVariant}><Plus size={13} /> Thêm biến thể</button></div>
+                <div className="variant-editor-head"><b>{modalText.variantsTitle}</b><button type="button" onClick={addVariant}><Plus size={13} /> {modalText.addVariant}</button></div>
                 {variants.map((variant, index) => (
                   <div className="variant-card" key={variant.id || index}>
-                    <label><span>Tên hiển thị *</span><input required name={`variants[${index}][label]`} value={variant.label} onChange={(e) => changeVariant(index, 'label', e.target.value)} placeholder="500g / Đỏ" /></label>
+                    <label><span>{modalText.displayName} *</span><input required name={`variants[${index}][label]`} value={variant.label} onChange={(e) => changeVariant(index, 'label', e.target.value)} placeholder={modalText.variantPlaceholder} /></label>
                     <div>
                       <label><span>SKU</span><input name={`variants[${index}][sku]`} value={variant.sku} onChange={(e) => changeVariant(index, 'sku', e.target.value)} /></label>
-                      <label><span>Quy cách</span><input name={`variants[${index}][unit]`} value={variant.unit} onChange={(e) => changeVariant(index, 'unit', e.target.value)} placeholder={form.unit || '500g'} /></label>
+                      <label><span>{copy.unit}</span><input name={`variants[${index}][unit]`} value={variant.unit} onChange={(e) => changeVariant(index, 'unit', e.target.value)} placeholder={form.unit || '500g'} /></label>
                     </div>
                     <div>
-                      <label><span>Giá *</span><input required min="0" step=".01" type="number" name={`variants[${index}][price]`} value={variant.price} onChange={(e) => changeVariant(index, 'price', e.target.value)} /></label>
-                      <label><span>Tồn kho *</span><input required min="0" type="number" name={`variants[${index}][stock]`} value={variant.stock} onChange={(e) => changeVariant(index, 'stock', e.target.value)} /></label>
+                      <label><span>{copy.price} *</span><input required min="0" step=".01" type="number" name={`variants[${index}][price]`} value={variant.price} onChange={(e) => changeVariant(index, 'price', e.target.value)} /></label>
+                      <label><span>{copy.stock} *</span><input required min="0" type="number" name={`variants[${index}][stock]`} value={variant.stock} onChange={(e) => changeVariant(index, 'stock', e.target.value)} /></label>
                     </div>
                     <label className="variant-image-upload">
-                      <span>Ảnh biến thể</span>
+                      <span>{modalText.variantImage}</span>
                       <div>
                         <img src={variant.imagePreview || imagePreview || defaultProductImage} alt="" />
-                        <strong>{variant.imageFile?.name || (variant.imagePreview ? 'Đổi ảnh biến thể' : 'Chọn ảnh biến thể')}</strong>
-                        <small>Để trống sẽ dùng ảnh chính</small>
-                        {variant.imagePreview && <button type="button" onClick={(e) => { e.preventDefault(); removeVariantImage(index) }}>Xóa ảnh</button>}
+                        <strong>{variant.imageFile?.name || (variant.imagePreview ? modalText.changeVariantImage : modalText.chooseVariantImage)}</strong>
+                        <small>{modalText.variantImageHelp}</small>
+                        {variant.imagePreview && <button type="button" onClick={(e) => { e.preventDefault(); removeVariantImage(index) }}>{modalText.removeImage}</button>}
                         <input accept="image/*" type="file" onChange={(e) => chooseVariantImage(index, e)} />
                       </div>
                     </label>
-                    <button className="variant-remove" type="button" onClick={() => removeVariant(index)}>Xóa biến thể</button>
+                    <button className="variant-remove" type="button" onClick={() => removeVariant(index)}>{modalText.removeVariant}</button>
                   </div>
                 ))}
               </section>
@@ -3052,27 +3181,27 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy: 
           <div className="tab-pane">
             <div className="seo-preview-card">
               <div className="seo-preview-url">lyly-storefront.vercel.app/products/{form.metaSlug || slugify(form.name) || 'ten-san-pham'}</div>
-              <div className="seo-preview-title">{form.metaTitle || form.name || 'Tiêu đề sản phẩm'}</div>
-              <div className="seo-preview-desc">{form.metaDescription || descriptionBody.slice(0, 120) || 'Mô tả ngắn hiển thị trên kết quả tìm kiếm Google...'}</div>
+              <div className="seo-preview-title">{form.metaTitle || form.name || modalText.seoProductFallback}</div>
+              <div className="seo-preview-desc">{form.metaDescription || descriptionBody.slice(0, 120) || modalText.seoDescFallback}</div>
             </div>
             <label>
-              <span>Đường dẫn (Slug)</span>
+              <span>{modalText.slug}</span>
               <div className="slug-field">
                 <input name="metaSlug" value={form.metaSlug || slugify(form.name)} onChange={change} disabled={!slugLocked} placeholder="ten-san-pham" />
-                <button type="button" className={`slug-lock-btn ${slugLocked ? 'unlocked' : 'locked'}`} onClick={() => setSlugLocked(!slugLocked)} title={slugLocked ? 'Khóa lại' : 'Mở khóa để sửa'}>
+                <button type="button" className={`slug-lock-btn ${slugLocked ? 'unlocked' : 'locked'}`} onClick={() => setSlugLocked(!slugLocked)} title={slugLocked ? modalText.lock : modalText.unlock}>
                   {slugLocked ? <Eye size={14} /> : <ShieldCheck size={14} />}
                 </button>
               </div>
-              <small className="field-hint">Tự động sinh từ tên. Bấm 🔓 để sửa tay.</small>
+              <small className="field-hint">{modalText.slugHint}</small>
             </label>
             <label>
-              <span>Tiêu đề SEO</span>
-              <input name="metaTitle" value={form.metaTitle || ''} onChange={change} placeholder={form.name || 'Tiêu đề SEO (tối đa 60 ký tự)'} maxLength={60} />
+              <span>{modalText.seoTitle}</span>
+              <input name="metaTitle" value={form.metaTitle || ''} onChange={change} placeholder={form.name || modalText.seoTitlePlaceholder} maxLength={60} />
               <small className="char-count">{(form.metaTitle || '').length}/60</small>
             </label>
             <label>
-              <span>Mô tả SEO</span>
-              <textarea name="metaDescription" value={form.metaDescription || ''} onChange={change} placeholder="Mô tả ngắn hiển thị dưới tiêu đề trên Google (150–160 ký tự)" maxLength={160} rows={3} />
+              <span>{modalText.seoDescription}</span>
+              <textarea name="metaDescription" value={form.metaDescription || ''} onChange={change} placeholder={modalText.seoDescriptionPlaceholder} maxLength={160} rows={3} />
               <small className="char-count">{(form.metaDescription || '').length}/160</small>
             </label>
           </div>
