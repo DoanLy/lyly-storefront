@@ -258,6 +258,7 @@ const adminI18n = {
     product: {
       create: 'Thêm sản phẩm mới',
       edit: 'Sửa sản phẩm',
+      lang: 'vi',
       name: 'Tên sản phẩm',
       namePlaceholder: 'Ví dụ: Organic Baby Spinach',
       category: 'Danh mục',
@@ -382,6 +383,7 @@ const adminI18n = {
     product: {
       create: 'Add new product',
       edit: 'Edit product',
+      lang: 'en',
       name: 'Product name',
       namePlaceholder: 'Example: Organic Baby Spinach',
       category: 'Category',
@@ -2723,7 +2725,7 @@ function imageFilePreview(file, callback) {
   reader.readAsDataURL(file)
 }
 
-function CategoryTreeSelect({ categories, value, onChange }) {
+function CategoryTreeSelect({ categories, value, onChange, labelForCategory = (name) => name, placeholder = 'Chọn danh mục' }) {
   const [open, setOpen] = useState(false)
   const ref = useRef()
   const rootCategories = categories.filter((c) => !c.parentId)
@@ -2735,7 +2737,7 @@ function CategoryTreeSelect({ categories, value, onChange }) {
   return (
     <div className="category-tree-select" ref={ref}>
       <button type="button" className="tree-select-btn" onClick={() => setOpen(!open)}>
-        <span>{value || 'Chọn danh mục'}</span>
+        <span>{value ? labelForCategory(value) : placeholder}</span>
         <ChevronDown size={14} />
       </button>
       {open && (
@@ -2745,11 +2747,11 @@ function CategoryTreeSelect({ categories, value, onChange }) {
             return (
               <div key={root.id}>
                 <button type="button" className={`tree-item tree-root ${value === root.name ? 'selected' : ''}`} onClick={() => { onChange(root.name); setOpen(false) }}>
-                  {root.name}
+                  {labelForCategory(root.name)}
                 </button>
                 {children.map((child) => (
                   <button type="button" key={child.id} className={`tree-item tree-child ${value === child.name ? 'selected' : ''}`} onClick={() => { onChange(child.name); setOpen(false) }}>
-                    └ {child.name}
+                    └ {labelForCategory(child.name)}
                   </button>
                 ))}
               </div>
@@ -2763,7 +2765,7 @@ function CategoryTreeSelect({ categories, value, onChange }) {
 
 function ProductModal({ categories, products, product, onClose, onSubmit, copy: incomingCopy }) {
   const copy = {
-    ...incomingCopy,
+    lang: 'vi',
     create: 'Thêm sản phẩm mới',
     edit: 'Sửa sản phẩm',
     name: 'Tên sản phẩm',
@@ -2790,7 +2792,9 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy: 
     cancel: 'Hủy',
     save: 'Lưu thay đổi',
     add: 'Thêm sản phẩm',
+    ...(incomingCopy || {}),
   }
+  const localizedCategory = (category) => categoryLabel(category, copy.lang)
   const activeCategories = categories.filter((c) => c.active)
   const initialCategory = product?.category || activeCategories[0]?.name || ''
   const hasExistingVariants = product?.variants?.length > 0
@@ -2879,7 +2883,7 @@ function ProductModal({ categories, products, product, onClose, onSubmit, copy: 
             <label><span>{copy.name} *</span><input required name="name" value={form.name} onChange={change} placeholder={copy.namePlaceholder} /></label>
             <label>
               <span>{copy.category} *</span>
-              <CategoryTreeSelect categories={activeCategories} value={form.category} onChange={(val) => change({ target: { name: 'category', value: val } })} />
+              <CategoryTreeSelect categories={activeCategories} value={form.category} onChange={(val) => change({ target: { name: 'category', value: val } })} labelForCategory={localizedCategory} placeholder={copy.lang === 'en' ? 'Select category' : 'Chọn danh mục'} />
             </label>
             <label><span>Tiêu đề mô tả</span><input name="descriptionTitle" value={descriptionTitle} onChange={(e) => setDescriptionTitle(e.target.value)} placeholder="Ví dụ: Kết cấu mềm mịn, hương vị tự nhiên" /></label>
             <div className="rich-editor-wrap">
