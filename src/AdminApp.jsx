@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+﻿import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowRight,
   ArrowUpRight,
@@ -334,6 +334,297 @@ const adminI18n = {
       noSelectionCopy: 'Hãy chọn ít nhất một sản phẩm trong danh sách trước khi dùng nút Xóa đã chọn.',
       understood: 'Đã hiểu',
     },
+    confirmDelete: {
+      cancel: 'Hủy',
+      deleting: 'Đang xóa...',
+    },
+    csvImport: {
+      title: 'Nhập sản phẩm bằng CSV',
+      description: 'Tải template CSV, điền dữ liệu theo đúng cột rồi upload lại file để tạo hoặc cập nhật sản phẩm theo SKU.',
+      requiredColumns: 'Các cột bắt buộc: sku, name, category, price, stock, unit.',
+      statusValues: 'Trạng thái chỉ nhận active hoặc draft.',
+      imageNote: 'Ảnh phụ nhập nhiều URL bằng dấu | trong cột images.',
+      variantsNote: 'Options và variants dùng JSON; nếu chưa dùng biến thể hãy để [].',
+      downloadTemplate: 'Tải template',
+      chooseFile: 'Chọn file CSV',
+    },
+    categories: {
+      addCategory: 'Thêm danh mục',
+      searchPlaceholder: 'Tìm kiếm danh mục',
+      filters: 'Bộ lọc',
+      rootCategory: 'Danh mục gốc',
+      allCategories: 'Tất cả danh mục',
+      statusAll: 'Tất cả',
+      statusActive: 'Đang hoạt động',
+      statusHidden: 'Tạm ẩn',
+      homepageAll: 'Tất cả',
+      homepageYes: 'Có hiển thị',
+      homepageNo: 'Không hiển thị',
+      clearFilters: 'Xóa lọc',
+      apply: 'Áp dụng',
+      selectedCount: (n) => `${n} danh mục đã chọn`,
+      activate: 'Kích hoạt',
+      deactivate: 'Tạm ẩn',
+      deleteSelected: 'Xóa đã chọn',
+      colCategory: 'Danh mục',
+      colStatus: 'Trạng thái',
+      colProducts: 'Sản phẩm',
+      colMenuOrder: 'Thứ tự Menu',
+      colHomeOrder: 'Thứ tự Home',
+      colMenu: 'Menu',
+      colHome: 'Home',
+      hideCategory: 'Ẩn danh mục',
+      showCategory: 'Hiện danh mục',
+      emptyTitle: 'Không tìm thấy danh mục',
+      emptyCopy: 'Thử thay đổi từ khóa hoặc thêm danh mục mới.',
+      cannotDeleteWithChildren: (name) => `Không thể xóa "${name}" vì đang có danh mục con bên trong.\nVui lòng di chuyển hoặc xóa danh mục con trước.`,
+    },
+    orders: {
+      exportAction: 'Xuất đơn hàng',
+      metricTotal: 'Tổng đơn',
+      metricTotalNote: (n) => `${n} đơn đang xử lý`,
+      metricUnpaid: 'Cần thanh toán',
+      metricUnpaidNote: 'Theo dõi trước khi đóng gói',
+      metricRevenue: 'Doanh thu thực',
+      metricRevenueNote: (n) => `${n} đơn đã giao · chỉ tính đơn Đã thanh toán`,
+      tabAll: 'Tất cả',
+      tabOpen: 'Đang xử lý',
+      tabUnpaid: 'Chưa thanh toán',
+      tabFulfilled: 'Đã giao',
+      tabReturnRequested: 'Yêu cầu trả hàng',
+      tabCancelled: 'Đã hủy',
+      tabReturned: 'Trả hàng / Hoàn tiền',
+      tabFailed: 'Giao thất bại',
+      searchPlaceholder: 'Tìm mã đơn, khách hàng, email, SĐT hoặc mã vận đơn',
+      sortNewest: 'Mới nhất',
+      sortTotalDesc: 'Tổng cao nhất',
+      sortTotalAsc: 'Tổng thấp nhất',
+      filtersButton: 'Bộ lọc',
+      exportButton: 'Xuất',
+      bulkSelected: (n) => `${n} đơn đã chọn`,
+      bulkPaid: 'Đã thanh toán',
+      bulkPacking: 'Đang đóng gói',
+      bulkReady: 'Sẵn sàng giao',
+      bulkInTransit: 'Đang giao hàng',
+      bulkDelivered: 'Đã giao',
+      bulkReturned: 'Trả hàng',
+      bulkPrint: 'In phiếu',
+      bulkCancel: 'Hủy đơn',
+      filterPayment: 'Thanh toán',
+      filterDelivery: 'Giao hàng',
+      filterShipping: 'Đơn vị vận chuyển',
+      filterPriceRange: 'Giá trị đơn (đ)',
+      filterFrom: 'Từ',
+      filterTo: 'Đến',
+      clearFilters: 'Xóa lọc',
+      paymentAll: 'Tất cả',
+      paymentPending: 'Chờ thanh toán',
+      paymentPaid: 'Đã thanh toán',
+      paymentRefunded: 'Đã hoàn tiền',
+      deliveryAll: 'Tất cả',
+      deliveryUnfulfilled: 'Chưa xử lý',
+      deliveryPacking: 'Đang đóng gói',
+      deliveryReady: 'Sẵn sàng giao',
+      deliveryInTransit: 'Đang giao hàng',
+      deliveryDelivered: 'Đã giao',
+      deliveryCancelled: 'Đã hủy',
+      deliveryReturned: 'Trả hàng',
+      deliveryFailed: 'Giao thất bại',
+      shippingAll: 'Tất cả',
+      colOrder: 'Đơn hàng',
+      colDate: 'Ngày',
+      colCustomer: 'Khách hàng',
+      colStatus: 'Trạng thái',
+      colPaymentMethod: 'Phương thức TT',
+      colPaymentStatus: 'Trạng thái TT',
+      colDeliveryStatus: 'Trạng thái GH',
+      colShipping: 'Vận chuyển',
+      colTotal: 'Tổng',
+      viewOrder: 'Xem đơn',
+      carrierPickupTitle: 'Đơn vị vận chuyển đã lấy hàng',
+      bucketLabels: {
+        return_requested: 'Yêu cầu trả hàng',
+        returned: 'Trả hàng / Hoàn tiền',
+        delivered: 'Đã giao',
+        cancelled: 'Đã hủy',
+        failed: 'Giao thất bại',
+        unpaid: 'Chưa thanh toán',
+        transit: 'Đang giao hàng',
+        open: 'Đang xử lý',
+      },
+      paymentStatusLabel: { Pending: 'Chờ thanh toán', Paid: 'Đã thanh toán', Refunded: 'Đã hoàn tiền' },
+      deliveryLabels: {
+        Unfulfilled: 'Chưa xử lý',
+        Packing: 'Đang đóng gói',
+        Ready: 'Sẵn sàng giao',
+        'In Transit': 'Đang giao hàng',
+        Delivered: 'Đã giao',
+        Cancelled: 'Đã hủy',
+        Returned: 'Trả hàng',
+        'Failed Delivery': 'Giao thất bại',
+      },
+      returnRequestedBadge: 'Yêu cầu trả hàng',
+      notFound: (id) => `Không tìm thấy đơn hàng ${id}.`,
+      updated: (id) => `${id} đã được cập nhật.`,
+      updateError: (id) => `Không thể cập nhật ${id}. Trạng thái này chưa được hỗ trợ — vui lòng liên hệ admin để apply DB migration.`,
+      bulkUpdated: (n) => `Đã cập nhật ${n} đơn hàng.`,
+      emptyTitle: 'Không tìm thấy đơn hàng',
+      emptyCopy: 'Thử đổi từ khóa, bộ lọc hoặc trạng thái đơn.',
+    },
+    orderDetail: {
+      products: 'Sản phẩm',
+      history: 'Lịch sử',
+      subtotal: 'Tạm tính',
+      discount: 'Giảm giá',
+      tax: 'Thuế',
+      shipping: 'Vận chuyển',
+      free: 'Miễn phí',
+      total: 'Tổng cộng',
+      eventLog: 'Nhật ký thay đổi',
+      orderCreatedAt: 'Đơn hàng tạo lúc',
+      deliveryMethodLabel: 'Hình thức nhận hàng:',
+      deliveryStatusLabel: 'Trạng thái giao hàng:',
+      paymentStatusLabel: 'Trạng thái thanh toán:',
+      paymentMethodLabel: 'Phương thức thanh toán:',
+      eventActorCustomer: 'Khách',
+      eventActorAdmin: 'Admin',
+      eventActorSystem: 'Hệ thống',
+      customerNotes: 'Ghi chú khách hàng',
+      updateOrder: 'Cập nhật đơn',
+      returnRequestTitle: 'Yêu cầu trả hàng',
+      returnReason: 'Lý do:',
+      returnNotes: 'Chi tiết:',
+      returnRequestedAt: 'Gửi lúc',
+      returnPending: 'Đơn hàng đang có yêu cầu trả hàng. Vui lòng duyệt hoặc từ chối trước khi chỉnh sửa trạng thái.',
+      approveReturn: 'Duyệt trả hàng',
+      rejectReturn: 'Từ chối trả hàng',
+      processing: 'Đang xử lý...',
+      rejectReasonLabel: 'Lý do từ chối',
+      rejectReasonRequired: '(bắt buộc)',
+      rejectReasonPlaceholder: 'Nhập lý do từ chối yêu cầu trả hàng...',
+      cancelReject: 'Hủy',
+      confirmReject: 'Xác nhận từ chối',
+      payment: 'Thanh toán',
+      paymentPending: 'Chờ thanh toán',
+      paymentPaid: 'Đã thanh toán',
+      paymentRefunded: 'Đã hoàn tiền',
+      delivery: 'Giao hàng',
+      deliveryUnfulfilled: 'Chưa xử lý',
+      deliveryPacking: 'Đang đóng gói',
+      deliveryReady: 'Sẵn sàng giao',
+      deliveryInTransit: 'Đang giao hàng',
+      deliveryDelivered: 'Đã giao',
+      deliveryCancelled: 'Đã hủy',
+      deliveryReturned: 'Trả hàng',
+      deliveryFailed: 'Giao thất bại',
+      shippingPartner: 'Đơn vị vận chuyển',
+      selectCarrier: 'Chọn đơn vị',
+      trackingLabel: 'Mã vận đơn',
+      openTracking: 'Mở trang tra cứu vận đơn',
+      saveChanges: 'Lưu thay đổi',
+      markCarrierPickup: 'Đơn vị vận chuyển đã lấy hàng',
+      codSupport: 'Hỗ trợ COD',
+      customer: 'Khách hàng',
+      riskAssessment: 'Đánh giá rủi ro',
+      lowRisk: 'Rủi ro thấp · Thông tin thanh toán và giao hàng hợp lệ.',
+    },
+    dashboard: {
+      overviewLabel: 'Tổng quan cửa hàng',
+      greeting: 'Chào buổi chiều, LyLy.',
+      workspaceLabel: 'LyLy market workspace',
+      workspaceTitle: 'Bạn đã có sản phẩm để bán.\nBạn muốn làm gì tiếp theo?',
+      workspaceCopy: 'Hoàn thiện cửa hàng và theo dõi các công việc vận hành hằng ngày.',
+      setupLabel: 'Bắt đầu nhanh',
+      setupTitle: 'Thiết lập cửa hàng LyLy',
+      setupCount: (done, total) => `${done}/${total} hoàn thành`,
+      setupCards: {
+        theme: { title: 'Chọn thiết kế cửa hàng', copy: 'Chỉnh storefront phù hợp với thương hiệu và các mùa bán hàng.', button: 'Xem giao diện' },
+        payment: { title: 'Thiết lập thanh toán', copy: 'Cho phép khách hàng thanh toán đơn hàng an toàn và thuận tiện.', button: 'Kích hoạt thanh toán' },
+        name: { title: 'Đặt tên cửa hàng', copy: 'Hiển thị thông tin nhất quán trong email và khi thanh toán.', button: 'Kiểm tra tên' },
+        domain: { title: 'Sở hữu tên miền riêng', copy: 'Tạo URL mang thương hiệu để khách hàng dễ nhớ hơn.', button: 'Thiết lập miền' },
+        delivery: { title: 'Xem lại phí vận chuyển', copy: 'Kiểm tra mức phí theo địa điểm và giá trị đơn hàng.', button: 'Xem lại phí' },
+      },
+      setupDone: 'Đã hoàn tất',
+      recentOrdersLabel: 'Hôm nay',
+      recentOrdersTitle: 'Đơn hàng gần đây',
+      viewAll: 'Xem tất cả',
+      revenueLabel: '7 ngày qua',
+      revenueTitle: 'Tóm tắt doanh thu',
+      revenueCompare: '+18.6% so với tuần trước',
+      assistantPlaceholder: 'Hỏi trợ lý LyLy về cửa hàng của bạn',
+      assistantReply: 'Tôi đã ghi nhận. Bạn có thể bắt đầu bằng việc cập nhật banner theo mùa và kiểm tra tồn kho sản phẩm bán chạy.',
+    },
+    csvErrors: {
+      noData: 'File CSV không có dữ liệu.',
+      missingColumns: (cols) => `CSV cần có các cột: ${cols}.`,
+      emptySku: (row) => `Dòng ${row}: SKU không được để trống.`,
+      emptyName: (row) => `Dòng ${row}: tên sản phẩm không được để trống.`,
+      categoryNotFound: (row, cat) => `Dòng ${row}: danh mục "${cat}" không tồn tại.`,
+      invalidPrice: (row) => `Dòng ${row}: giá bán không hợp lệ.`,
+      invalidStock: (row) => `Dòng ${row}: tồn kho không hợp lệ.`,
+      invalidStatus: (row) => `Dòng ${row}: trạng thái phải là active hoặc draft.`,
+      emptyUnit: (row) => `Dòng ${row}: quy cách không được để trống.`,
+      invalidOldPrice: (row) => `Dòng ${row}: giá trước giảm phải lớn hơn hoặc bằng giá bán.`,
+    },
+    customersPage: {
+      addCustomer: 'Thêm khách hàng',
+      tabAll: 'Tất cả',
+      tabReturning: 'Khách quay lại',
+      tabEmail: 'Có email',
+      tabBlocked: 'Bị khóa',
+      searchPlaceholder: 'Tìm tên, email, điện thoại hoặc địa điểm',
+      segment: 'Phân khúc',
+      bulkSelected: (n) => `${n} khách đã chọn`,
+      deleteSelected: 'Xóa đã chọn',
+      colCustomer: 'Khách hàng',
+      colPhone: 'Số điện thoại',
+      colLocation: 'Địa điểm',
+      colJoined: 'Ngày đăng ký',
+      colStatus: 'Trạng thái',
+      colOrders: 'Đơn hàng',
+      colSpent: 'Đã chi tiêu',
+      viewTitle: 'Xem',
+      editTitle: 'Sửa',
+      deleteTitle: 'Xóa',
+      emptyTitle: 'Không tìm thấy khách hàng',
+      emptyCopy: 'Thử đổi từ khóa hoặc tạo khách hàng mới.',
+    },
+    discountsPage: {
+      createDiscount: 'Tạo mã giảm giá',
+      metricRevenue: 'Doanh số từ ưu đãi',
+      metricRevenuePeriod: 'Trong 30 ngày qua',
+      metricActive: 'Mã đang hoạt động',
+      metricActiveNote: (n) => `${n} mã đã tạo`,
+      metricUsage: 'Lượt sử dụng',
+      metricUsageNote: 'Tổng lượt ghi nhận',
+      tabAll: 'Tất cả',
+      tabActive: 'Đang hoạt động',
+      tabScheduled: 'Đã lên lịch',
+      tabExpired: 'Đã hết hạn',
+      tabDraft: 'Bản nháp',
+      searchPlaceholder: 'Tìm kiếm mã giảm giá',
+      colCode: 'Mã',
+      colType: 'Loại',
+      colValue: 'Giá trị',
+      colStatus: 'Trạng thái',
+      colUses: 'Lượt dùng',
+      colEnds: 'Kết thúc',
+      viewTitle: 'Xem chi tiết',
+      editTitle: 'Sửa',
+      deleteTitle: 'Xóa',
+      emptyTitle: 'Không tìm thấy mã giảm giá',
+      emptyCopy: 'Thử đổi từ khóa tìm kiếm hoặc tạo mã mới.',
+    },
+    contentPage: {
+      createRecipe: 'Tạo recipe mới',
+      createBlog: 'Tạo bài blog mới',
+      createArticle: 'Viết bài mới',
+      tabAll: 'Tất cả',
+      tabPublished: 'Hiển thị',
+      tabDraft: 'Đã ẩn',
+      searchPlaceholder: 'Tìm bài viết, tác giả, thẻ',
+      editButton: 'Sửa',
+    },
   },
   en: {
     code: 'EN',
@@ -458,6 +749,297 @@ const adminI18n = {
       noSelectionTitle: 'No product selected',
       noSelectionCopy: 'Select at least one product in the list before using Delete selected.',
       understood: 'Got it',
+    },
+    confirmDelete: {
+      cancel: 'Cancel',
+      deleting: 'Deleting...',
+    },
+    csvImport: {
+      title: 'Import products via CSV',
+      description: 'Download the CSV template, fill in data per column, then upload the file to create or update products by SKU.',
+      requiredColumns: 'Required columns: sku, name, category, price, stock, unit.',
+      statusValues: 'Status only accepts: active or draft.',
+      imageNote: 'Additional images: enter multiple URLs separated by | in the images column.',
+      variantsNote: 'Options and variants use JSON; if not using variants, leave as [].',
+      downloadTemplate: 'Download template',
+      chooseFile: 'Choose CSV file',
+    },
+    categories: {
+      addCategory: 'Add category',
+      searchPlaceholder: 'Search categories',
+      filters: 'Filters',
+      rootCategory: 'Root category',
+      allCategories: 'All categories',
+      statusAll: 'All',
+      statusActive: 'Active',
+      statusHidden: 'Hidden',
+      homepageAll: 'All',
+      homepageYes: 'Showing',
+      homepageNo: 'Not showing',
+      clearFilters: 'Clear filters',
+      apply: 'Apply',
+      selectedCount: (n) => `${n} categories selected`,
+      activate: 'Activate',
+      deactivate: 'Deactivate',
+      deleteSelected: 'Delete selected',
+      colCategory: 'Category',
+      colStatus: 'Status',
+      colProducts: 'Products',
+      colMenuOrder: 'Menu order',
+      colHomeOrder: 'Home order',
+      colMenu: 'Menu',
+      colHome: 'Home',
+      hideCategory: 'Hide category',
+      showCategory: 'Show category',
+      emptyTitle: 'No categories found',
+      emptyCopy: 'Try changing the keyword or add a new category.',
+      cannotDeleteWithChildren: (name) => `Cannot delete "${name}" because it has subcategories.\nPlease move or delete the subcategories first.`,
+    },
+    orders: {
+      exportAction: 'Export orders',
+      metricTotal: 'Total orders',
+      metricTotalNote: (n) => `${n} orders being processed`,
+      metricUnpaid: 'Awaiting payment',
+      metricUnpaidNote: 'Follow up before packing',
+      metricRevenue: 'Net revenue',
+      metricRevenueNote: (n) => `${n} delivered · paid orders only`,
+      tabAll: 'All',
+      tabOpen: 'Processing',
+      tabUnpaid: 'Unpaid',
+      tabFulfilled: 'Delivered',
+      tabReturnRequested: 'Return request',
+      tabCancelled: 'Cancelled',
+      tabReturned: 'Returned / Refunded',
+      tabFailed: 'Delivery failed',
+      searchPlaceholder: 'Search by order number, customer, email, phone or tracking ID',
+      sortNewest: 'Newest',
+      sortTotalDesc: 'Highest total',
+      sortTotalAsc: 'Lowest total',
+      filtersButton: 'Filters',
+      exportButton: 'Export',
+      bulkSelected: (n) => `${n} orders selected`,
+      bulkPaid: 'Mark as paid',
+      bulkPacking: 'Packing',
+      bulkReady: 'Ready',
+      bulkInTransit: 'In transit',
+      bulkDelivered: 'Delivered',
+      bulkReturned: 'Returned',
+      bulkPrint: 'Print labels',
+      bulkCancel: 'Cancel orders',
+      filterPayment: 'Payment',
+      filterDelivery: 'Delivery',
+      filterShipping: 'Shipping partner',
+      filterPriceRange: 'Order value',
+      filterFrom: 'From',
+      filterTo: 'To',
+      clearFilters: 'Clear filters',
+      paymentAll: 'All',
+      paymentPending: 'Awaiting payment',
+      paymentPaid: 'Paid',
+      paymentRefunded: 'Refunded',
+      deliveryAll: 'All',
+      deliveryUnfulfilled: 'Unfulfilled',
+      deliveryPacking: 'Packing',
+      deliveryReady: 'Ready',
+      deliveryInTransit: 'In transit',
+      deliveryDelivered: 'Delivered',
+      deliveryCancelled: 'Cancelled',
+      deliveryReturned: 'Returned',
+      deliveryFailed: 'Delivery failed',
+      shippingAll: 'All',
+      colOrder: 'Order',
+      colDate: 'Date',
+      colCustomer: 'Customer',
+      colStatus: 'Status',
+      colPaymentMethod: 'Payment method',
+      colPaymentStatus: 'Payment status',
+      colDeliveryStatus: 'Delivery status',
+      colShipping: 'Shipping',
+      colTotal: 'Total',
+      viewOrder: 'View order',
+      carrierPickupTitle: 'Carrier has picked up',
+      bucketLabels: {
+        return_requested: 'Return requested',
+        returned: 'Returned / Refunded',
+        delivered: 'Delivered',
+        cancelled: 'Cancelled',
+        failed: 'Delivery failed',
+        unpaid: 'Unpaid',
+        transit: 'In transit',
+        open: 'Processing',
+      },
+      paymentStatusLabel: { Pending: 'Awaiting payment', Paid: 'Paid', Refunded: 'Refunded' },
+      deliveryLabels: {
+        Unfulfilled: 'Unfulfilled',
+        Packing: 'Packing',
+        Ready: 'Ready',
+        'In Transit': 'In transit',
+        Delivered: 'Delivered',
+        Cancelled: 'Cancelled',
+        Returned: 'Returned',
+        'Failed Delivery': 'Delivery failed',
+      },
+      returnRequestedBadge: 'Return requested',
+      notFound: (id) => `Order ${id} not found.`,
+      updated: (id) => `${id} has been updated.`,
+      updateError: (id) => `Unable to update ${id}. This status is not supported — please contact admin to apply DB migration.`,
+      bulkUpdated: (n) => `${n} orders updated.`,
+      emptyTitle: 'No orders found',
+      emptyCopy: 'Try changing keyword, filters or tab.',
+    },
+    orderDetail: {
+      products: 'Products',
+      history: 'History',
+      subtotal: 'Subtotal',
+      discount: 'Discount',
+      tax: 'Tax',
+      shipping: 'Shipping',
+      free: 'Free',
+      total: 'Total',
+      eventLog: 'Change log',
+      orderCreatedAt: 'Order created at',
+      deliveryMethodLabel: 'Delivery method:',
+      deliveryStatusLabel: 'Delivery status:',
+      paymentStatusLabel: 'Payment status:',
+      paymentMethodLabel: 'Payment method:',
+      eventActorCustomer: 'Customer',
+      eventActorAdmin: 'Admin',
+      eventActorSystem: 'System',
+      customerNotes: 'Customer notes',
+      updateOrder: 'Update order',
+      returnRequestTitle: 'Return request',
+      returnReason: 'Reason:',
+      returnNotes: 'Notes:',
+      returnRequestedAt: 'Submitted at',
+      returnPending: 'This order has a return request. Please approve or reject before editing status.',
+      approveReturn: 'Approve return',
+      rejectReturn: 'Reject return',
+      processing: 'Processing...',
+      rejectReasonLabel: 'Rejection reason',
+      rejectReasonRequired: '(required)',
+      rejectReasonPlaceholder: 'Enter reason for rejecting the return request...',
+      cancelReject: 'Cancel',
+      confirmReject: 'Confirm rejection',
+      payment: 'Payment',
+      paymentPending: 'Awaiting payment',
+      paymentPaid: 'Paid',
+      paymentRefunded: 'Refunded',
+      delivery: 'Delivery',
+      deliveryUnfulfilled: 'Unfulfilled',
+      deliveryPacking: 'Packing',
+      deliveryReady: 'Ready',
+      deliveryInTransit: 'In Transit',
+      deliveryDelivered: 'Delivered',
+      deliveryCancelled: 'Cancelled',
+      deliveryReturned: 'Returned',
+      deliveryFailed: 'Failed Delivery',
+      shippingPartner: 'Shipping partner',
+      selectCarrier: 'Select carrier',
+      trackingLabel: 'Tracking ID',
+      openTracking: 'Open tracking link',
+      saveChanges: 'Save changes',
+      markCarrierPickup: 'Carrier has picked up',
+      codSupport: 'Supports COD',
+      customer: 'Customer',
+      riskAssessment: 'Risk assessment',
+      lowRisk: 'Low risk · Payment and delivery information valid.',
+    },
+    dashboard: {
+      overviewLabel: 'Store overview',
+      greeting: 'Good afternoon, LyLy.',
+      workspaceLabel: 'LyLy market workspace',
+      workspaceTitle: 'You have products to sell.\nWhat would you like to do next?',
+      workspaceCopy: 'Complete your store and track daily operational tasks.',
+      setupLabel: 'Quick start',
+      setupTitle: 'Set up LyLy store',
+      setupCount: (done, total) => `${done}/${total} completed`,
+      setupCards: {
+        theme: { title: 'Choose store design', copy: 'Customize the storefront to match your brand and seasonal sales.', button: 'View themes' },
+        payment: { title: 'Set up payments', copy: 'Allow customers to pay for orders safely and conveniently.', button: 'Activate payments' },
+        name: { title: 'Set store name', copy: 'Display consistent information in emails and at checkout.', button: 'Check name' },
+        domain: { title: 'Own a custom domain', copy: 'Create a branded URL that customers will remember.', button: 'Set up domain' },
+        delivery: { title: 'Review shipping rates', copy: 'Check rates by location and order value.', button: 'Review rates' },
+      },
+      setupDone: 'Done',
+      recentOrdersLabel: 'Today',
+      recentOrdersTitle: 'Recent orders',
+      viewAll: 'View all',
+      revenueLabel: 'Last 7 days',
+      revenueTitle: 'Revenue summary',
+      revenueCompare: '+18.6% vs. last week',
+      assistantPlaceholder: 'Ask LyLy assistant about your store',
+      assistantReply: 'Noted. You can start by updating the seasonal banner and checking inventory for best-selling products.',
+    },
+    csvErrors: {
+      noData: 'CSV file has no data.',
+      missingColumns: (cols) => `CSV must have columns: ${cols}.`,
+      emptySku: (row) => `Row ${row}: SKU cannot be empty.`,
+      emptyName: (row) => `Row ${row}: product name cannot be empty.`,
+      categoryNotFound: (row, cat) => `Row ${row}: category "${cat}" does not exist.`,
+      invalidPrice: (row) => `Row ${row}: price is invalid.`,
+      invalidStock: (row) => `Row ${row}: inventory is invalid.`,
+      invalidStatus: (row) => `Row ${row}: status must be active or draft.`,
+      emptyUnit: (row) => `Row ${row}: unit cannot be empty.`,
+      invalidOldPrice: (row) => `Row ${row}: compare-at price must be greater than or equal to price.`,
+    },
+    customersPage: {
+      addCustomer: 'Add customer',
+      tabAll: 'All',
+      tabReturning: 'Returning',
+      tabEmail: 'Has email',
+      tabBlocked: 'Blocked',
+      searchPlaceholder: 'Search by name, email, phone or location',
+      segment: 'Segment',
+      bulkSelected: (n) => `${n} customers selected`,
+      deleteSelected: 'Delete selected',
+      colCustomer: 'Customer',
+      colPhone: 'Phone',
+      colLocation: 'Location',
+      colJoined: 'Joined',
+      colStatus: 'Status',
+      colOrders: 'Orders',
+      colSpent: 'Spent',
+      viewTitle: 'View',
+      editTitle: 'Edit',
+      deleteTitle: 'Delete',
+      emptyTitle: 'No customers found',
+      emptyCopy: 'Try changing the search or add a new customer.',
+    },
+    discountsPage: {
+      createDiscount: 'Create discount',
+      metricRevenue: 'Revenue from discounts',
+      metricRevenuePeriod: 'Last 30 days',
+      metricActive: 'Active codes',
+      metricActiveNote: (n) => `${n} codes created`,
+      metricUsage: 'Total uses',
+      metricUsageNote: 'Total recorded',
+      tabAll: 'All',
+      tabActive: 'Active',
+      tabScheduled: 'Scheduled',
+      tabExpired: 'Expired',
+      tabDraft: 'Draft',
+      searchPlaceholder: 'Search discount codes',
+      colCode: 'Code',
+      colType: 'Type',
+      colValue: 'Value',
+      colStatus: 'Status',
+      colUses: 'Uses',
+      colEnds: 'Ends',
+      viewTitle: 'View details',
+      editTitle: 'Edit',
+      deleteTitle: 'Delete',
+      emptyTitle: 'No discount codes found',
+      emptyCopy: 'Try a different search or create a new code.',
+    },
+    contentPage: {
+      createRecipe: 'New recipe',
+      createBlog: 'New blog post',
+      createArticle: 'New article',
+      tabAll: 'All',
+      tabPublished: 'Published',
+      tabDraft: 'Draft',
+      searchPlaceholder: 'Search articles, authors, tags',
+      editButton: 'Edit',
     },
   },
 }
@@ -642,14 +1224,14 @@ function parseCsv(text) {
   return rows
 }
 
-function productsFromCsv(text, categories, products) {
+function productsFromCsv(text, categories, products, csvErr = adminI18n.vi.csvErrors) {
   const [headerRow, ...dataRows] = parseCsv(text.replace(/^\uFEFF/, ''))
-  if (!headerRow) throw new Error('File CSV không có dữ liệu.')
+  if (!headerRow) throw new Error(csvErr.noData)
 
   const headers = headerRow.map((header) => header.trim().toLowerCase())
   const required = ['sku', 'name', 'category', 'price', 'stock', 'unit']
   if (required.some((column) => !headers.includes(column))) {
-    throw new Error(`CSV cần có các cột: ${required.join(', ')}.`)
+    throw new Error(csvErr.missingColumns(required.join(', ')))
   }
 
   const categoryNames = new Set(categories.map((category) => category.name))
@@ -663,14 +1245,14 @@ function productsFromCsv(text, categories, products) {
     const status = field(row, 'status') || existing?.status || 'draft'
     const oldPriceValue = field(row, 'old_price')
 
-    if (!sku) throw new Error(`Dòng ${index + 2}: SKU không được để trống.`)
-    if (!field(row, 'name')) throw new Error(`Dòng ${index + 2}: tên sản phẩm không được để trống.`)
-    if (!categoryNames.has(category)) throw new Error(`Dòng ${index + 2}: danh mục "${category}" không tồn tại.`)
-    if (!Number.isFinite(price) || price < 0) throw new Error(`Dòng ${index + 2}: giá bán không hợp lệ.`)
-    if (!Number.isInteger(stock) || stock < 0) throw new Error(`Dòng ${index + 2}: tồn kho không hợp lệ.`)
-    if (!['active', 'draft'].includes(status)) throw new Error(`Dòng ${index + 2}: trạng thái phải là active hoặc draft.`)
-    if (!field(row, 'unit')) throw new Error(`Dòng ${index + 2}: quy cách không được để trống.`)
-    if (oldPriceValue && (!Number.isFinite(Number(oldPriceValue)) || Number(oldPriceValue) < price)) throw new Error(`Dòng ${index + 2}: giá trước giảm phải lớn hơn hoặc bằng giá bán.`)
+    if (!sku) throw new Error(csvErr.emptySku(index + 2))
+    if (!field(row, 'name')) throw new Error(csvErr.emptyName(index + 2))
+    if (!categoryNames.has(category)) throw new Error(csvErr.categoryNotFound(index + 2, category))
+    if (!Number.isFinite(price) || price < 0) throw new Error(csvErr.invalidPrice(index + 2))
+    if (!Number.isInteger(stock) || stock < 0) throw new Error(csvErr.invalidStock(index + 2))
+    if (!['active', 'draft'].includes(status)) throw new Error(csvErr.invalidStatus(index + 2))
+    if (!field(row, 'unit')) throw new Error(csvErr.emptyUnit(index + 2))
+    if (oldPriceValue && (!Number.isFinite(Number(oldPriceValue)) || Number(oldPriceValue) < price)) throw new Error(csvErr.invalidOldPrice(index + 2))
 
     return {
       ...existing,
@@ -801,8 +1383,10 @@ function EmptyHint({ icon: Icon, title, copy }) {
   return <div className="empty-hint"><Icon size={33} /><h3>{title}</h3><p>{copy}</p></div>
 }
 
-function ConfirmDeleteModal({ title, message, confirmLabel = 'Xóa', onCancel, onConfirm }) {
+function ConfirmDeleteModal({ title, message, confirmLabel, onCancel, onConfirm, copy = adminI18n.vi }) {
   const [submitting, setSubmitting] = useState(false)
+  const cd = copy.confirmDelete
+  const label = confirmLabel ?? copy.productsPage.deleteOneConfirm
   const confirm = async () => {
     setSubmitting(true)
     await onConfirm()
@@ -815,43 +1399,45 @@ function ConfirmDeleteModal({ title, message, confirmLabel = 'Xóa', onCancel, o
         <Trash2 size={34} />
         <p>{message}</p>
         <div className="modal-actions">
-          <button className="admin-secondary" type="button" disabled={submitting} onClick={onCancel}>Hủy</button>
-          <button className="product-danger" type="button" disabled={submitting} onClick={confirm}>{submitting ? 'Đang xóa...' : confirmLabel}</button>
+          <button className="admin-secondary" type="button" disabled={submitting} onClick={onCancel}>{cd.cancel}</button>
+          <button className="product-danger" type="button" disabled={submitting} onClick={confirm}>{submitting ? cd.deleting : label}</button>
         </div>
       </div>
     </Modal>
   )
 }
 
-function CsvImportGuideModal({ categories, onClose, onChooseFile }) {
+function CsvImportGuideModal({ categories, onClose, onChooseFile, copy = adminI18n.vi }) {
+  const ci = copy.csvImport
   return (
-    <Modal title="Nhập sản phẩm bằng CSV" onClose={onClose}>
+    <Modal title={ci.title} onClose={onClose}>
       <div className="csv-guide">
-        <p>Tải template CSV, điền dữ liệu theo đúng cột rồi upload lại file để tạo hoặc cập nhật sản phẩm theo SKU.</p>
+        <p>{ci.description}</p>
         <ul>
-          <li>Các cột bắt buộc: sku, name, category, price, stock, unit.</li>
-          <li>Trạng thái chỉ nhận active hoặc draft.</li>
-          <li>Ảnh phụ nhập nhiều URL bằng dấu | trong cột images.</li>
-          <li>Options và variants dùng JSON; nếu chưa dùng biến thể hãy để [].</li>
+          <li>{ci.requiredColumns}</li>
+          <li>{ci.statusValues}</li>
+          <li>{ci.imageNote}</li>
+          <li>{ci.variantsNote}</li>
         </ul>
         <div className="modal-actions">
-          <button className="admin-secondary" type="button" onClick={() => downloadProductsCsvTemplate(categories)}><Download size={14} /> Tải template</button>
-          <button className="admin-primary" type="button" onClick={onChooseFile}><Upload size={14} /> Chọn file CSV</button>
+          <button className="admin-secondary" type="button" onClick={() => downloadProductsCsvTemplate(categories)}><Download size={14} /> {ci.downloadTemplate}</button>
+          <button className="admin-primary" type="button" onClick={onChooseFile}><Upload size={14} /> {ci.chooseFile}</button>
         </div>
       </div>
     </Modal>
   )
 }
 
-function Dashboard({ tasks, setTasks, orders }) {
+function Dashboard({ tasks, setTasks, orders, copy = adminI18n.vi }) {
   const [assistantText, setAssistantText] = useState('')
   const [assistantReply, setAssistantReply] = useState('')
   const toggleTask = (id) => setTasks((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])
+  const db = copy.dashboard
 
   const submitAssistant = (event) => {
     event.preventDefault()
     if (!assistantText.trim()) return
-    setAssistantReply('Tôi đã ghi nhận. Bạn có thể bắt đầu bằng việc cập nhật banner theo mùa và kiểm tra tồn kho sản phẩm bán chạy.')
+    setAssistantReply(db.assistantReply)
     setAssistantText('')
   }
 
@@ -859,53 +1445,53 @@ function Dashboard({ tasks, setTasks, orders }) {
     <div className="dashboard-page">
       <div className="dashboard-topline">
         <div>
-          <p className="admin-eyebrow">Tổng quan cửa hàng</p>
-          <h1>Chào buổi chiều, LyLy.</h1>
+          <p className="admin-eyebrow">{db.overviewLabel}</p>
+          <h1>{db.greeting}</h1>
         </div>
         <div className="admin-date"><CalendarDays size={16} /> 02 Jun 2026 <ChevronDown size={14} /></div>
       </div>
 
       <section className="dashboard-hero">
         <div className="dashboard-hero-copy">
-          <span><Sparkles size={14} /> LyLy market workspace</span>
-          <h2>Bạn đã có sản phẩm để bán.<br />Bạn muốn làm gì tiếp theo?</h2>
-          <p>Hoàn thiện cửa hàng và theo dõi các công việc vận hành hằng ngày.</p>
+          <span><Sparkles size={14} /> {db.workspaceLabel}</span>
+          <h2>{db.workspaceTitle.split('\n').map((line, i) => i === 0 ? line : <>{line}</>).reduce((acc, line, i) => i === 0 ? [line] : [...acc, <br key={i} />, line], [])}</h2>
+          <p>{db.workspaceCopy}</p>
         </div>
         <img src="/images/lyly-hero.png" alt="" />
       </section>
 
       <form className="assistant-bar" onSubmit={submitAssistant}>
         <Bot size={20} />
-        <input value={assistantText} onChange={(event) => setAssistantText(event.target.value)} placeholder="Hỏi trợ lý LyLy về cửa hàng của bạn" />
+        <input value={assistantText} onChange={(event) => setAssistantText(event.target.value)} placeholder={db.assistantPlaceholder} />
         <button type="submit" aria-label="Send prompt"><Send size={17} /></button>
       </form>
       {assistantReply && <div className="assistant-reply"><Bot size={17} /><p>{assistantReply}</p><button type="button" onClick={() => setAssistantReply('')}><X size={15} /></button></div>}
 
       <div className="dashboard-section-heading">
-        <div><p className="admin-eyebrow">Bắt đầu nhanh</p><h2>Thiết lập cửa hàng LyLy</h2></div>
-        <span>{tasks.length}/5 hoàn thành</span>
+        <div><p className="admin-eyebrow">{db.setupLabel}</p><h2>{db.setupTitle}</h2></div>
+        <span>{db.setupCount(tasks.length, 5)}</span>
       </div>
       <section className="setup-grid">
-        <SetupCard id="theme" tasks={tasks} onToggle={toggleTask} wide title="Chọn thiết kế cửa hàng" copy="Chỉnh storefront phù hợp với thương hiệu và các mùa bán hàng." button="Xem giao diện">
+        <SetupCard id="theme" tasks={tasks} onToggle={toggleTask} wide title={db.setupCards.theme.title} copy={db.setupCards.theme.copy} button={db.setupCards.theme.button} done={db.setupDone}>
           <div className="setup-theme-visual"><Image size={36} /><span>Aa</span><i></i></div>
         </SetupCard>
-        <SetupCard id="payment" tasks={tasks} onToggle={toggleTask} wide title="Thiết lập thanh toán" copy="Cho phép khách hàng thanh toán đơn hàng an toàn và thuận tiện." button="Kích hoạt thanh toán">
+        <SetupCard id="payment" tasks={tasks} onToggle={toggleTask} wide title={db.setupCards.payment.title} copy={db.setupCards.payment.copy} button={db.setupCards.payment.button} done={db.setupDone}>
           <div className="setup-payment-visual"><b>VISA</b><b>Pay</b><b>••</b></div>
         </SetupCard>
-        <SetupCard id="name" tasks={tasks} onToggle={toggleTask} title="Đặt tên cửa hàng" copy="Hiển thị thông tin nhất quán trong email và khi thanh toán." button="Kiểm tra tên">
+        <SetupCard id="name" tasks={tasks} onToggle={toggleTask} title={db.setupCards.name.title} copy={db.setupCards.name.copy} button={db.setupCards.name.button} done={db.setupDone}>
           <div className="setup-mini-visual"><Store size={48} /></div>
         </SetupCard>
-        <SetupCard id="domain" tasks={tasks} onToggle={toggleTask} title="Sở hữu tên miền riêng" copy="Tạo URL mang thương hiệu để khách hàng dễ nhớ hơn." button="Thiết lập miền">
+        <SetupCard id="domain" tasks={tasks} onToggle={toggleTask} title={db.setupCards.domain.title} copy={db.setupCards.domain.copy} button={db.setupCards.domain.button} done={db.setupDone}>
           <div className="domain-visual"><Globe2 size={40} /><span>lylymarket.com</span></div>
         </SetupCard>
-        <SetupCard id="delivery" tasks={tasks} onToggle={toggleTask} title="Xem lại phí vận chuyển" copy="Kiểm tra mức phí theo địa điểm và giá trị đơn hàng." button="Xem lại phí">
+        <SetupCard id="delivery" tasks={tasks} onToggle={toggleTask} title={db.setupCards.delivery.title} copy={db.setupCards.delivery.copy} button={db.setupCards.delivery.button} done={db.setupDone}>
           <div className="setup-mini-visual"><Truck size={54} /></div>
         </SetupCard>
       </section>
 
       <section className="dashboard-lower-grid">
         <div className="admin-panel recent-orders">
-          <div className="panel-title"><div><p className="admin-eyebrow">Hôm nay</p><h2>Đơn hàng gần đây</h2></div><a href="/admin/orders">Xem tất cả <ArrowRight size={15} /></a></div>
+          <div className="panel-title"><div><p className="admin-eyebrow">{db.recentOrdersLabel}</p><h2>{db.recentOrdersTitle}</h2></div><a href="/admin/orders">{db.viewAll} <ArrowRight size={15} /></a></div>
           {orders.slice(0, 4).map((order) => (
             <div className="compact-order" key={order.id}>
               <div><b>{order.id}</b><small>{order.customer}</small></div>
@@ -915,9 +1501,9 @@ function Dashboard({ tasks, setTasks, orders }) {
           ))}
         </div>
         <div className="admin-panel sales-summary">
-          <div className="panel-title"><div><p className="admin-eyebrow">7 ngày qua</p><h2>Tóm tắt doanh thu</h2></div></div>
+          <div className="panel-title"><div><p className="admin-eyebrow">{db.revenueLabel}</p><h2>{db.revenueTitle}</h2></div></div>
           <strong>{money(2846.35)}</strong>
-          <p><ArrowUpRight size={15} /> 18.6% so với tuần trước</p>
+          <p><ArrowUpRight size={15} /> {db.revenueCompare}</p>
           <div className="mini-chart">{[34, 51, 46, 68, 59, 78, 91].map((height, index) => <i style={{ height: `${height}%` }} key={index} />)}</div>
         </div>
       </section>
@@ -925,7 +1511,7 @@ function Dashboard({ tasks, setTasks, orders }) {
   )
 }
 
-function SetupCard({ id, title, copy, button, children, wide, tasks, onToggle }) {
+function SetupCard({ id, title, copy, button, done = 'Done', children, wide, tasks, onToggle }) {
   const complete = tasks.includes(id)
   return (
     <article className={`setup-card ${wide ? 'wide' : ''} ${complete ? 'complete' : ''}`}>
@@ -934,7 +1520,7 @@ function SetupCard({ id, title, copy, button, children, wide, tasks, onToggle })
       </button>
       <div><h3>{title}</h3><p>{copy}</p></div>
       {children}
-      <button className="admin-secondary" type="button" onClick={() => onToggle(id)}>{complete ? 'Đã hoàn tất' : button}</button>
+      <button className="admin-secondary" type="button" onClick={() => onToggle(id)}>{complete ? done : button}</button>
     </article>
   )
 }
@@ -961,7 +1547,8 @@ function ProductsPage({ meta, categories, products, copy, onBulkEdit, onCreate, 
     stock: 'all',
   })
   const importInput = useRef(null)
-  const productCopy = copy || adminI18n.vi.productsPage
+  const productCopy = (copy?.productsPage ? copy.productsPage : copy) || adminI18n.vi.productsPage
+  const fullCopy = copy?.confirmDelete ? copy : adminI18n.vi
   const localizedCategory = (category) => categoryLabel(category, productCopy.lang)
   const filterOptions = (name) => [...new Set(products.map((product) => product[name]).filter(Boolean))].sort()
   const activeFilterCount = Object.entries(filters).filter(([name, value]) => name !== 'includeSubcategories' && value !== 'all').length
@@ -1038,7 +1625,7 @@ function ProductsPage({ meta, categories, products, copy, onBulkEdit, onCreate, 
     const file = event.target.files?.[0]
     if (!file) return
     try {
-      const imported = productsFromCsv(await file.text(), categories, products)
+      const imported = productsFromCsv(await file.text(), categories, products, fullCopy.csvErrors)
       await onImport(imported)
       setNotice(productCopy.imported(imported.length))
     } catch (error) {
@@ -1110,6 +1697,7 @@ function ProductsPage({ meta, categories, products, copy, onBulkEdit, onCreate, 
           confirmLabel={deleteRequest.ids.length > 1 ? productCopy.deleteManyConfirm : productCopy.deleteOneConfirm}
           onCancel={() => setDeleteRequest(null)}
           onConfirm={confirmRemove}
+          copy={fullCopy}
         />
       )}
       {selectionWarning && (
@@ -1123,13 +1711,13 @@ function ProductsPage({ meta, categories, products, copy, onBulkEdit, onCreate, 
           </div>
         </Modal>
       )}
-      {importGuideOpen && <CsvImportGuideModal categories={categories} onClose={() => setImportGuideOpen(false)} onChooseFile={() => { setImportGuideOpen(false); importInput.current?.click() }} />}
+      {importGuideOpen && <CsvImportGuideModal categories={categories} onClose={() => setImportGuideOpen(false)} onChooseFile={() => { setImportGuideOpen(false); importInput.current?.click() }} copy={fullCopy} />}
       {bulkOpen && <BulkProductEditor categories={categories} products={products.filter((product) => selected.includes(product.id))} onClose={() => setBulkOpen(false)} onSubmit={async (updates) => { await onBulkEdit(updates); setSelected([]); setBulkOpen(false) }} />}
     </>
   )
 }
 
-function CategoriesPage({ meta, categories, products, onCreate, onEdit, onRemove, onToggle }) {
+function CategoriesPage({ meta, categories, products, onCreate, onEdit, onRemove, onToggle, copy = adminI18n.vi }) {
   const [query, setQuery] = useState('')
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [filters, setFilters] = useState({ root: 'all', status: 'all', homepage: 'all', menu: 'all' })
@@ -1161,11 +1749,11 @@ function CategoriesPage({ meta, categories, products, onCreate, onEdit, onRemove
   const allSelected = allIds.length > 0 && allIds.every((id) => selected.includes(id))
   const toggleAll = () => setSelected(allSelected ? [] : allIds)
 
+  const cat = copy.categories
   const handleRemove = (category) => {
     const hasChildren = categories.some((c) => c.parentId === category.id)
     if (hasChildren) {
-      // Show error via onRemove with a flag — parent will handle
-      alert(`Không thể xóa "${category.name}" vì đang có danh mục con bên trong.\nVui lòng di chuyển hoặc xóa danh mục con trước.`)
+      alert(cat.cannotDeleteWithChildren(category.name))
       return
     }
     onRemove(category.id)
@@ -1188,40 +1776,40 @@ function CategoriesPage({ meta, categories, products, onCreate, onEdit, onRemove
 
   return (
     <>
-      <SectionTitle title={meta.categories[0]} description={meta.categories[1]} action="Thêm danh mục" onAction={onCreate} />
+      <SectionTitle title={meta.categories[0]} description={meta.categories[1]} action={cat.addCategory} onAction={onCreate} />
       <section className="admin-panel data-panel">
         <div className="table-toolbar category-toolbar">
-          <label><Search size={16} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Tìm kiếm danh mục" /></label>
-          <button className={activeFilterCount ? 'filter-active' : ''} type="button" onClick={() => setFiltersOpen(!filtersOpen)}><Filter size={15} /> Bộ lọc {activeFilterCount > 0 && <em>{activeFilterCount}</em>}</button>
+          <label><Search size={16} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={cat.searchPlaceholder} /></label>
+          <button className={activeFilterCount ? 'filter-active' : ''} type="button" onClick={() => setFiltersOpen(!filtersOpen)}><Filter size={15} /> {cat.filters} {activeFilterCount > 0 && <em>{activeFilterCount}</em>}</button>
         </div>
         {filtersOpen && (
           <div className="category-filter-panel">
-            <label><span>Danh mục gốc</span><select value={filters.root} onChange={(e) => setFilter('root', e.target.value)}><option value="all">Tất cả danh mục</option>{rootCategories.map((c) => <option value={c.id} key={c.id}>{c.name}</option>)}</select></label>
-            <label><span>Trạng thái</span><select value={filters.status} onChange={(e) => setFilter('status', e.target.value)}><option value="all">Tất cả</option><option value="active">Đang hoạt động</option><option value="draft">Tạm ẩn</option></select></label>
-            <label><span>Homepage</span><select value={filters.homepage} onChange={(e) => setFilter('homepage', e.target.value)}><option value="all">Tất cả</option><option value="yes">Có hiển thị</option><option value="no">Không hiển thị</option></select></label>
-            <label><span>Mega menu</span><select value={filters.menu} onChange={(e) => setFilter('menu', e.target.value)}><option value="all">Tất cả</option><option value="yes">Có hiển thị</option><option value="no">Không hiển thị</option></select></label>
-            <div className="category-filter-actions"><button className="admin-secondary" type="button" onClick={resetFilters}>Xóa lọc</button><button className="admin-primary" type="button" onClick={() => setFiltersOpen(false)}>Áp dụng</button></div>
+            <label><span>{cat.rootCategory}</span><select value={filters.root} onChange={(e) => setFilter('root', e.target.value)}><option value="all">{cat.allCategories}</option>{rootCategories.map((c) => <option value={c.id} key={c.id}>{c.name}</option>)}</select></label>
+            <label><span>{cat.colStatus}</span><select value={filters.status} onChange={(e) => setFilter('status', e.target.value)}><option value="all">{cat.statusAll}</option><option value="active">{cat.statusActive}</option><option value="draft">{cat.statusHidden}</option></select></label>
+            <label><span>Homepage</span><select value={filters.homepage} onChange={(e) => setFilter('homepage', e.target.value)}><option value="all">{cat.homepageAll}</option><option value="yes">{cat.homepageYes}</option><option value="no">{cat.homepageNo}</option></select></label>
+            <label><span>Mega menu</span><select value={filters.menu} onChange={(e) => setFilter('menu', e.target.value)}><option value="all">{cat.homepageAll}</option><option value="yes">{cat.homepageYes}</option><option value="no">{cat.homepageNo}</option></select></label>
+            <div className="category-filter-actions"><button className="admin-secondary" type="button" onClick={resetFilters}>{cat.clearFilters}</button><button className="admin-primary" type="button" onClick={() => setFiltersOpen(false)}>{cat.apply}</button></div>
           </div>
         )}
         {selected.length > 0 && (
           <div className="order-bulk-bar">
-            <span>{selected.length} danh mục đã chọn</span>
-            <button type="button" onClick={() => bulkToggle(true)}>Kích hoạt</button>
-            <button type="button" onClick={() => bulkToggle(false)}>Tạm ẩn</button>
-            <button className="danger-button" type="button" onClick={() => { selected.forEach((id) => { const cat = categories.find((c) => c.id === id); if (cat) handleRemove(cat) }); setSelected([]) }}>Xóa đã chọn</button>
+            <span>{cat.selectedCount(selected.length)}</span>
+            <button type="button" onClick={() => bulkToggle(true)}>{cat.activate}</button>
+            <button type="button" onClick={() => bulkToggle(false)}>{cat.deactivate}</button>
+            <button className="danger-button" type="button" onClick={() => { selected.forEach((id) => { const c = categories.find((x) => x.id === id); if (c) handleRemove(c) }); setSelected([]) }}>{cat.deleteSelected}</button>
           </div>
         )}
         <div className="admin-table-wrap">
           <table className="admin-table category-table">
             <thead><tr>
               <th><input type="checkbox" checked={allSelected} onChange={toggleAll} /></th>
-              <th>Danh mục</th>
-              <th>Trạng thái</th>
-              <th>Sản phẩm</th>
-              <th>Thứ tự Menu</th>
-              <th>Thứ tự Home</th>
-              <th>Menu</th>
-              <th>Home</th>
+              <th>{cat.colCategory}</th>
+              <th>{cat.colStatus}</th>
+              <th>{cat.colProducts}</th>
+              <th>{cat.colMenuOrder}</th>
+              <th>{cat.colHomeOrder}</th>
+              <th>{cat.colMenu}</th>
+              <th>{cat.colHome}</th>
               <th></th>
             </tr></thead>
             <tbody>
@@ -1239,29 +1827,29 @@ function CategoriesPage({ meta, categories, products, onCreate, onEdit, onRemove
                       <div><b>{row.name}</b><small>/{row.slug}</small></div>
                     </div>
                   </td>
-                  <td><StatusPill>{row.active ? 'Active' : 'Draft'}</StatusPill></td>
+                  <td><StatusPill>{row.active ? copy.product.active : copy.product.draft}</StatusPill></td>
                   <td><span className={aggregateProductCount(row) === 0 ? 'muted-dash' : ''}>{aggregateProductCount(row)}</span></td>
                   <td>{row.displayOrder}</td>
                   <td>{row.homeDisplayOrder ?? row.displayOrder}</td>
                   <td>{row.includeInMenu ? <span className="cat-check">✓</span> : <span className="muted-dash">—</span>}</td>
                   <td>{row.showOnHome ? <span className="cat-check">✓</span> : <span className="muted-dash">—</span>}</td>
                   <td><div className="row-actions">
-                    <button className="row-icon" type="button" onClick={() => onToggle(row)} title={row.active ? 'Ẩn danh mục' : 'Hiện danh mục'}><Eye size={15} /></button>
-                    <button className="row-icon" type="button" onClick={() => onEdit(row)} title="Sửa"><Pencil size={15} /></button>
-                    <button className="row-icon" type="button" onClick={() => handleRemove(row)} title="Xóa"><Trash2 size={15} /></button>
+                    <button className="row-icon" type="button" onClick={() => onToggle(row)} title={row.active ? cat.hideCategory : cat.showCategory}><Eye size={15} /></button>
+                    <button className="row-icon" type="button" onClick={() => onEdit(row)} title={copy.product.edit}><Pencil size={15} /></button>
+                    <button className="row-icon" type="button" onClick={() => handleRemove(row)} title={copy.confirmDelete.cancel}><Trash2 size={15} /></button>
                   </div></td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {!treeRows.length && <EmptyHint icon={Tag} title="Không tìm thấy danh mục" copy="Thử thay đổi từ khóa hoặc thêm danh mục mới." />}
+          {!treeRows.length && <EmptyHint icon={Tag} title={cat.emptyTitle} copy={cat.emptyCopy} />}
         </div>
       </section>
     </>
   )
 }
 
-function OrdersPage({ meta, orders, focusedOrderId = '', onFocusedOrderHandled, onUpdate, onBulkUpdate, shippingSettings = {} }) {
+function OrdersPage({ meta, orders, focusedOrderId = '', onFocusedOrderHandled, onUpdate, onBulkUpdate, shippingSettings = {}, copy = adminI18n.vi }) {
   const [query, setQuery] = useState('')
   const [tab, setTab] = useState('all')
   const [deliveryFilter, setDeliveryFilter] = useState('all')
@@ -1287,10 +1875,10 @@ function OrdersPage({ meta, orders, focusedOrderId = '', onFocusedOrderHandled, 
         onFocusedOrderHandled?.()
         return
       }
-      setNotice(`Không tìm thấy đơn hàng ${focusedOrderId}.`)
+      setNotice(ord.notFound(focusedOrderId))
       onFocusedOrderHandled?.()
     })
-  }, [focusedOrderId, orders, onFocusedOrderHandled])
+  }, [focusedOrderId, orders, onFocusedOrderHandled, ord])
 
   const visible = orders.filter((order) => {
     const text = `${order.id} ${order.customer} ${order.email || ''} ${order.phone || ''} ${order.location || ''} ${order.paymentMethod || ''} ${order.trackingId || ''}`.toLowerCase()
@@ -1331,21 +1919,22 @@ function OrdersPage({ meta, orders, focusedOrderId = '', onFocusedOrderHandled, 
     .filter((o) => o.payment === 'Paid' && !['Cancelled', 'Returned'].includes(o.delivery))
     .reduce((s, o) => s + o.total, 0)
 
+  const ord = copy.orders
   const toggleAll = () => setSelected(allSelected ? [] : visible.map((o) => o.id))
   const toggleSelected = (id) => setSelected((c) => c.includes(id) ? c.filter((i) => i !== id) : [...c, id])
   const updateOrder = async (order, changes) => {
     const updated = await onUpdate({ ...order, ...changes })
     if (!updated) {
-      setNotice(`Không thể cập nhật ${order.id}. Trạng thái này chưa được hỗ trợ — vui lòng liên hệ admin để apply DB migration.`)
+      setNotice(ord.updateError(order.id))
       return
     }
     setDetailOrder((current) => current?.id === updated.id ? updated : current)
-    setNotice(`${updated.id} đã được cập nhật.`)
+    setNotice(ord.updated(updated.id))
   }
   const bulkUpdate = async (changes) => {
     if (!selectedOrders.length) return
     await onBulkUpdate(selectedOrders.map((order) => ({ ...order, ...changes })))
-    setNotice(`Đã cập nhật ${selectedOrders.length} đơn hàng.`)
+    setNotice(ord.bulkUpdated(selectedOrders.length))
     setSelected([])
   }
   const printSelected = () => {
@@ -1358,87 +1947,87 @@ function OrdersPage({ meta, orders, focusedOrderId = '', onFocusedOrderHandled, 
 
   return (
     <>
-      <SectionTitle title={meta.orders[0]} description={meta.orders[1]} action="Xuất đơn hàng" onAction={() => downloadOrdersCsv(visible)} icon={Download} />
+      <SectionTitle title={meta.orders[0]} description={meta.orders[1]} action={ord.exportAction} onAction={() => downloadOrdersCsv(visible)} icon={Download} />
       <section className="metrics-grid">
-        <MetricCard label="Tổng đơn" value={orders.length} note={`${openCount} đơn đang xử lý`} />
-        <MetricCard label="Cần thanh toán" value={unpaidCount} note="Theo dõi trước khi đóng gói" />
-        <MetricCard label="Doanh thu thực" value={money(revenue)} note={`${deliveredCount} đơn đã giao • chỉ tính đơn Đã thanh toán`} />
+        <MetricCard label={ord.metricTotal} value={orders.length} note={ord.metricTotalNote(openCount)} />
+        <MetricCard label={ord.metricUnpaid} value={unpaidCount} note={ord.metricUnpaidNote} />
+        <MetricCard label={ord.metricRevenue} value={money(revenue)} note={ord.metricRevenueNote(deliveredCount)} />
       </section>
       {notice && <div className="product-notice"><span>{notice}</span><button type="button" onClick={() => setNotice('')}><X size={14} /></button></div>}
       <section className="admin-panel data-panel">
         <div className="data-tabs">
-          <button className={tab === 'all' ? 'active' : ''} type="button" onClick={() => setTab('all')}>Tất cả <em>{orders.length}</em></button>
-          <button className={tab === 'open' ? 'active' : ''} type="button" onClick={() => setTab('open')}>Đang xử lý <em>{openCount}</em></button>
-          <button className={tab === 'unpaid' ? 'active' : ''} type="button" onClick={() => setTab('unpaid')}>Chưa thanh toán <em>{unpaidCount}</em></button>
-          <button className={tab === 'fulfilled' ? 'active' : ''} type="button" onClick={() => setTab('fulfilled')}>Đã giao <em>{deliveredCount}</em></button>
-          {returnRequestedCount > 0 && <button className={`${tab === 'return_requested' ? 'active' : ''} tab-return-requested`} type="button" onClick={() => setTab('return_requested')}>Yêu cầu trả hàng <em>{returnRequestedCount}</em></button>}
-          {cancelledCount > 0 && <button className={tab === 'cancelled' ? 'active' : ''} type="button" onClick={() => setTab('cancelled')}>Đã hủy <em>{cancelledCount}</em></button>}
-          {returnedCount > 0 && <button className={tab === 'returned' ? 'active' : ''} type="button" onClick={() => setTab('returned')}>Trả hàng / Hoàn tiền <em>{returnedCount}</em></button>}
-          {failedCount > 0 && <button className={tab === 'failed' ? 'active' : ''} type="button" onClick={() => setTab('failed')}>Giao thất bại <em>{failedCount}</em></button>}
+          <button className={tab === 'all' ? 'active' : ''} type="button" onClick={() => setTab('all')}>{ord.tabAll} <em>{orders.length}</em></button>
+          <button className={tab === 'open' ? 'active' : ''} type="button" onClick={() => setTab('open')}>{ord.tabOpen} <em>{openCount}</em></button>
+          <button className={tab === 'unpaid' ? 'active' : ''} type="button" onClick={() => setTab('unpaid')}>{ord.tabUnpaid} <em>{unpaidCount}</em></button>
+          <button className={tab === 'fulfilled' ? 'active' : ''} type="button" onClick={() => setTab('fulfilled')}>{ord.tabFulfilled} <em>{deliveredCount}</em></button>
+          {returnRequestedCount > 0 && <button className={`${tab === 'return_requested' ? 'active' : ''} tab-return-requested`} type="button" onClick={() => setTab('return_requested')}>{ord.tabReturnRequested} <em>{returnRequestedCount}</em></button>}
+          {cancelledCount > 0 && <button className={tab === 'cancelled' ? 'active' : ''} type="button" onClick={() => setTab('cancelled')}>{ord.tabCancelled} <em>{cancelledCount}</em></button>}
+          {returnedCount > 0 && <button className={tab === 'returned' ? 'active' : ''} type="button" onClick={() => setTab('returned')}>{ord.tabReturned} <em>{returnedCount}</em></button>}
+          {failedCount > 0 && <button className={tab === 'failed' ? 'active' : ''} type="button" onClick={() => setTab('failed')}>{ord.tabFailed} <em>{failedCount}</em></button>}
         </div>
         <div className="table-toolbar">
-          <label><Search size={16} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Tìm mã đơn, khách hàng, email, SĐT hoặc mã vận đơn" /></label>
-          <select value={sort} onChange={(e) => setSort(e.target.value)}><option value="newest">Mới nhất</option><option value="total-desc">Tổng cao nhất</option><option value="total-asc">Tổng thấp nhất</option></select>
-          <button className={filterOpen ? 'filter-active' : ''} type="button" onClick={() => setFilterOpen(!filterOpen)}><Filter size={15} /> Bộ lọc</button>
-          <button type="button" onClick={() => downloadOrdersCsv(visible)}><Download size={15} /> Xuất</button>
+          <label><Search size={16} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={ord.searchPlaceholder} /></label>
+          <select value={sort} onChange={(e) => setSort(e.target.value)}><option value="newest">{ord.sortNewest}</option><option value="total-desc">{ord.sortTotalDesc}</option><option value="total-asc">{ord.sortTotalAsc}</option></select>
+          <button className={filterOpen ? 'filter-active' : ''} type="button" onClick={() => setFilterOpen(!filterOpen)}><Filter size={15} /> {ord.filtersButton}</button>
+          <button type="button" onClick={() => downloadOrdersCsv(visible)}><Download size={15} /> {ord.exportButton}</button>
         </div>
         {selected.length > 0 && (
           <div className="order-bulk-bar">
-            <span>{selected.length} đơn đã chọn</span>
-            <button type="button" onClick={() => bulkUpdate({ payment: 'Paid' })}>Đã thanh toán</button>
-            <button type="button" onClick={() => bulkUpdate({ delivery: 'Packing' })}>Đang đóng gói</button>
-            <button type="button" onClick={() => bulkUpdate({ delivery: 'Ready' })}>Sẵn sàng giao</button>
-            <button type="button" onClick={() => bulkUpdate({ delivery: 'In Transit' })}><Truck size={13} /> Đang giao hàng</button>
-            <button type="button" onClick={() => bulkUpdate({ delivery: 'Delivered' })}>Đã giao</button>
-            <button type="button" onClick={() => bulkUpdate({ delivery: 'Returned' })}>Trả hàng</button>
-            <button type="button" onClick={printSelected}><Printer size={13} /> In phiếu</button>
-            <button className="danger-button" type="button" onClick={() => bulkUpdate({ delivery: 'Cancelled' })}>Hủy đơn</button>
+            <span>{ord.bulkSelected(selected.length)}</span>
+            <button type="button" onClick={() => bulkUpdate({ payment: 'Paid' })}>{ord.bulkPaid}</button>
+            <button type="button" onClick={() => bulkUpdate({ delivery: 'Packing' })}>{ord.bulkPacking}</button>
+            <button type="button" onClick={() => bulkUpdate({ delivery: 'Ready' })}>{ord.bulkReady}</button>
+            <button type="button" onClick={() => bulkUpdate({ delivery: 'In Transit' })}><Truck size={13} /> {ord.bulkInTransit}</button>
+            <button type="button" onClick={() => bulkUpdate({ delivery: 'Delivered' })}>{ord.bulkDelivered}</button>
+            <button type="button" onClick={() => bulkUpdate({ delivery: 'Returned' })}>{ord.bulkReturned}</button>
+            <button type="button" onClick={printSelected}><Printer size={13} /> {ord.bulkPrint}</button>
+            <button className="danger-button" type="button" onClick={() => bulkUpdate({ delivery: 'Cancelled' })}>{ord.bulkCancel}</button>
           </div>
         )}
         {filterOpen && (
           <div className="order-filter-panel">
             <label>
-              <span>Thanh toán</span>
+              <span>{ord.filterPayment}</span>
               <select value={paymentFilter} onChange={(e) => setPaymentFilter(e.target.value)}>
-                <option value="all">Tất cả</option>
-                <option value="pending">Chờ thanh toán</option>
-                <option value="paid">Đã thanh toán</option>
-                <option value="refunded">Đã hoàn tiền</option>
+                <option value="all">{ord.paymentAll}</option>
+                <option value="pending">{ord.paymentPending}</option>
+                <option value="paid">{ord.paymentPaid}</option>
+                <option value="refunded">{ord.paymentRefunded}</option>
               </select>
             </label>
             <label>
-              <span>Giao hàng</span>
+              <span>{ord.filterDelivery}</span>
               <select value={deliveryFilter} onChange={(e) => setDeliveryFilter(e.target.value)}>
-                <option value="all">Tất cả</option>
-                <option value="unfulfilled">Chưa xử lý</option>
-                <option value="packing">Đang đóng gói</option>
-                <option value="ready">Sẵn sàng giao</option>
-                <option value="in transit">Đang giao hàng</option>
-                <option value="delivered">Đã giao</option>
-                <option value="cancelled">Đã hủy</option>
-                <option value="returned">Trả hàng</option>
-                <option value="failed delivery">Giao thất bại</option>
+                <option value="all">{ord.deliveryAll}</option>
+                <option value="unfulfilled">{ord.deliveryUnfulfilled}</option>
+                <option value="packing">{ord.deliveryPacking}</option>
+                <option value="ready">{ord.deliveryReady}</option>
+                <option value="in transit">{ord.deliveryInTransit}</option>
+                <option value="delivered">{ord.deliveryDelivered}</option>
+                <option value="cancelled">{ord.deliveryCancelled}</option>
+                <option value="returned">{ord.deliveryReturned}</option>
+                <option value="failed delivery">{ord.deliveryFailed}</option>
               </select>
             </label>
             {shippingPartners.length > 0 && (
               <label>
-                <span>Đơn vị vận chuyển</span>
+                <span>{ord.filterShipping}</span>
                 <select value={shippingFilter} onChange={(e) => setShippingFilter(e.target.value)}>
-                  <option value="all">Tất cả</option>
+                  <option value="all">{ord.shippingAll}</option>
                   {shippingPartners.map((p) => <option key={p} value={p.toLowerCase()}>{p}</option>)}
                 </select>
               </label>
             )}
             <label>
-              <span>Giá trị đơn (đ)</span>
+              <span>{ord.filterPriceRange}</span>
               <div className="price-range-inputs">
-                <input type="number" placeholder="Từ" value={priceMin} onChange={(e) => setPriceMin(e.target.value)} min="0" />
+                <input type="number" placeholder={ord.filterFrom} value={priceMin} onChange={(e) => setPriceMin(e.target.value)} min="0" />
                 <span>–</span>
-                <input type="number" placeholder="Đến" value={priceMax} onChange={(e) => setPriceMax(e.target.value)} min="0" />
+                <input type="number" placeholder={ord.filterTo} value={priceMax} onChange={(e) => setPriceMax(e.target.value)} min="0" />
               </div>
             </label>
             <div className="category-filter-actions">
-              <button className="admin-secondary" type="button" onClick={clearFilters}>Xóa lọc</button>
+              <button className="admin-secondary" type="button" onClick={clearFilters}>{ord.clearFilters}</button>
             </div>
           </div>
         )}
@@ -1447,15 +2036,15 @@ function OrdersPage({ meta, orders, focusedOrderId = '', onFocusedOrderHandled, 
             <thead>
               <tr>
                 <th><input type="checkbox" checked={allSelected} onChange={toggleAll} /></th>
-                <th>Đơn hàng</th>
-                <th>Ngày</th>
-                <th>Khách hàng</th>
-                <th>Trạng thái</th>
-                <th>Phương thức TT</th>
-                <th>Trạng thái TT</th>
-                <th>Trạng thái GH</th>
-                <th>Vận chuyển</th>
-                <th>Tổng</th>
+                <th>{ord.colOrder}</th>
+                <th>{ord.colDate}</th>
+                <th>{ord.colCustomer}</th>
+                <th>{ord.colStatus}</th>
+                <th>{ord.colPaymentMethod}</th>
+                <th>{ord.colPaymentStatus}</th>
+                <th>{ord.colDeliveryStatus}</th>
+                <th>{ord.colShipping}</th>
+                <th>{ord.colTotal}</th>
                 <th></th>
               </tr>
             </thead>
@@ -1471,15 +2060,15 @@ function OrdersPage({ meta, orders, focusedOrderId = '', onFocusedOrderHandled, 
                       <div><b>{order.customer}</b><small>{order.email || order.location}</small></div>
                     </div>
                   </td>
-                  <td>{(() => { const b = adminOrderBucket(order); return <span className={`order-status-badge status-${b.key}`}>{b.label}</span> })()}</td>
+                  <td>{(() => { const b = adminOrderBucket(order); return <span className={`order-status-badge status-${b.key}`}>{ord.bucketLabels[b.key] || b.key}</span> })()}</td>
                   <td>{order.paymentMethod ? <span className="payment-method-tag">{order.paymentMethod}</span> : <span className="muted-dash">—</span>}</td>
                   <td>
-                    <span className={`status-tag payment-${order.payment.toLowerCase()}`}>{order.payment === 'Pending' ? 'Chờ thanh toán' : order.payment === 'Paid' ? 'Đã thanh toán' : 'Đã hoàn tiền'}</span>
+                    <span className={`status-tag payment-${order.payment.toLowerCase()}`}>{ord.paymentStatusLabel[order.payment] || order.payment}</span>
                   </td>
                   <td>
                     {order.returnReason
-                      ? <span className="return-requested-badge">Yêu cầu trả hàng</span>
-                      : <span className={`status-tag delivery-${order.delivery.toLowerCase().replaceAll(' ', '-')}`}>{deliveryLabel(order.delivery)}</span>
+                      ? <span className="return-requested-badge">{ord.returnRequestedBadge}</span>
+                      : <span className={`status-tag delivery-${order.delivery.toLowerCase().replaceAll(' ', '-')}`}>{ord.deliveryLabels[order.delivery] || order.delivery}</span>
                     }
                   </td>
                   <td>
@@ -1493,9 +2082,9 @@ function OrdersPage({ meta, orders, focusedOrderId = '', onFocusedOrderHandled, 
                   <td><b>{money(order.total)}</b></td>
                   <td>
                     <div className="row-actions">
-                      <button className="row-icon" type="button" onClick={() => setDetailOrder(order)} title="Xem đơn"><Eye size={15} /></button>
+                      <button className="row-icon" type="button" onClick={() => setDetailOrder(order)} title={ord.viewOrder}><Eye size={15} /></button>
                       {!order.returnReason && order.delivery === 'Ready' && order.shippingPartner && (
-                        <button className="row-icon pickup-icon" type="button" title="Đơn vị vận chuyển đã lấy hàng" onClick={() => updateOrder(order, { delivery: 'In Transit' })}><Truck size={14} /></button>
+                        <button className="row-icon pickup-icon" type="button" title={ord.carrierPickupTitle} onClick={() => updateOrder(order, { delivery: 'In Transit' })}><Truck size={14} /></button>
                       )}
                     </div>
                   </td>
@@ -1503,7 +2092,7 @@ function OrdersPage({ meta, orders, focusedOrderId = '', onFocusedOrderHandled, 
               ))}
             </tbody>
           </table>
-          {!visible.length && <EmptyHint icon={ShoppingCart} title="Không tìm thấy đơn hàng" copy="Thử đổi từ khóa, bộ lọc hoặc trạng thái đơn." />}
+          {!visible.length && <EmptyHint icon={ShoppingCart} title={ord.emptyTitle} copy={ord.emptyCopy} />}
         </div>
       </section>
       {detailOrder && (
@@ -1512,11 +2101,12 @@ function OrdersPage({ meta, orders, focusedOrderId = '', onFocusedOrderHandled, 
           carriers={carrierOptions}
           onClose={() => setDetailOrder(null)}
           onUpdate={updateOrder}
+          copy={copy}
           onResolveReturn={async (uuid, approve, rejectionReason) => {
             const updated = await resolveReturnRequest(uuid, approve, rejectionReason)
             await onUpdate(updated, {})
             setDetailOrder(null)
-            setNotice(`${updated.id} ${approve ? 'đã được duyệt trả hàng.' : 'đã từ chối trả hàng.'}`)
+            setNotice(`${updated.id} ${approve ? copy.orderDetail.approveReturn.toLowerCase() : copy.orderDetail.rejectReturn.toLowerCase()}.`)
           }}
         />
       )}
@@ -1524,7 +2114,7 @@ function OrdersPage({ meta, orders, focusedOrderId = '', onFocusedOrderHandled, 
   )
 }
 
-function OrderDetailModal({ order, carriers = [], onClose, onUpdate, onResolveReturn }) {
+function OrderDetailModal({ order, carriers = [], onClose, onUpdate, onResolveReturn, copy = adminI18n.vi }) {
   const [payment, setPayment] = useState(order.payment)
   const [delivery, setDelivery] = useState(order.delivery)
   const [shippingPartner, setShippingPartner] = useState(order.shippingPartner || '')
@@ -1555,14 +2145,16 @@ function OrderDetailModal({ order, carriers = [], onClose, onUpdate, onResolveRe
     ? selectedCarrier.trackingUrl.replace('{trackingId}', encodeURIComponent(trackingId))
     : ''
 
+  const od = copy.orderDetail
+
   return (
     <Modal wide title={`${order.id} · ${order.customer}`} onClose={onClose}>
       <div className="order-detail">
         <section className="order-detail-main">
           <div className="order-card">
-            <div className="order-card-title"><h3>Sản phẩm</h3><StatusPill>{delivery}</StatusPill></div>
+            <div className="order-card-title"><h3>{od.products}</h3><StatusPill>{delivery}</StatusPill></div>
             <div className="order-line-list">
-              {(order.lineItems?.length ? order.lineItems : [{ name: 'Sản phẩm', quantity: order.items, price: order.total, total: order.total }]).map((item, index) => (
+              {(order.lineItems?.length ? order.lineItems : [{ name: od.products, quantity: order.items, price: order.total, total: order.total }]).map((item, index) => (
                 <div className="order-line-item" key={`${item.name}-${index}`}>
                   <div><b>{item.name}</b><small>{item.quantity} x {money(item.price)}</small></div>
                   <strong>{money(item.total)}</strong>
@@ -1570,47 +2162,47 @@ function OrderDetailModal({ order, carriers = [], onClose, onUpdate, onResolveRe
               ))}
             </div>
             <div className="order-total-box">
-              <p><span>Tạm tính</span><b>{money(subtotal)}</b></p>
-              {discountTotal > 0 && <p><span>Giảm giá</span><b>-{money(discountTotal)}</b></p>}
-              {taxTotal > 0 && <p><span>Thuế</span><b>{money(taxTotal)}</b></p>}
-              <p><span>Vận chuyển</span><b>{deliveryFee > 0 ? money(deliveryFee) : 'Miễn phí'}</b></p>
-              <p><span>Tổng cộng</span><strong>{money(order.total)}</strong></p>
+              <p><span>{od.subtotal}</span><b>{money(subtotal)}</b></p>
+              {discountTotal > 0 && <p><span>{od.discount}</span><b>-{money(discountTotal)}</b></p>}
+              {taxTotal > 0 && <p><span>{od.tax}</span><b>{money(taxTotal)}</b></p>}
+              <p><span>{od.shipping}</span><b>{deliveryFee > 0 ? money(deliveryFee) : od.free}</b></p>
+              <p><span>{od.total}</span><strong>{money(order.total)}</strong></p>
             </div>
           </div>
 
           <div className="order-card">
-            <div className="order-card-title"><h3>Lịch sử</h3></div>
+            <div className="order-card-title"><h3>{od.history}</h3></div>
             <div className="order-timeline">
-              <p><CheckCircle2 size={15} /> Đơn hàng tạo lúc {order.date}</p>
-              {order.deliveryMethod && <p><Truck size={15} /> Hình thức nhận hàng: {order.deliveryMethod}</p>}
-              <p><Package size={15} /> Trạng thái giao hàng: {delivery}</p>
-              <p><ShoppingBag size={15} /> Trạng thái thanh toán: {payment}</p>
-              {order.paymentMethod && <p><BadgePercent size={15} /> Phương thức thanh toán: {order.paymentMethod}</p>}
+              <p><CheckCircle2 size={15} /> {od.orderCreatedAt} {order.date}</p>
+              {order.deliveryMethod && <p><Truck size={15} /> {od.deliveryMethodLabel} {order.deliveryMethod}</p>}
+              <p><Package size={15} /> {od.deliveryStatusLabel} {delivery}</p>
+              <p><ShoppingBag size={15} /> {od.paymentStatusLabel} {payment}</p>
+              {order.paymentMethod && <p><BadgePercent size={15} /> {od.paymentMethodLabel} {order.paymentMethod}</p>}
             </div>
             {order.events?.length > 0 && (
               <>
-                <p className="admin-event-list-title">Nhật ký thay đổi</p>
+                <p className="admin-event-list-title">{od.eventLog}</p>
                 <div className="admin-event-list">
                   {[...order.events].reverse().map((event) => (
                     <div key={event.id} className={`admin-event-item actor-${event.actor}`}>
                       <span className="admin-event-date">{event.date}</span>
-                      <span className="admin-event-actor">{event.actor === 'customer' ? 'Khách' : event.actor === 'admin' ? 'Admin' : 'Hệ thống'}</span>
+                      <span className="admin-event-actor">{event.actor === 'customer' ? od.eventActorCustomer : event.actor === 'admin' ? od.eventActorAdmin : od.eventActorSystem}</span>
                       <span className="admin-event-msg">{event.message}</span>
                     </div>
                   ))}
                 </div>
               </>
             )}
-            {order.note && <div className="order-note"><b>Ghi chú khách hàng</b><span>{order.note}</span></div>}
+            {order.note && <div className="order-note"><b>{od.customerNotes}</b><span>{order.note}</span></div>}
           </div>
 
           {hasReturnRequest && (
             <div className="order-card order-return-request-card">
-              <div className="order-card-title"><h3><RotateCcw size={14} /> Yêu cầu trả hàng</h3></div>
+              <div className="order-card-title"><h3><RotateCcw size={14} /> {od.returnRequestTitle}</h3></div>
               <div className="return-request-info">
-                <p><b>Lý do:</b> {order.returnReason}</p>
-                {order.returnNotes && <p><b>Chi tiết:</b> {order.returnNotes}</p>}
-                {order.returnRequestedAt && <p className="return-requested-time">Gửi lúc {new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(order.returnRequestedAt))}</p>}
+                <p><b>{od.returnReason}</b> {order.returnReason}</p>
+                {order.returnNotes && <p><b>{od.returnNotes}</b> {order.returnNotes}</p>}
+                {order.returnRequestedAt && <p className="return-requested-time">{od.returnRequestedAt} {new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(order.returnRequestedAt))}</p>}
               </div>
             </div>
           )}
@@ -1618,34 +2210,34 @@ function OrderDetailModal({ order, carriers = [], onClose, onUpdate, onResolveRe
 
         <aside className="order-detail-side">
           <div className="order-card">
-            <h3>Cập nhật đơn</h3>
+            <h3>{od.updateOrder}</h3>
             {hasReturnRequest ? (
               <div className="return-action-panel">
-                <p className="return-action-notice">Đơn hàng đang có yêu cầu trả hàng. Vui lòng duyệt hoặc từ chối trước khi chỉnh sửa trạng thái.</p>
+                <p className="return-action-notice">{od.returnPending}</p>
                 {!rejectStep ? (
                   <>
                     <button className="return-approve-btn" type="button" disabled={resolving} onClick={() => handleResolveReturn(true)}>
-                      <CheckCircle2 size={15} /> {resolving ? 'Đang xử lý...' : 'Duyệt trả hàng'}
+                      <CheckCircle2 size={15} /> {resolving ? od.processing : od.approveReturn}
                     </button>
                     <button className="return-reject-btn" type="button" disabled={resolving} onClick={() => setRejectStep(true)}>
-                      <XCircle size={15} /> Từ chối trả hàng
+                      <XCircle size={15} /> {od.rejectReturn}
                     </button>
                   </>
                 ) : (
                   <div className="reject-reason-panel">
-                    <label className="reject-reason-label">Lý do từ chối <span>(bắt buộc)</span></label>
+                    <label className="reject-reason-label">{od.rejectReasonLabel} <span>{od.rejectReasonRequired}</span></label>
                     <textarea
                       className="reject-reason-input"
                       value={rejectReason}
                       onChange={(e) => setRejectReason(e.target.value)}
-                      placeholder="Nhập lý do từ chối yêu cầu trả hàng..."
+                      placeholder={od.rejectReasonPlaceholder}
                       rows={3}
                       autoFocus
                     />
                     <div className="reject-reason-actions">
-                      <button type="button" className="admin-secondary" onClick={() => { setRejectStep(false); setRejectReason('') }}>Hủy</button>
+                      <button type="button" className="admin-secondary" onClick={() => { setRejectStep(false); setRejectReason('') }}>{od.cancelReject}</button>
                       <button className="return-reject-btn" type="button" disabled={resolving || !rejectReason.trim()} onClick={() => handleResolveReturn(false, rejectReason.trim())}>
-                        <XCircle size={15} /> {resolving ? 'Đang xử lý...' : 'Xác nhận từ chối'}
+                        <XCircle size={15} /> {resolving ? od.processing : od.confirmReject}
                       </button>
                     </div>
                   </div>
@@ -1654,57 +2246,57 @@ function OrderDetailModal({ order, carriers = [], onClose, onUpdate, onResolveRe
             ) : (
               <>
                 <label>
-                  <span>Thanh toán</span>
+                  <span>{od.payment}</span>
                   <select value={payment} onChange={(e) => setPayment(e.target.value)}>
-                    <option value="Pending">Chờ thanh toán</option>
-                    <option value="Paid">Đã thanh toán</option>
-                    <option value="Refunded">Đã hoàn tiền</option>
+                    <option value="Pending">{od.paymentPending}</option>
+                    <option value="Paid">{od.paymentPaid}</option>
+                    <option value="Refunded">{od.paymentRefunded}</option>
                   </select>
                 </label>
                 <label>
-                  <span>Giao hàng</span>
+                  <span>{od.delivery}</span>
                   <select value={delivery} onChange={(e) => setDelivery(e.target.value)}>
-                    <option value="Unfulfilled">Chưa xử lý</option>
-                    <option value="Packing">Đang đóng gói</option>
-                    <option value="Ready">Sẵn sàng giao</option>
-                    <option value="In Transit">Đang giao hàng</option>
-                    <option value="Delivered">Đã giao</option>
-                    <option value="Cancelled">Đã hủy</option>
-                    <option value="Returned">Trả hàng</option>
-                    <option value="Failed Delivery">Giao thất bại</option>
+                    <option value="Unfulfilled">{od.deliveryUnfulfilled}</option>
+                    <option value="Packing">{od.deliveryPacking}</option>
+                    <option value="Ready">{od.deliveryReady}</option>
+                    <option value="In Transit">{od.deliveryInTransit}</option>
+                    <option value="Delivered">{od.deliveryDelivered}</option>
+                    <option value="Cancelled">{od.deliveryCancelled}</option>
+                    <option value="Returned">{od.deliveryReturned}</option>
+                    <option value="Failed Delivery">{od.deliveryFailed}</option>
                   </select>
                 </label>
                 <label>
-                  <span>Đơn vị vận chuyển</span>
+                  <span>{od.shippingPartner}</span>
                   <select value={shippingPartner} onChange={(e) => {
                     const partner = e.target.value
                     setShippingPartner(partner)
                     if (partner && !trackingId) setTrackingId(generateTrackingId(partner))
                   }}>
-                    <option value="">Chọn đơn vị</option>
+                    <option value="">{od.selectCarrier}</option>
                     {carriers.map((carrier) => <option key={carrier.id || carrier.name} value={carrier.name}>{carrier.name} - {carrier.service}</option>)}
                     {shippingPartner && !selectedCarrier && <option value={shippingPartner}>{shippingPartner}</option>}
                   </select>
                 </label>
                 {trackingId && (
                   <div className="tracking-display">
-                    <span className="tracking-display-label">Mã vận đơn</span>
+                    <span className="tracking-display-label">{od.trackingLabel}</span>
                     <span className="tracking-display-value">{trackingId}</span>
                   </div>
                 )}
-                {selectedCarrier && <p className="carrier-order-note">{selectedCarrier.service}{selectedCarrier.cod ? ' · Hỗ trợ COD' : ''}</p>}
-                {trackingHref && <a className="tracking-link" href={trackingHref} target="_blank" rel="noreferrer">Mở trang tra cứu vận đơn <ArrowUpRight size={13} /></a>}
-                <button className="admin-primary" type="button" onClick={save}><CheckCircle2 size={15} /> Lưu thay đổi</button>
+                {selectedCarrier && <p className="carrier-order-note">{selectedCarrier.service}{selectedCarrier.cod ? ` · ${od.codSupport}` : ''}</p>}
+                {trackingHref && <a className="tracking-link" href={trackingHref} target="_blank" rel="noreferrer">{od.openTracking} <ArrowUpRight size={13} /></a>}
+                <button className="admin-primary" type="button" onClick={save}><CheckCircle2 size={15} /> {od.saveChanges}</button>
                 {canMarkPickup && (
                   <button className="carrier-pickup-btn" type="button" onClick={markCarrierPickup}>
-                    <Truck size={15} /> Đơn vị vận chuyển đã lấy hàng
+                    <Truck size={15} /> {od.markCarrierPickup}
                   </button>
                 )}
               </>
             )}
           </div>
           <div className="order-card">
-            <h3>Khách hàng</h3>
+            <h3>{od.customer}</h3>
             <div className="order-contact">
               <b>{order.customer}</b>
               {order.email && <a href={`mailto:${order.email}`}>{order.email}</a>}
@@ -1713,8 +2305,8 @@ function OrderDetailModal({ order, carriers = [], onClose, onUpdate, onResolveRe
             </div>
           </div>
           <div className="order-card">
-            <h3>Đánh giá rủi ro</h3>
-            <p className="order-risk"><ShieldCheck size={16} /> Rủi ro thấp · Thông tin thanh toán và giao hàng hợp lệ.</p>
+            <h3>{od.riskAssessment}</h3>
+            <p className="order-risk"><ShieldCheck size={16} /> {od.lowRisk}</p>
           </div>
         </aside>
       </div>
@@ -1743,10 +2335,11 @@ function CustomersPage({ meta }) {
   )
 }
 
-function CustomersManagePage({ meta, customers, onCreate, onEdit, onView, onRemove }) {
+function CustomersManagePage({ meta, customers, onCreate, onEdit, onView, onRemove, copy = adminI18n.vi }) {
   const [query, setQuery] = useState('')
   const [tab, setTab] = useState('all')
   const [selected, setSelected] = useState([])
+  const cp = copy.customersPage
   const sanitizeLocation = (loc) => {
     if (!loc) return ''
     if (/pass|api|token|key|secret|password|@#\$|77086/i.test(loc)) return ''
@@ -1764,35 +2357,35 @@ function CustomersManagePage({ meta, customers, onCreate, onEdit, onView, onRemo
 
   return (
     <>
-      <SectionTitle title={meta.customers[0]} description={meta.customers[1]} action="Thêm khách hàng" onAction={onCreate} />
+      <SectionTitle title={meta.customers[0]} description={meta.customers[1]} action={cp.addCustomer} onAction={onCreate} />
       <section className="admin-panel data-panel">
         <div className="data-tabs">
-          <button className={tab === 'all' ? 'active' : ''} type="button" onClick={() => setTab('all')}>Tất cả <em>{customers.length}</em></button>
-          <button className={tab === 'returning' ? 'active' : ''} type="button" onClick={() => setTab('returning')}>Khách quay lại</button>
-          <button className={tab === 'email' ? 'active' : ''} type="button" onClick={() => setTab('email')}>Có email</button>
-          {blockedCount > 0 && <button className={tab === 'blocked' ? 'active' : ''} type="button" onClick={() => setTab('blocked')}>Bị khóa <em>{blockedCount}</em></button>}
+          <button className={tab === 'all' ? 'active' : ''} type="button" onClick={() => setTab('all')}>{cp.tabAll} <em>{customers.length}</em></button>
+          <button className={tab === 'returning' ? 'active' : ''} type="button" onClick={() => setTab('returning')}>{cp.tabReturning}</button>
+          <button className={tab === 'email' ? 'active' : ''} type="button" onClick={() => setTab('email')}>{cp.tabEmail}</button>
+          {blockedCount > 0 && <button className={tab === 'blocked' ? 'active' : ''} type="button" onClick={() => setTab('blocked')}>{cp.tabBlocked} <em>{blockedCount}</em></button>}
         </div>
         <div className="table-toolbar">
-          <label><Search size={16} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Tìm tên, email, điện thoại hoặc địa điểm" /></label>
-          <button type="button"><Filter size={15} /> Phân khúc</button>
+          <label><Search size={16} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={cp.searchPlaceholder} /></label>
+          <button type="button"><Filter size={15} /> {cp.segment}</button>
         </div>
         {selected.length > 0 && (
           <div className="order-bulk-bar">
-            <span>{selected.length} khách đã chọn</span>
-            <button className="danger-button" type="button" onClick={() => { selected.forEach((id) => onRemove(id)); setSelected([]) }}>Xóa đã chọn</button>
+            <span>{cp.bulkSelected(selected.length)}</span>
+            <button className="danger-button" type="button" onClick={() => { selected.forEach((id) => onRemove(id)); setSelected([]) }}>{cp.deleteSelected}</button>
           </div>
         )}
         <div className="admin-table-wrap">
           <table className="admin-table customers-table">
             <thead><tr>
               <th><input type="checkbox" checked={allSelected} onChange={toggleAll} /></th>
-              <th>Khách hàng</th>
-              <th>Số điện thoại</th>
-              <th>Địa điểm</th>
-              <th>Ngày đăng ký</th>
-              <th>Trạng thái</th>
-              <th>Đơn hàng</th>
-              <th>Đã chi tiêu</th>
+              <th>{cp.colCustomer}</th>
+              <th>{cp.colPhone}</th>
+              <th>{cp.colLocation}</th>
+              <th>{cp.colJoined}</th>
+              <th>{cp.colStatus}</th>
+              <th>{cp.colOrders}</th>
+              <th>{cp.colSpent}</th>
               <th></th>
             </tr></thead>
             <tbody>{visible.map((customer) => (
@@ -1806,14 +2399,14 @@ function CustomersManagePage({ meta, customers, onCreate, onEdit, onView, onRemo
                 <td>{customer.orders}</td>
                 <td><b>{money(customer.spent)}</b></td>
                 <td><div className="row-actions">
-                  <button className="row-icon" type="button" onClick={() => onView(customer)} title="Xem"><Eye size={15} /></button>
-                  <button className="row-icon" type="button" onClick={() => onEdit(customer)} title="Sửa"><Pencil size={15} /></button>
-                  <button className="row-icon" type="button" onClick={() => onRemove(customer.id)} title="Xóa"><Trash2 size={15} /></button>
+                  <button className="row-icon" type="button" onClick={() => onView(customer)} title={cp.viewTitle}><Eye size={15} /></button>
+                  <button className="row-icon" type="button" onClick={() => onEdit(customer)} title={cp.editTitle}><Pencil size={15} /></button>
+                  <button className="row-icon" type="button" onClick={() => onRemove(customer.id)} title={cp.deleteTitle}><Trash2 size={15} /></button>
                 </div></td>
               </tr>
             ))}</tbody>
           </table>
-          {!visible.length && <EmptyHint icon={Users} title="Không tìm thấy khách hàng" copy="Thử đổi từ khóa hoặc tạo khách hàng mới." />}
+          {!visible.length && <EmptyHint icon={Users} title={cp.emptyTitle} copy={cp.emptyCopy} />}
         </div>
       </section>
     </>
@@ -1950,7 +2543,7 @@ function DiscountsPage({ meta, discounts, onCreate }) {
   )
 }
 
-function DiscountsManagePage({ meta, discounts, onCreate, onEdit, onView, onRemove }) {
+function DiscountsManagePage({ meta, discounts, onCreate, onEdit, onView, onRemove, copy = adminI18n.vi }) {
   const [query, setQuery] = useState('')
   const [statusTab, setStatusTab] = useState('all')
   const normalizedQuery = query.trim().toLowerCase()
@@ -1964,31 +2557,32 @@ function DiscountsManagePage({ meta, discounts, onCreate, onEdit, onView, onRemo
     return matchesQuery && matchesStatus
   })
 
+  const dp = copy.discountsPage
   return (
     <>
-      <SectionTitle title={meta.discounts[0]} description={meta.discounts[1]} action="Tạo mã giảm giá" onAction={onCreate} />
+      <SectionTitle title={meta.discounts[0]} description={meta.discounts[1]} action={dp.createDiscount} onAction={onCreate} />
       <section className="metrics-grid">
-        <MetricCard label="Doanh số từ ưu đãi" value={money(1438)} note="Trong 30 ngày qua" />
-        <MetricCard label="Mã đang hoạt động" value={String(discounts.filter((item) => item.status === 'Active').length)} note={`${discounts.length} mã đã tạo`} />
-        <MetricCard label="Lượt sử dụng" value={String(discounts.reduce((total, discount) => total + Number(discount.uses || 0), 0))} note="Tổng lượt ghi nhận" />
+        <MetricCard label={dp.metricRevenue} value={money(1438)} note={dp.metricRevenuePeriod} />
+        <MetricCard label={dp.metricActive} value={String(discounts.filter((item) => item.status === 'Active').length)} note={dp.metricActiveNote(discounts.length)} />
+        <MetricCard label={dp.metricUsage} value={String(discounts.reduce((total, discount) => total + Number(discount.uses || 0), 0))} note={dp.metricUsageNote} />
       </section>
       <section className="admin-panel data-panel">
         <div className="data-tabs">
-          <button className={statusTab === 'all' ? 'active' : ''} type="button" onClick={() => setStatusTab('all')}>Tất cả</button>
-          <button className={statusTab === 'active' ? 'active' : ''} type="button" onClick={() => setStatusTab('active')}>Đang hoạt động</button>
-          <button className={statusTab === 'scheduled' ? 'active' : ''} type="button" onClick={() => setStatusTab('scheduled')}>Đã lên lịch</button>
-          <button className={statusTab === 'expired' ? 'active' : ''} type="button" onClick={() => setStatusTab('expired')}>Đã hết hạn</button>
-          <button className={statusTab === 'draft' ? 'active' : ''} type="button" onClick={() => setStatusTab('draft')}>Bản nháp</button>
+          <button className={statusTab === 'all' ? 'active' : ''} type="button" onClick={() => setStatusTab('all')}>{dp.tabAll}</button>
+          <button className={statusTab === 'active' ? 'active' : ''} type="button" onClick={() => setStatusTab('active')}>{dp.tabActive}</button>
+          <button className={statusTab === 'scheduled' ? 'active' : ''} type="button" onClick={() => setStatusTab('scheduled')}>{dp.tabScheduled}</button>
+          <button className={statusTab === 'expired' ? 'active' : ''} type="button" onClick={() => setStatusTab('expired')}>{dp.tabExpired}</button>
+          <button className={statusTab === 'draft' ? 'active' : ''} type="button" onClick={() => setStatusTab('draft')}>{dp.tabDraft}</button>
         </div>
         <div className="table-toolbar">
-          <label><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm kiếm mã giảm giá" /></label>
+          <label><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={dp.searchPlaceholder} /></label>
         </div>
         <div className="admin-table-wrap">
           <table className="admin-table">
-            <thead><tr><th>Mã</th><th>Loại</th><th>Giá trị</th><th>Trạng thái</th><th>Lượt dùng</th><th>Kết thúc</th><th></th></tr></thead>
-            <tbody>{visibleDiscounts.map((discount) => <tr key={discount.id || discount.code}><td><b className="discount-code"><Tag size={14} />{discount.code || discount.title}</b></td><td>{discount.type}</td><td>{discount.value}</td><td><StatusPill>{discount.status}</StatusPill></td><td>{discount.uses}</td><td>{discount.ends}</td><td><div className="row-actions"><button className="row-icon" type="button" onClick={() => onView(discount)} title="Xem chi tiết"><Eye size={15} /></button><button className="row-icon" type="button" onClick={() => onEdit(discount)} title="Sửa"><Pencil size={15} /></button><button className="row-icon" type="button" onClick={() => onRemove(discount.id)} title="Xóa"><Trash2 size={15} /></button></div></td></tr>)}</tbody>
+            <thead><tr><th>{dp.colCode}</th><th>{dp.colType}</th><th>{dp.colValue}</th><th>{dp.colStatus}</th><th>{dp.colUses}</th><th>{dp.colEnds}</th><th></th></tr></thead>
+            <tbody>{visibleDiscounts.map((discount) => <tr key={discount.id || discount.code}><td><b className="discount-code"><Tag size={14} />{discount.code || discount.title}</b></td><td>{discount.type}</td><td>{discount.value}</td><td><StatusPill>{discount.status}</StatusPill></td><td>{discount.uses}</td><td>{discount.ends}</td><td><div className="row-actions"><button className="row-icon" type="button" onClick={() => onView(discount)} title={dp.viewTitle}><Eye size={15} /></button><button className="row-icon" type="button" onClick={() => onEdit(discount)} title={dp.editTitle}><Pencil size={15} /></button><button className="row-icon" type="button" onClick={() => onRemove(discount.id)} title={dp.deleteTitle}><Trash2 size={15} /></button></div></td></tr>)}</tbody>
           </table>
-          {!visibleDiscounts.length && <EmptyHint icon={BadgePercent} title="Không tìm thấy mã giảm giá" copy="Thử đổi từ khóa tìm kiếm hoặc tạo mã mới." />}
+          {!visibleDiscounts.length && <EmptyHint icon={BadgePercent} title={dp.emptyTitle} copy={dp.emptyCopy} />}
         </div>
       </section>
     </>
@@ -2013,27 +2607,28 @@ function ContentPage({ meta }) {
   )
 }
 
-function ContentManagePage({ meta, articles, type = 'all', onCreate, onEdit, onView, onRemove }) {
+function ContentManagePage({ meta, articles, type = 'all', onCreate, onEdit, onView, onRemove, copy = adminI18n.vi }) {
   const [query, setQuery] = useState('')
   const [tab, setTab] = useState('all')
+  const cp = copy.contentPage
   const visible = articles.filter((article) => {
     const matchesQuery = `${article.title} ${article.author} ${article.category} ${article.tags?.join(' ')}`.toLowerCase().includes(query.toLowerCase())
     const matchesTab = tab === 'all' || article.status.toLowerCase() === tab
     const matchesType = type === 'all' || article.type === type
     return matchesQuery && matchesTab && matchesType
   })
-  const createLabel = type === 'recipe' ? 'Tạo recipe mới' : type === 'news' ? 'Tạo bài blog mới' : 'Viết bài mới'
+  const createLabel = type === 'recipe' ? cp.createRecipe : type === 'news' ? cp.createBlog : cp.createArticle
   return (
     <>
       <SectionTitle title={meta[0]} description={meta[1]} action={createLabel} onAction={onCreate} />
       <section className="admin-panel data-panel">
-        <div className="data-tabs"><button className={tab === 'all' ? 'active' : ''} type="button" onClick={() => setTab('all')}>Tất cả</button><button className={tab === 'published' ? 'active' : ''} type="button" onClick={() => setTab('published')}>Hiển thị</button><button className={tab === 'draft' ? 'active' : ''} type="button" onClick={() => setTab('draft')}>Đã ẩn</button></div>
-        <div className="table-toolbar"><label><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm bài viết, tác giả, thẻ" /></label></div>
+        <div className="data-tabs"><button className={tab === 'all' ? 'active' : ''} type="button" onClick={() => setTab('all')}>{cp.tabAll}</button><button className={tab === 'published' ? 'active' : ''} type="button" onClick={() => setTab('published')}>{cp.tabPublished}</button><button className={tab === 'draft' ? 'active' : ''} type="button" onClick={() => setTab('draft')}>{cp.tabDraft}</button></div>
+        <div className="table-toolbar"><label><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={cp.searchPlaceholder} /></label></div>
         <div className="content-grid managed-content-grid">
           {visible.map((article) => (
             <article className="admin-panel article-admin-card" key={article.id || article.slug}>
               <img src={article.image} alt="" />
-              <div><StatusPill>{article.status}</StatusPill><h3>{article.title}</h3><p>{article.author} · {article.date}</p><div><button className="admin-secondary" type="button" onClick={() => onEdit(article)}><Pencil size={14} /> Sửa</button><button className="row-icon" type="button" onClick={() => onView(article)}><Eye size={16} /></button><button className="row-icon" type="button" onClick={() => onRemove(article.id)}><Trash2 size={16} /></button></div></div>
+              <div><StatusPill>{article.status}</StatusPill><h3>{article.title}</h3><p>{article.author} · {article.date}</p><div><button className="admin-secondary" type="button" onClick={() => onEdit(article)}><Pencil size={14} /> {cp.editButton}</button><button className="row-icon" type="button" onClick={() => onView(article)}><Eye size={16} /></button><button className="row-icon" type="button" onClick={() => onRemove(article.id)}><Trash2 size={16} /></button></div></div>
             </article>
           ))}
           <button className="new-content-card" type="button" onClick={onCreate}><Plus size={24} /><span>{createLabel}</span></button>
@@ -4080,16 +4675,16 @@ function AdminApp() {
   }
 
   const renderPage = () => {
-    if (page === 'dashboard') return <Dashboard tasks={tasks} setTasks={setTasks} orders={adminOrders} />
-    if (page === 'products') return <ProductsPage meta={localizedMeta} categories={categories} products={products} copy={adminCopy.productsPage} onBulkEdit={bulkEditProducts} onCreate={() => { setProductEditing(null); setProductModal(true) }} onEdit={(product) => { setProductEditing(product); setProductModal(true) }} onImport={importProducts} onRemove={removeProducts} />
-    if (page === 'categories') return <CategoriesPage meta={localizedMeta} categories={categories} products={products} onCreate={() => { setCategoryEditing(null); setCategoryModal(true) }} onEdit={(category) => { setCategoryEditing(category); setCategoryModal(true) }} onRemove={removeCategory} onToggle={toggleCategory} />
-    if (page === 'orders') return <OrdersPage meta={localizedMeta} orders={adminOrders} focusedOrderId={focusedOrderId} onFocusedOrderHandled={() => setFocusedOrderId('')} shippingSettings={storeSettings.shipping || {}} onUpdate={saveOrder} onBulkUpdate={bulkSaveOrders} />
-    if (page === 'customers') return <CustomersManagePage meta={localizedMeta} customers={adminCustomers} onCreate={() => { setCustomerEditing(null); setCustomerModal(true) }} onEdit={(customer) => { setCustomerDetail(null); setCustomerEditing(customer); setCustomerModal(true) }} onView={setCustomerDetail} onRemove={removeCustomer} />
+    if (page === 'dashboard') return <Dashboard tasks={tasks} setTasks={setTasks} orders={adminOrders} copy={adminCopy} />
+    if (page === 'products') return <ProductsPage meta={localizedMeta} categories={categories} products={products} copy={adminCopy} onBulkEdit={bulkEditProducts} onCreate={() => { setProductEditing(null); setProductModal(true) }} onEdit={(product) => { setProductEditing(product); setProductModal(true) }} onImport={importProducts} onRemove={removeProducts} />
+    if (page === 'categories') return <CategoriesPage meta={localizedMeta} categories={categories} products={products} copy={adminCopy} onCreate={() => { setCategoryEditing(null); setCategoryModal(true) }} onEdit={(category) => { setCategoryEditing(category); setCategoryModal(true) }} onRemove={removeCategory} onToggle={toggleCategory} />
+    if (page === 'orders') return <OrdersPage meta={localizedMeta} orders={adminOrders} focusedOrderId={focusedOrderId} onFocusedOrderHandled={() => setFocusedOrderId('')} shippingSettings={storeSettings.shipping || {}} onUpdate={saveOrder} onBulkUpdate={bulkSaveOrders} copy={adminCopy} />
+    if (page === 'customers') return <CustomersManagePage meta={localizedMeta} customers={adminCustomers} copy={adminCopy} onCreate={() => { setCustomerEditing(null); setCustomerModal(true) }} onEdit={(customer) => { setCustomerDetail(null); setCustomerEditing(customer); setCustomerModal(true) }} onView={setCustomerDetail} onRemove={removeCustomer} />
     if (page === 'marketing') return <MarketingPage meta={localizedMeta} />
-    if (page === 'discounts') return <DiscountsManagePage meta={localizedMeta} discounts={discounts} onCreate={() => { setDiscountEditing(null); setDiscountModal(true) }} onEdit={editDiscount} onView={setDiscountDetail} onRemove={removeDiscount} />
+    if (page === 'discounts') return <DiscountsManagePage meta={localizedMeta} discounts={discounts} copy={adminCopy} onCreate={() => { setDiscountEditing(null); setDiscountModal(true) }} onEdit={editDiscount} onView={setDiscountDetail} onRemove={removeDiscount} />
     if (page === 'content' || page === 'content-recipes' || page === 'content-blog') {
       const type = page === 'content-recipes' ? 'recipe' : page === 'content-blog' ? 'news' : 'all'
-      return <ContentManagePage meta={localizedMeta[page] || localizedMeta.content} articles={adminArticles} type={type} onCreate={() => { setArticleDefaultType(type === 'recipe' ? 'recipe' : 'news'); setArticleEditing(null); setArticleModal(true) }} onEdit={(article) => { setArticleDefaultType(article.type || 'news'); setArticleDetail(null); setArticleEditing(article); setArticleModal(true) }} onView={setArticleDetail} onRemove={removeArticle} />
+      return <ContentManagePage meta={localizedMeta[page] || localizedMeta.content} articles={adminArticles} type={type} copy={adminCopy} onCreate={() => { setArticleDefaultType(type === 'recipe' ? 'recipe' : 'news'); setArticleEditing(null); setArticleModal(true) }} onEdit={(article) => { setArticleDefaultType(article.type || 'news'); setArticleDetail(null); setArticleEditing(article); setArticleModal(true) }} onView={setArticleDetail} onRemove={removeArticle} />
     }
     if (page === 'analytics') return <AnalyticsPage meta={localizedMeta} orders={adminOrders} products={products} customers={adminCustomers} />
     if (page === 'analytics-reports') return <ReportsPage meta={localizedMeta} orders={adminOrders} products={products} customers={adminCustomers} discounts={discounts} />
@@ -4166,3 +4761,4 @@ function AdminApp() {
 }
 
 export default AdminApp
+

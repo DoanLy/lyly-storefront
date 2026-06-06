@@ -863,11 +863,12 @@ function getAccountName(user, profile = {}) {
   return localName || metadataName || user?.email?.split('@')[0] || 'Customer'
 }
 
-function AccountModal({ user, profile, onClose, onSignOut }) {
+function AccountModal({ user, profile, onClose, onSignOut, copy = storefrontI18n.en }) {
   const [mode, setMode] = useState('signin')
   const [form, setForm] = useState({ name: '', email: '', password: '' })
   const [status, setStatus] = useState('idle')
   const [message, setMessage] = useState('')
+  const a = copy.auth
 
   const change = (event) => {
     setForm((current) => ({ ...current, [event.target.name]: event.target.value }))
@@ -881,7 +882,7 @@ function AccountModal({ user, profile, onClose, onSignOut }) {
 
     try {
       if (!isSupabaseConfigured || !supabase) {
-        throw new Error('Supabase is not configured for storefront auth.')
+        throw new Error(a.supabaseError)
       }
 
       if (mode === 'signin') {
@@ -898,10 +899,10 @@ function AccountModal({ user, profile, onClose, onSignOut }) {
           options: { data: { full_name: form.name.trim() } },
         })
         if (error) throw error
-        setMessage('Account created. Please check your email if confirmation is required.')
+        setMessage(a.accountCreated)
       }
     } catch (error) {
-      setMessage(error.message || 'Please try again.')
+      setMessage(error.message || a.tryAgain)
     } finally {
       setStatus('idle')
     }
@@ -910,33 +911,33 @@ function AccountModal({ user, profile, onClose, onSignOut }) {
   return (
     <div className="account-overlay" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <section className="account-modal">
-        <button className="account-modal-close" type="button" onClick={onClose} aria-label="Close account"><X size={28} /></button>
+        <button className="account-modal-close" type="button" onClick={onClose} aria-label={a.closeAccount}><X size={28} /></button>
         {user ? (
           <>
-            <h2>Account</h2>
+            <h2>{a.account}</h2>
             <p className="account-email">{user.email}</p>
             <div className="account-modal-actions">
-              <a href="/account?tab=orders" onClick={onClose}><Package size={25} /> Orders</a>
-              <a href="/account?tab=profile" onClick={onClose}><User size={25} /> Profile</a>
+              <a href="/account?tab=orders" onClick={onClose}><Package size={25} /> {a.orders}</a>
+              <a href="/account?tab=profile" onClick={onClose}><User size={25} /> {a.profile}</a>
             </div>
             <div className="account-signed-in">
               <span>{getAccountName(user, profile)}</span>
-              <button type="button" onClick={onSignOut}>Sign out</button>
+              <button type="button" onClick={onSignOut}>{a.signOut}</button>
             </div>
           </>
         ) : (
           <>
-            <h2>{mode === 'signin' ? 'Sign in' : 'Create account'}</h2>
+            <h2>{mode === 'signin' ? a.signIn : a.createAccount}</h2>
             <div className="account-tabs">
-              <button className={mode === 'signin' ? 'active' : ''} type="button" onClick={() => setMode('signin')}>Sign in</button>
-              <button className={mode === 'signup' ? 'active' : ''} type="button" onClick={() => setMode('signup')}>Register</button>
+              <button className={mode === 'signin' ? 'active' : ''} type="button" onClick={() => setMode('signin')}>{a.signIn}</button>
+              <button className={mode === 'signup' ? 'active' : ''} type="button" onClick={() => setMode('signup')}>{a.register}</button>
             </div>
             <form className="account-auth-form" onSubmit={submit}>
-              {mode === 'signup' && <label>Name<input name="name" value={form.name} onChange={change} autoComplete="name" required /></label>}
-              <label>Email<input name="email" type="email" value={form.email} onChange={change} autoComplete="email" required /></label>
-              <label>Password<input name="password" type="password" value={form.password} onChange={change} autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} required minLength={6} /></label>
+              {mode === 'signup' && <label>{a.name}<input name="name" value={form.name} onChange={change} autoComplete="name" required /></label>}
+              <label>{a.email}<input name="email" type="email" value={form.email} onChange={change} autoComplete="email" required /></label>
+              <label>{a.password}<input name="password" type="password" value={form.password} onChange={change} autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} required minLength={6} /></label>
               {message && <p className="account-message">{message}</p>}
-              <button type="submit" disabled={status === 'submitting'}>{status === 'submitting' ? 'Working...' : mode === 'signin' ? 'Sign in' : 'Create account'}</button>
+              <button type="submit" disabled={status === 'submitting'}>{status === 'submitting' ? a.working : mode === 'signin' ? a.signIn : a.createAccount}</button>
             </form>
           </>
         )}
@@ -1194,7 +1195,7 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
         console.error('Unable to load storefront orders.', error)
         setOrders([])
         setOrdersStatus('error')
-        setOrdersMessage('Unable to load orders right now.')
+        setOrdersMessage(copy.orders.unableToLoad)
       })
 
     return () => {
@@ -1213,8 +1214,8 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
         </header>
         <section className="account-empty-state">
           <h1>{copy.account}</h1>
-          <p>{copy.langCode === 'VI' ? 'Đăng nhập hoặc tạo tài khoản để xem đơn hàng, hồ sơ và địa chỉ đã lưu.' : 'Sign in or create an account to view orders, profile and saved addresses.'}</p>
-          <button type="button" onClick={onOpenAccount}>{copy.langCode === 'VI' ? 'Đăng nhập' : 'Sign in'}</button>
+          <p>{copy.auth.signInToView}</p>
+          <button type="button" onClick={onOpenAccount}>{copy.auth.signIn}</button>
         </section>
       </main>
     )
@@ -1242,10 +1243,10 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
       await updateStorefrontOrderAction(order.uuid, action, paymentMethod)
       const refreshedOrders = await loadStorefrontOrders(user.email)
       setOrders(refreshedOrders)
-      showActionNotice(action === 'pay' ? `${order.id} has been marked as paid.` : `${order.id} has been cancelled.`)
+      showActionNotice(action === 'pay' ? copy.orders.markedPaid(order.id) : copy.orders.cancelSuccess(order.id))
     } catch (error) {
       console.error(`Unable to ${action} storefront order.`, error)
-      showActionNotice(action === 'pay' ? `Unable to process payment for ${order.id}.` : `Unable to cancel ${order.id}.`)
+      showActionNotice(action === 'pay' ? copy.orders.payError(order.id) : copy.orders.cancelError(order.id))
     } finally {
       setOrderActionKey('')
     }
@@ -1269,7 +1270,7 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
           ordersStatus === 'loading' ? (
             <div className="account-card account-empty-row">
               <Package size={24} />
-              <span>Loading orders...</span>
+              <span>{copy.orders.loading}</span>
             </div>
           ) : ordersStatus === 'error' ? (
             <div className="account-card account-empty-row">
@@ -1281,21 +1282,21 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
               <div className="account-order-tools">
                 <div className="account-order-hero">
                   <div>
-                    <span>{copy.langCode === 'VI' ? 'Trung t\u00e2m \u0111\u01a1n h\u00e0ng' : 'Order center'}</span>
+                    <span>{copy.orders.orderCenter}</span>
                     <h2>{accountText.ordersTab}</h2>
-                    <p>{copy.langCode === 'VI' ? 'Theo d\u00f5i tr\u1ea1ng th\u00e1i, t\u00ecm nhanh \u0111\u01a1n h\u00e0ng v\u00e0 x\u1eed l\u00fd c\u00e1c y\u00eau c\u1ea7u mua l\u1ea1i trong m\u1ed9t n\u01a1i.' : 'Track status, search purchases and manage reorder actions from one focused view.'}</p>
+                    <p>{copy.orders.orderCenterDesc}</p>
                   </div>
                   <dl className="account-order-summary">
                     <div>
-                      <dt>{copy.langCode === 'VI' ? 'T\u1ed5ng \u0111\u01a1n' : 'Orders'}</dt>
+                      <dt>{copy.orders.totalOrders}</dt>
                       <dd>{orders.length}</dd>
                     </div>
                     <div>
-                      <dt>{copy.langCode === 'VI' ? '\u0110ang x\u1eed l\u00fd' : 'Active'}</dt>
+                      <dt>{copy.orders.active}</dt>
                       <dd>{activeOrderCount}</dd>
                     </div>
                     <div>
-                      <dt>{copy.langCode === 'VI' ? 'G\u1ea7n nh\u1ea5t' : 'Latest'}</dt>
+                      <dt>{copy.orders.latest}</dt>
                       <dd>{latestOrder}</dd>
                     </div>
                   </dl>
@@ -1303,7 +1304,7 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
                 <div className="account-order-filter-panel">
                   <label className="account-order-search">
                     <Search size={18} />
-                    <input value={orderQuery} onChange={(event) => setOrderQuery(event.target.value)} placeholder={copy.langCode === 'VI' ? 'T\u00ecm theo m\u00e3 \u0111\u01a1n ho\u1eb7c s\u1ea3n ph\u1ea9m' : 'Search by order number or product'} />
+                    <input value={orderQuery} onChange={(event) => setOrderQuery(event.target.value)} placeholder={copy.orders.searchPlaceholder} />
                   </label>
                   <div className="account-order-tabs">
                     {accountOrderTabs.map(([id, label]) => (
@@ -1329,17 +1330,17 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
                       <header className="account-order-head">
                         <div>
                           <b>{order.id}</b>
-                          <small>{order.date} · {order.deliveryMethod || 'Delivery'}</small>
+                          <small>{order.date} · {order.deliveryMethod || copy.orders.delivery}</small>
                         </div>
                         <strong>{formatPrice(order.total)}</strong>
                       </header>
                       <div className="account-order-meta">
-                        <span>{order.items} items</span>
-                        <span>Payment: {order.payment}{order.paymentMethod ? ` · ${order.paymentMethod}` : ''}</span>
-                        <span>Delivery: {order.delivery}</span>
+                        <span>{order.items} {copy.orders.items}</span>
+                        <span>{copy.orders.payment} {order.payment}{order.paymentMethod ? ` · ${order.paymentMethod}` : ''}</span>
+                        <span>{copy.orders.deliveryLabel} {order.delivery}</span>
                       </div>
                       <div className={`account-order-stepper stage-${stage}`}>
-                        {['Ordered', 'Processing', 'In transit', 'Delivered'].map((label, index) => (
+                        {[copy.orders.stepOrdered, copy.orders.stepProcessing, copy.orders.stepInTransit, copy.orders.stepDelivered].map((label, index) => (
                           <span className={index <= stage ? 'active' : ''} key={label}><i></i>{label}</span>
                         ))}
                       </div>
@@ -1357,27 +1358,27 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
                           })}
                         </ul>
                       )}
-                      {hiddenCount > 0 && <button className="account-show-more" type="button" onClick={() => toggleExpandedOrder(order.uuid)}>View {hiddenCount} more products</button>}
-                      {expanded && orderItems.length > 2 && <button className="account-show-more" type="button" onClick={() => toggleExpandedOrder(order.uuid)}>Show fewer products</button>}
+                      {hiddenCount > 0 && <button className="account-show-more" type="button" onClick={() => toggleExpandedOrder(order.uuid)}>{copy.orders.viewMore(hiddenCount)}</button>}
+                      {expanded && orderItems.length > 2 && <button className="account-show-more" type="button" onClick={() => toggleExpandedOrder(order.uuid)}>{copy.orders.showFewer}</button>}
                       <div className="account-price-breakdown">
-                        <p><span>Subtotal</span><b>{formatPrice(subtotalValue)}</b></p>
-                        {order.discountTotal > 0 && <p><span>Discount</span><b>-{formatPrice(order.discountTotal)}</b></p>}
-                        <p><span>Delivery fee</span><b>{order.deliveryFee ? formatPrice(order.deliveryFee) : 'Free'}</b></p>
-                        <p><span>Tax</span><b>{formatPrice(order.taxTotal || Math.max(0, order.total - subtotalValue + order.discountTotal - order.deliveryFee))}</b></p>
-                        <p><span>Total</span><b>{formatPrice(order.total)}</b></p>
+                        <p><span>{copy.orders.subtotal}</span><b>{formatPrice(subtotalValue)}</b></p>
+                        {order.discountTotal > 0 && <p><span>{copy.orders.discount}</span><b>-{formatPrice(order.discountTotal)}</b></p>}
+                        <p><span>{copy.orders.deliveryFee}</span><b>{order.deliveryFee ? formatPrice(order.deliveryFee) : copy.orders.free}</b></p>
+                        <p><span>{copy.orders.tax}</span><b>{formatPrice(order.taxTotal || Math.max(0, order.total - subtotalValue + order.discountTotal - order.deliveryFee))}</b></p>
+                        <p><span>{copy.orders.total}</span><b>{formatPrice(order.total)}</b></p>
                       </div>
-                      {order.trackingId && <p className="account-order-tracking">Tracking: {order.trackingId}</p>}
+                      {order.trackingId && <p className="account-order-tracking">{copy.orders.tracking} {order.trackingId}</p>}
                       {order.returnRejected && (
                         <div className="return-rejected-notice">
-                          <b>Yêu cầu trả hàng đã bị từ chối</b>
+                          <b>{copy.orders.returnRejected}</b>
                           {order.returnRejectedMessage && <span>{order.returnRejectedMessage}</span>}
                         </div>
                       )}
                       <div className="order-history-list">
-                        <p className="order-history-title"><RotateCcw size={12} /> Order history</p>
+                        <p className="order-history-title"><RotateCcw size={12} /> {copy.orders.orderHistory}</p>
                         <div className="order-history-item">
                           <span className="order-history-date">{order.date}</span>
-                          <span className="order-history-msg">Đơn hàng được đặt</span>
+                          <span className="order-history-msg">{copy.orders.orderPlaced}</span>
                         </div>
                         {order.events.map((event) => (
                           <div key={event.id} className="order-history-item">
@@ -1387,14 +1388,14 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
                         ))}
                       </div>
                       <div className="account-order-actions">
-                        {bucket === 'unpaid' && <button type="button" disabled={Boolean(orderActionKey)} onClick={() => { setPayMethod(null); setPayOrderModal(order) }}>{orderActionKey === `${order.uuid}-pay` ? 'Processing...' : 'Pay now'}</button>}
-                        {!['delivered', 'cancelled', 'transit'].includes(bucket) && <button type="button" disabled={Boolean(orderActionKey)} onClick={() => setCancelOrderModal(order)}>{orderActionKey === `${order.uuid}-cancel` ? 'Cancelling...' : 'Cancel order'}</button>}
-                        {bucket === 'delivered' && <button type="button" onClick={() => onReorder?.(order)}>Reorder</button>}
+                        {bucket === 'unpaid' && <button type="button" disabled={Boolean(orderActionKey)} onClick={() => { setPayMethod(null); setPayOrderModal(order) }}>{orderActionKey === `${order.uuid}-pay` ? copy.orders.processing : copy.orders.payNow}</button>}
+                        {!['delivered', 'cancelled', 'transit'].includes(bucket) && <button type="button" disabled={Boolean(orderActionKey)} onClick={() => setCancelOrderModal(order)}>{orderActionKey === `${order.uuid}-cancel` ? copy.orders.cancelling : copy.orders.cancelOrder}</button>}
+                        {bucket === 'delivered' && <button type="button" onClick={() => onReorder?.(order)}>{copy.orders.reorder}</button>}
                         {bucket === 'delivered' && !order.returnReason && !order.returnRejected && order.delivery !== 'Returned' && (
-                          <button type="button" onClick={() => { setReturnReason(''); setReturnNotes(''); setReturnModal(order) }}>Return items</button>
+                          <button type="button" onClick={() => { setReturnReason(''); setReturnNotes(''); setReturnModal(order) }}>{copy.orders.returnItems}</button>
                         )}
                         {bucket === 'delivered' && order.returnReason && (
-                          <span className="return-pending-tag">Return requested</span>
+                          <span className="return-pending-tag">{copy.orders.returnRequested}</span>
                         )}
                       </div>
                     </article>
@@ -1402,7 +1403,7 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
                 }) : (
                   <div className="account-card account-empty-row">
                     <Search size={24} />
-                    <span>No orders match your filters</span>
+                    <span>{copy.orders.noOrdersMatch}</span>
                   </div>
                 )}
               </div>
@@ -1410,7 +1411,7 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
           ) : (
             <div className="account-card account-empty-row">
               <Package size={24} />
-              <span>No orders yet</span>
+              <span>{copy.orders.noOrdersYet}</span>
             </div>
           )
         ) : (
@@ -1651,8 +1652,8 @@ function AccountPage({ user, profile, addresses, products = [], copy = storefron
               <input required value={addressForm.firstName} onChange={(event) => setAddressForm((current) => ({ ...current, firstName: event.target.value }))} placeholder={accountText.firstName} />
               <input required value={addressForm.lastName} onChange={(event) => setAddressForm((current) => ({ ...current, lastName: event.target.value }))} placeholder={accountText.lastName} />
             </div>
-            <input required value={addressForm.address} onChange={(event) => setAddressForm((current) => ({ ...current, address: event.target.value }))} placeholder="Address" />
-            <input value={addressForm.apartment} onChange={(event) => setAddressForm((current) => ({ ...current, apartment: event.target.value }))} placeholder="Apartment, suite, etc (optional)" />
+            <input required value={addressForm.address} onChange={(event) => setAddressForm((current) => ({ ...current, address: event.target.value }))} placeholder={copy.langCode === 'VI' ? 'Số nhà, đường' : 'Address'} />
+            <input value={addressForm.apartment} onChange={(event) => setAddressForm((current) => ({ ...current, apartment: event.target.value }))} placeholder={copy.langCode === 'VI' ? 'Căn hộ, tòa nhà (tùy chọn)' : 'Apartment, suite, etc (optional)'} />
             <div className="account-form-grid three">
               <input required value={addressForm.city} onChange={(event) => setAddressForm((current) => ({ ...current, city: event.target.value }))} placeholder={accountText.city} />
               <select value={addressForm.state} onChange={(event) => setAddressForm((current) => ({ ...current, state: event.target.value }))}><option>Alabama</option><option>California</option><option>New York</option><option>Texas</option></select>
@@ -2449,11 +2450,11 @@ function CheckoutModal({ items, discounts, initialDiscountCode = '', user, profi
         {confirmClose && (
           <div className="checkout-confirm-close">
             <div className="checkout-confirm-box">
-              <h3>Rời trang thanh toán?</h3>
-              <p>Thông tin bạn đã nhập sẽ không được lưu lại.</p>
+              <h3>{copy.checkout.confirmLeaveTitle}</h3>
+              <p>{copy.checkout.confirmLeaveDesc}</p>
               <div>
-                <button type="button" className="checkout-confirm-stay" onClick={() => setConfirmClose(false)}>Tiếp tục thanh toán</button>
-                <button type="button" className="checkout-confirm-leave" onClick={onClose}>Rời khỏi</button>
+                <button type="button" className="checkout-confirm-stay" onClick={() => setConfirmClose(false)}>{copy.checkout.continueCheckout}</button>
+                <button type="button" className="checkout-confirm-leave" onClick={onClose}>{copy.checkout.leave}</button>
               </div>
             </div>
           </div>
@@ -2480,27 +2481,27 @@ function CheckoutModal({ items, discounts, initialDiscountCode = '', user, profi
                 </div>
 
                 <fieldset>
-                  <legend>Thông tin liên hệ</legend>
+                  <legend>{copy.checkout.contactInfo}</legend>
                   <p className="checkout-login-hint">
-                    Đã có tài khoản? <button type="button" onClick={() => {}} className="checkout-login-link">Đăng nhập để tự động điền</button>
+                    {copy.checkout.haveAccount} <button type="button" onClick={() => {}} className="checkout-login-link">{copy.checkout.signInToAutofill}</button>
                   </p>
                   <label><span>Email *</span><input required type="email" name="email" value={form.email} onChange={change} placeholder="you@example.com" /></label>
                   <div className="checkout-grid">
-                    <label><span>Họ và tên *</span><input required name="name" value={form.name} onChange={change} placeholder="Nguyễn Văn A" /></label>
-                    <label><span>Số điện thoại *</span><input required name="phone" value={form.phone} onChange={change} placeholder="+84 xxx xxx xxx" /></label>
+                    <label><span>{copy.checkout.fullName}</span><input required name="name" value={form.name} onChange={change} placeholder="Nguyễn Văn A" /></label>
+                    <label><span>{copy.checkout.phone}</span><input required name="phone" value={form.phone} onChange={change} placeholder="+84 xxx xxx xxx" /></label>
                   </div>
                 </fieldset>
 
                 <fieldset>
-                  <legend>Giao hàng</legend>
+                  <legend>{copy.checkout.deliverySection}</legend>
                   <div className="checkout-choice-grid">
                     <label className={form.deliveryMethod === 'local' ? 'selected' : ''}>
                       <input type="radio" name="deliveryMethod" value="local" checked={form.deliveryMethod === 'local'} onChange={change} />
-                      <span><Truck size={18} /> Giao tận nơi <b>{subtotal - discount >= 75 ? 'Miễn phí' : formatPrice(8)}</b></span>
+                      <span><Truck size={18} /> {copy.checkout.homeDelivery} <b>{subtotal - discount >= 75 ? copy.checkout.free : formatPrice(8)}</b></span>
                     </label>
                     <label className={form.deliveryMethod === 'pickup' ? 'selected' : ''}>
                       <input type="radio" name="deliveryMethod" value="pickup" checked={form.deliveryMethod === 'pickup'} onChange={change} />
-                      <span><Store size={18} /> Nhận tại cửa hàng <b>Miễn phí</b></span>
+                      <span><Store size={18} /> {copy.checkout.storePickup} <b>{copy.checkout.free}</b></span>
                     </label>
                   </div>
 
@@ -2508,26 +2509,26 @@ function CheckoutModal({ items, discounts, initialDiscountCode = '', user, profi
                     <>
                       <div className="checkout-delivery-eta">
                         <Clock3 size={14} />
-                        <span>Thời gian giao hàng dự kiến: <b>30 – 60 phút</b></span>
+                        <span>{copy.checkout.deliveryEta} <b>30 – 60 phút</b></span>
                       </div>
                       <label>
-                        <span>Khung giờ nhận hàng mong muốn</span>
+                        <span>{copy.checkout.deliverySlot}</span>
                         <select name="deliverySlot" value={form.deliverySlot} onChange={change} className="checkout-select">
                           {DELIVERY_SLOTS.map((slot) => <option key={slot} value={slot}>{slot}</option>)}
                         </select>
                       </label>
-                      <label><span>Địa chỉ *</span><input required name="address" value={form.address} onChange={change} placeholder="Số nhà, tên đường" /></label>
+                      <label><span>{copy.checkout.addressField}</span><input required name="address" value={form.address} onChange={change} placeholder={copy.langCode === 'VI' ? 'Số nhà, tên đường' : 'Street address'} /></label>
                       <div className="checkout-grid">
-                        <label><span>Tầng / Căn hộ</span><input name="apartment" value={form.apartment} onChange={change} placeholder="Tùy chọn" /></label>
+                        <label><span>{copy.checkout.apartmentField}</span><input name="apartment" value={form.apartment} onChange={change} placeholder={copy.checkout.optional} /></label>
                         <label>
-                          <span>Tỉnh / Thành phố *</span>
+                          <span>{copy.checkout.cityField}</span>
                           <select required name="city" value={form.city} onChange={change} className="checkout-select">
-                            <option value="">Chọn thành phố</option>
+                            <option value="">{copy.checkout.selectCity}</option>
                             {VN_CITIES.map((city) => <option key={city} value={city}>{city}</option>)}
                           </select>
                         </label>
                       </div>
-                      <label><span>Mã bưu chính</span><input name="postalCode" value={form.postalCode} onChange={change} placeholder="700000" /></label>
+                      <label><span>{copy.checkout.postalCodeField}</span><input name="postalCode" value={form.postalCode} onChange={change} placeholder="700000" /></label>
                     </>
                   )}
 
@@ -2549,7 +2550,7 @@ function CheckoutModal({ items, discounts, initialDiscountCode = '', user, profi
                 </fieldset>
 
                 <fieldset>
-                  <legend>Thanh toán</legend>
+                  <legend>{copy.checkout.paymentSection}</legend>
                   <div className="checkout-payment-list">
                     {PAYMENT_METHODS.slice(0, 3).map((method) => (
                       <label key={method.id} className={`checkout-payment-option ${form.paymentMethod === method.id ? 'selected' : ''}`}>
@@ -2573,27 +2574,27 @@ function CheckoutModal({ items, discounts, initialDiscountCode = '', user, profi
                     ))}
                     <button type="button" className="payment-show-more" onClick={() => setShowAllPayments(!showAllPayments)}>
                       <ChevronDown size={14} style={{ transform: showAllPayments ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }} />
-                      {showAllPayments ? 'Thu gọn' : `Xem thêm ${PAYMENT_METHODS.length - 3} hình thức khác`}
+                      {showAllPayments ? copy.checkout.collapsePayments : copy.checkout.showMorePayments(PAYMENT_METHODS.length - 3)}
                     </button>
                   </div>
                   {form.paymentMethod === 'transfer' && (
                     <div className="checkout-transfer-note">
                       <ShieldCheck size={14} />
-                      <span>Thông tin số tài khoản và cú pháp chuyển khoản sẽ hiển thị ngay sau khi bạn bấm "Đặt hàng".</span>
+                      <span>{copy.checkout.bankTransferNote}</span>
                     </div>
                   )}
                   {['momo', 'zalopay', 'shopeepay', 'vnpay'].includes(form.paymentMethod) && (
                     <div className="checkout-transfer-note qr-note">
-                      <span>📱 <b>Mobile:</b> App ví sẽ được mở tự động sau khi đặt hàng.</span>
-                      <span>💻 <b>Desktop:</b> Mã QR sẽ hiển thị để quét bằng điện thoại.</span>
+                      <span>📱 <b>Mobile:</b> {copy.checkout.mobilePayNote}</span>
+                      <span>💻 <b>Desktop:</b> {copy.checkout.desktopPayNote}</span>
                     </div>
                   )}
-                  <label><span>Ghi chú đơn hàng</span><input name="notes" value={form.notes} onChange={change} placeholder="Hướng dẫn giao hàng hoặc yêu cầu đặc biệt" /></label>
+                  <label><span>{copy.checkout.orderNotesLabel}</span><input name="notes" value={form.notes} onChange={change} placeholder={copy.checkout.orderNotesPlaceholder} /></label>
                 </fieldset>
               </div>
 
               <aside className="checkout-summary-panel">
-                <h3>Tóm tắt đơn hàng</h3>
+                <h3>{copy.checkout.orderSummary}</h3>
                 <div className="checkout-review-items">
                   {items.map((item) => (
                     <div className="checkout-review-item" key={item.id}>
@@ -2626,21 +2627,21 @@ function CheckoutModal({ items, discounts, initialDiscountCode = '', user, profi
                   copy={copy}
                 />
                 <div className="checkout-totals">
-                  <p><span>Tạm tính</span><b>{formatPrice(subtotal)}</b></p>
-                  <p><span>Giảm giá</span><b>-{formatPrice(discount)}</b></p>
-                  {totals.shippingDiscount > 0 && <p><span>Giảm phí ship</span><b>-{formatPrice(totals.shippingDiscount)}</b></p>}
-                  <p><span>Giao hàng</span><b>{deliveryFee ? formatPrice(deliveryFee) : copy.cart.free}</b></p>
-                  <p><span>Thuế ước tính</span><b>{formatPrice(tax)}</b></p>
-                  <p className="grand-total"><span>Tổng cộng</span><b>{formatPrice(total)}</b></p>
+                  <p><span>{copy.checkout.subtotal}</span><b>{formatPrice(subtotal)}</b></p>
+                  <p><span>{copy.checkout.discountLabel}</span><b>-{formatPrice(discount)}</b></p>
+                  {totals.shippingDiscount > 0 && <p><span>{copy.checkout.shippingDiscountLabel}</span><b>-{formatPrice(totals.shippingDiscount)}</b></p>}
+                  <p><span>{copy.checkout.deliveryLabel}</span><b>{deliveryFee ? formatPrice(deliveryFee) : copy.checkout.free}</b></p>
+                  <p><span>{copy.checkout.estimatedTax}</span><b>{formatPrice(tax)}</b></p>
+                  <p className="grand-total"><span>{copy.checkout.grandTotal}</span><b>{formatPrice(total)}</b></p>
                 </div>
                 {message && <p className="checkout-error">{message}</p>}
                 <button type="submit" disabled={status === 'submitting'}>
-                  {status === 'submitting' ? 'Đang xử lý...' : 'Đặt hàng'} <ArrowRight size={17} />
+                  {status === 'submitting' ? copy.checkout.processing : copy.checkout.placeOrder} <ArrowRight size={17} />
                 </button>
                 <div className="checkout-trust-badges">
-                  <span><ShieldCheck size={13} /> Thanh toán bảo mật SSL</span>
-                  <span>🔒 Dữ liệu mã hóa 256-bit</span>
-                  <span>✓ Xác thực Visa / MC</span>
+                  <span><ShieldCheck size={13} /> {copy.checkout.sslSecure}</span>
+                  <span>🔒 {copy.checkout.encrypted}</span>
+                  <span>✓ {copy.checkout.visaVerified}</span>
                 </div>
               </aside>
             </div>
@@ -2737,6 +2738,118 @@ const storefrontI18n = {
       discountHint: (code) => `Use code ${code} for a fresh discount`,
       discountUnavailable: 'This discount code is not available.',
       orderError: 'Unable to place your order. Please try again.',
+      confirmLeaveTitle: 'Leave checkout?',
+      confirmLeaveDesc: "Information you've entered will not be saved.",
+      continueCheckout: 'Continue checkout',
+      leave: 'Leave',
+      contactInfo: 'Contact information',
+      haveAccount: 'Have an account?',
+      signInToAutofill: 'Sign in to auto-fill',
+      deliverySection: 'Delivery',
+      homeDelivery: 'Home delivery',
+      storePickup: 'Store pickup',
+      free: 'Free',
+      deliveryEta: 'Estimated delivery time:',
+      deliverySlot: 'Preferred delivery time',
+      addressField: 'Address *',
+      apartmentField: 'Floor / Apartment',
+      optional: 'Optional',
+      cityField: 'Province / City *',
+      selectCity: 'Select city',
+      postalCodeField: 'Postal code',
+      paymentSection: 'Payment',
+      showMorePayments: (n) => `Show ${n} more payment options`,
+      collapsePayments: 'Collapse',
+      bankTransferNote: 'Bank account info and transfer code will be shown after you place the order.',
+      mobilePayNote: 'Mobile: Payment app will open automatically after placing order.',
+      desktopPayNote: 'Desktop: QR code will be shown to scan with phone.',
+      orderNotesLabel: 'Order notes',
+      orderNotesPlaceholder: 'Delivery instructions or special requests',
+      orderSummary: 'Order summary',
+      subtotal: 'Subtotal',
+      discountLabel: 'Discount',
+      shippingDiscountLabel: 'Shipping discount',
+      deliveryLabel: 'Delivery',
+      estimatedTax: 'Estimated tax',
+      grandTotal: 'Total',
+      placeOrder: 'Place order',
+      processing: 'Processing...',
+      sslSecure: 'SSL secure payment',
+      encrypted: '256-bit encrypted data',
+      visaVerified: 'Visa / MC verified',
+      fullName: 'Full name *',
+      phone: 'Phone number *',
+    },
+    auth: {
+      account: 'Account',
+      orders: 'Orders',
+      profile: 'Profile',
+      signOut: 'Sign out',
+      signIn: 'Sign in',
+      register: 'Register',
+      createAccount: 'Create account',
+      name: 'Name',
+      email: 'Email',
+      password: 'Password',
+      working: 'Working...',
+      closeAccount: 'Close account',
+      accountCreated: 'Account created. Please check your email if confirmation is required.',
+      supabaseError: 'Supabase is not configured for storefront auth.',
+      tryAgain: 'Please try again.',
+      signInToView: 'Sign in or create an account to view orders, profile and saved addresses.',
+    },
+    orders: {
+      loading: 'Loading orders...',
+      orderCenter: 'Order center',
+      orderCenterDesc: 'Track status, search purchases and manage reorder actions from one focused view.',
+      totalOrders: 'Orders',
+      active: 'Active',
+      latest: 'Latest',
+      searchPlaceholder: 'Search by order number or product',
+      delivery: 'Delivery',
+      items: 'items',
+      payment: 'Payment:',
+      deliveryLabel: 'Delivery:',
+      stepOrdered: 'Ordered',
+      stepProcessing: 'Processing',
+      stepInTransit: 'In transit',
+      stepDelivered: 'Delivered',
+      viewMore: (n) => `View ${n} more products`,
+      showFewer: 'Show fewer products',
+      subtotal: 'Subtotal',
+      discount: 'Discount',
+      deliveryFee: 'Delivery fee',
+      free: 'Free',
+      tax: 'Tax',
+      total: 'Total',
+      tracking: 'Tracking:',
+      returnRejected: 'Return request rejected',
+      orderHistory: 'Order history',
+      orderPlaced: 'Order placed',
+      payNow: 'Pay now',
+      processing: 'Processing...',
+      cancelOrder: 'Cancel order',
+      cancelling: 'Cancelling...',
+      reorder: 'Reorder',
+      returnItems: 'Return items',
+      returnRequested: 'Return requested',
+      noOrdersMatch: 'No orders match your filters',
+      noOrdersYet: 'No orders yet',
+      unableToLoad: 'Unable to load orders right now.',
+      markedPaid: (id) => `${id} has been marked as paid.`,
+      cancelSuccess: (id) => `${id} has been cancelled.`,
+      payError: (id) => `Unable to process payment for ${id}.`,
+      cancelError: (id) => `Unable to cancel ${id}.`,
+    },
+    newsletter: {
+      eyebrow: 'Stay in season',
+      heading: 'Fresh ideas, straight to your inbox.',
+      subheading: 'Recipes, market notes and a little something for your next order.',
+      emailPlaceholder: 'Your email address',
+      signUp: 'Sign me up',
+      sending: 'Sending...',
+      thankYou: 'Thank you!',
+      error: 'Please try again.',
     },
     account: 'Account',
   },
@@ -2825,6 +2938,118 @@ const storefrontI18n = {
       discountHint: (code) => `Dùng mã ${code} để nhận ưu đãi`,
       discountUnavailable: 'Mã giảm giá này không khả dụng.',
       orderError: 'Không thể đặt hàng. Vui lòng thử lại.',
+      confirmLeaveTitle: 'Rời trang thanh toán?',
+      confirmLeaveDesc: 'Thông tin bạn đã nhập sẽ không được lưu lại.',
+      continueCheckout: 'Tiếp tục thanh toán',
+      leave: 'Rời khỏi',
+      contactInfo: 'Thông tin liên hệ',
+      haveAccount: 'Đã có tài khoản?',
+      signInToAutofill: 'Đăng nhập để tự động điền',
+      deliverySection: 'Giao hàng',
+      homeDelivery: 'Giao tận nơi',
+      storePickup: 'Nhận tại cửa hàng',
+      free: 'Miễn phí',
+      deliveryEta: 'Thời gian giao hàng dự kiến:',
+      deliverySlot: 'Khung giờ nhận hàng mong muốn',
+      addressField: 'Địa chỉ *',
+      apartmentField: 'Tầng / Căn hộ',
+      optional: 'Tùy chọn',
+      cityField: 'Tỉnh / Thành phố *',
+      selectCity: 'Chọn thành phố',
+      postalCodeField: 'Mã bưu chính',
+      paymentSection: 'Thanh toán',
+      showMorePayments: (n) => `Xem thêm ${n} hình thức khác`,
+      collapsePayments: 'Thu gọn',
+      bankTransferNote: 'Thông tin số tài khoản và cú pháp chuyển khoản sẽ hiển thị ngay sau khi bạn bấm "Đặt hàng".',
+      mobilePayNote: 'Mobile: App ví sẽ được mở tự động sau khi đặt hàng.',
+      desktopPayNote: 'Desktop: Mã QR sẽ hiển thị để quét bằng điện thoại.',
+      orderNotesLabel: 'Ghi chú đơn hàng',
+      orderNotesPlaceholder: 'Hướng dẫn giao hàng hoặc yêu cầu đặc biệt',
+      orderSummary: 'Tóm tắt đơn hàng',
+      subtotal: 'Tạm tính',
+      discountLabel: 'Giảm giá',
+      shippingDiscountLabel: 'Giảm phí ship',
+      deliveryLabel: 'Giao hàng',
+      estimatedTax: 'Thuế ước tính',
+      grandTotal: 'Tổng cộng',
+      placeOrder: 'Đặt hàng',
+      processing: 'Đang xử lý...',
+      sslSecure: 'Thanh toán bảo mật SSL',
+      encrypted: 'Dữ liệu mã hóa 256-bit',
+      visaVerified: 'Xác thực Visa / MC',
+      fullName: 'Họ và tên *',
+      phone: 'Số điện thoại *',
+    },
+    auth: {
+      account: 'Tài khoản',
+      orders: 'Đơn hàng',
+      profile: 'Hồ sơ',
+      signOut: 'Đăng xuất',
+      signIn: 'Đăng nhập',
+      register: 'Đăng ký',
+      createAccount: 'Tạo tài khoản',
+      name: 'Họ và tên',
+      email: 'Email',
+      password: 'Mật khẩu',
+      working: 'Đang xử lý...',
+      closeAccount: 'Đóng',
+      accountCreated: 'Tạo tài khoản thành công. Vui lòng kiểm tra email để xác nhận nếu cần.',
+      supabaseError: 'Chức năng đăng nhập chưa được cấu hình.',
+      tryAgain: 'Vui lòng thử lại.',
+      signInToView: 'Đăng nhập hoặc tạo tài khoản để xem đơn hàng, hồ sơ và địa chỉ đã lưu.',
+    },
+    orders: {
+      loading: 'Đang tải đơn hàng...',
+      orderCenter: 'Trung tâm đơn hàng',
+      orderCenterDesc: 'Theo dõi trạng thái, tìm nhanh đơn hàng và xử lý các yêu cầu mua lại trong một nơi.',
+      totalOrders: 'Tổng đơn',
+      active: 'Đang xử lý',
+      latest: 'Gần nhất',
+      searchPlaceholder: 'Tìm theo mã đơn hoặc sản phẩm',
+      delivery: 'Giao hàng',
+      items: 'sản phẩm',
+      payment: 'Thanh toán:',
+      deliveryLabel: 'Giao hàng:',
+      stepOrdered: 'Đã đặt',
+      stepProcessing: 'Đang xử lý',
+      stepInTransit: 'Đang giao',
+      stepDelivered: 'Đã giao',
+      viewMore: (n) => `Xem thêm ${n} sản phẩm`,
+      showFewer: 'Thu gọn',
+      subtotal: 'Tạm tính',
+      discount: 'Giảm giá',
+      deliveryFee: 'Phí giao hàng',
+      free: 'Miễn phí',
+      tax: 'Thuế',
+      total: 'Tổng cộng',
+      tracking: 'Mã vận đơn:',
+      returnRejected: 'Yêu cầu trả hàng đã bị từ chối',
+      orderHistory: 'Lịch sử đơn hàng',
+      orderPlaced: 'Đơn hàng được đặt',
+      payNow: 'Thanh toán ngay',
+      processing: 'Đang xử lý...',
+      cancelOrder: 'Hủy đơn',
+      cancelling: 'Đang hủy...',
+      reorder: 'Mua lại',
+      returnItems: 'Trả hàng',
+      returnRequested: 'Đã yêu cầu trả hàng',
+      noOrdersMatch: 'Không tìm thấy đơn hàng phù hợp',
+      noOrdersYet: 'Chưa có đơn hàng nào',
+      unableToLoad: 'Không thể tải đơn hàng lúc này.',
+      markedPaid: (id) => `${id} đã được đánh dấu thanh toán.`,
+      cancelSuccess: (id) => `${id} đã bị hủy.`,
+      payError: (id) => `Không thể xử lý thanh toán cho ${id}.`,
+      cancelError: (id) => `Không thể hủy ${id}.`,
+    },
+    newsletter: {
+      eyebrow: 'Luôn theo mùa',
+      heading: 'Ý tưởng tươi ngon, thẳng đến hộp thư.',
+      subheading: 'Công thức, ghi chú thị trường và một chút ưu đãi cho đơn tiếp theo.',
+      emailPlaceholder: 'Địa chỉ email của bạn',
+      signUp: 'Đăng ký nhận tin',
+      sending: 'Đang gửi...',
+      thankYou: 'Cảm ơn bạn!',
+      error: 'Vui lòng thử lại.',
     },
     account: 'Tài khoản',
   },
@@ -3422,17 +3647,17 @@ function App() {
 
         <section className="newsletter">
           <div>
-            <p className="eyebrow">Stay in season</p>
-            <h2>Fresh ideas, straight to your inbox.</h2>
-            <p>Recipes, market notes and a little something for your next order.</p>
+            <p className="eyebrow">{t.newsletter.eyebrow}</p>
+            <h2>{t.newsletter.heading}</h2>
+            <p>{t.newsletter.subheading}</p>
           </div>
           <form onSubmit={submitNewsletter}>
             <label>
-              <span className="sr-only">Email address</span>
-              <input type="email" required value={newsletterEmail} onChange={(event) => setNewsletterEmail(event.target.value)} placeholder="Your email address" />
+              <span className="sr-only">{t.newsletter.emailPlaceholder}</span>
+              <input type="email" required value={newsletterEmail} onChange={(event) => setNewsletterEmail(event.target.value)} placeholder={t.newsletter.emailPlaceholder} />
             </label>
-            <button type="submit" disabled={newsletterStatus === 'submitting'}>{newsletterStatus === 'success' ? 'Thank you!' : newsletterStatus === 'submitting' ? 'Sending...' : 'Sign me up'} <ArrowRight size={17} /></button>
-            {newsletterStatus === 'error' && <p className="newsletter-error">Please try again.</p>}
+            <button type="submit" disabled={newsletterStatus === 'submitting'}>{newsletterStatus === 'success' ? t.newsletter.thankYou : newsletterStatus === 'submitting' ? t.newsletter.sending : t.newsletter.signUp} <ArrowRight size={17} /></button>
+            {newsletterStatus === 'error' && <p className="newsletter-error">{t.newsletter.error}</p>}
           </form>
         </section>
       </main>
@@ -3541,7 +3766,7 @@ function App() {
       </aside>
 
       {quickProduct && <QuickProductModal product={quickProduct} onAdd={addToCart} onBuyNow={buyNow} onClose={() => setQuickProduct(null)} copy={t} />}
-      {accountOpen && <AccountModal user={storefrontUser} profile={accountProfile} onClose={() => setAccountOpen(false)} onSignOut={signOutAccount} />}
+      {accountOpen && <AccountModal user={storefrontUser} profile={accountProfile} onClose={() => setAccountOpen(false)} onSignOut={signOutAccount} copy={t} />}
       {pickupOpen && <SelectPickupModal selectedId={selectedPickup?.id} onSelect={selectPickup} onClose={() => setPickupOpen(false)} />}
       {checkoutOpen && <CheckoutModal items={cart} discounts={discounts} initialDiscountCode={appliedDiscountCode} user={storefrontUser} profile={accountProfile} onClose={() => setCheckoutOpen(false)} onComplete={() => setCart([])} onUpdateQuantity={updateQuantity} copy={t} />}
       {searchOpen && <button className="search-closer" aria-label="Close search" type="button" onClick={() => setSearchOpen(false)} />}
