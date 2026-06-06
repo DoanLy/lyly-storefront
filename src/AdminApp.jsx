@@ -284,6 +284,55 @@ const adminI18n = {
       save: 'Lưu thay đổi',
       add: 'Thêm sản phẩm',
     },
+    productsPage: {
+      lang: 'vi',
+      addNew: 'Thêm mới',
+      bulkEdit: 'Sửa hàng loạt',
+      catalogPdf: 'Tải catalog PDF',
+      exportCsv: 'Xuất CSV',
+      importCsv: 'Nhập CSV',
+      deleteSelected: 'Xóa đã chọn',
+      tabs: { all: 'Tất cả', active: 'Đang bán', draft: 'Bản nháp' },
+      search: 'Tìm kiếm sản phẩm',
+      filters: 'Bộ lọc',
+      allCategories: 'Tất cả danh mục',
+      all: 'Tất cả',
+      manufacturer: 'Nhà sản xuất',
+      vendor: 'Nhà cung cấp',
+      warehouse: 'Kho hàng',
+      productType: 'Loại sản phẩm',
+      storefrontDisplay: 'Hiển thị storefront',
+      visible: 'Đang hiển thị',
+      hidden: 'Đang ẩn',
+      inventory: 'Tồn kho',
+      inStock: 'Còn hàng',
+      lowStock: 'Sắp hết hàng',
+      outOfStock: 'Hết hàng',
+      includeSubcategories: 'Tìm trong danh mục con',
+      skuJump: 'Đi thẳng tới SKU',
+      skuPlaceholder: 'Ví dụ: FRT-1024',
+      open: 'Mở',
+      clearFilters: 'Xóa lọc',
+      apply: 'Áp dụng',
+      columns: { product: 'Sản phẩm', status: 'Trạng thái', stock: 'Tồn kho', category: 'Danh mục', price: 'Giá' },
+      variants: (count) => `${count} biến thể`,
+      stockCount: (count) => `${count} còn hàng`,
+      emptyTitle: 'Không tìm thấy sản phẩm',
+      emptyCopy: 'Thử thay đổi từ khóa hoặc thêm sản phẩm mới.',
+      editTitle: 'Sửa sản phẩm',
+      deleteAria: (name) => `Xóa ${name}`,
+      skuNotFound: 'Không tìm thấy sản phẩm có SKU này.',
+      imported: (count) => `Đã nhập ${count} sản phẩm từ CSV.`,
+      deleteOneTitle: 'Xóa sản phẩm?',
+      deleteManyTitle: 'Xóa sản phẩm đã chọn?',
+      deleteOneMessage: (name) => `Bạn có chắc muốn xóa "${name}"? Hành động này không thể hoàn tác.`,
+      deleteManyMessage: (count) => `Bạn có chắc muốn xóa ${count} sản phẩm đã chọn? Hành động này không thể hoàn tác.`,
+      deleteOneConfirm: 'Xóa sản phẩm',
+      deleteManyConfirm: 'Xóa đã chọn',
+      noSelectionTitle: 'Chưa chọn sản phẩm',
+      noSelectionCopy: 'Hãy chọn ít nhất một sản phẩm trong danh sách trước khi dùng nút Xóa đã chọn.',
+      understood: 'Đã hiểu',
+    },
   },
   en: {
     code: 'EN',
@@ -359,7 +408,95 @@ const adminI18n = {
       save: 'Save changes',
       add: 'Add product',
     },
+    productsPage: {
+      lang: 'en',
+      addNew: 'Add new',
+      bulkEdit: 'Bulk edit',
+      catalogPdf: 'Download catalog PDF',
+      exportCsv: 'Export CSV',
+      importCsv: 'Import CSV',
+      deleteSelected: 'Delete selected',
+      tabs: { all: 'All', active: 'Active', draft: 'Draft' },
+      search: 'Search products',
+      filters: 'Filter',
+      allCategories: 'All categories',
+      all: 'All',
+      manufacturer: 'Manufacturer',
+      vendor: 'Vendor',
+      warehouse: 'Warehouse',
+      productType: 'Product type',
+      storefrontDisplay: 'Storefront display',
+      visible: 'Visible',
+      hidden: 'Hidden',
+      inventory: 'Inventory',
+      inStock: 'In stock',
+      lowStock: 'Low stock',
+      outOfStock: 'Out of stock',
+      includeSubcategories: 'Include subcategories',
+      skuJump: 'Go directly to SKU',
+      skuPlaceholder: 'Example: FRT-1024',
+      open: 'Open',
+      clearFilters: 'Clear filters',
+      apply: 'Apply',
+      columns: { product: 'Product', status: 'Status', stock: 'Inventory', category: 'Category', price: 'Price' },
+      variants: (count) => `${count} variants`,
+      stockCount: (count) => `${count} in stock`,
+      emptyTitle: 'No products found',
+      emptyCopy: 'Try changing the keyword or add a new product.',
+      editTitle: 'Edit product',
+      deleteAria: (name) => `Delete ${name}`,
+      skuNotFound: 'No product found for this SKU.',
+      imported: (count) => `Imported ${count} products from CSV.`,
+      deleteOneTitle: 'Delete product?',
+      deleteManyTitle: 'Delete selected products?',
+      deleteOneMessage: (name) => `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+      deleteManyMessage: (count) => `Are you sure you want to delete ${count} selected products? This action cannot be undone.`,
+      deleteOneConfirm: 'Delete product',
+      deleteManyConfirm: 'Delete selected',
+      noSelectionTitle: 'No product selected',
+      noSelectionCopy: 'Select at least one product in the list before using Delete selected.',
+      understood: 'Got it',
+    },
   },
+}
+
+const CATEGORY_LABELS = {
+  vi: {
+    'Bread & Bakery': 'Bánh mì & Bánh ngọt',
+    'Fruits & Vegetables': 'Trái cây & Rau củ',
+    'Dairy & Eggs': 'Sữa & Trứng',
+    'Pasta & Noodles': 'Mì Ý & Mì sợi',
+    Pantry: 'Hàng khô',
+    Produce: 'Nông sản',
+    Drinks: 'Đồ uống',
+    Bakery: 'Bánh',
+    'Grains & Beans': 'Ngũ cốc & Đậu',
+    Snacks: 'Đồ ăn vặt',
+    'Oil, Vinegar & Spices': 'Dầu, Giấm & Gia vị',
+    'Sauces & Marinades': 'Sốt & Ướp',
+    Dressings: 'Nước sốt trộn',
+    Vegetables: 'Rau củ',
+    Fruit: 'Trái cây',
+    'Herbs & Aromatics': 'Rau thơm & Hương liệu',
+    Beverages: 'Đồ uống',
+    Coffee: 'Cà phê',
+    'Tea & Elixirs': 'Trà & Đồ uống thảo mộc',
+    Juices: 'Nước ép',
+    'Flour & Baking': 'Bột & Nguyên liệu làm bánh',
+    Bread: 'Bánh mì',
+    'Buns & Rolls': 'Bánh buns & rolls',
+    'Bagels & Breakfast': 'Bagel & Bữa sáng',
+    'Gluten-Free': 'Không gluten',
+    'Milk & Cream': 'Sữa & Kem',
+    'Eggs & Butter': 'Trứng & Bơ',
+    Cheese: 'Phô mai',
+    'Yogurt & Cultured Dairy': 'Sữa chua & Sữa lên men',
+    'Plant-Based': 'Nguồn gốc thực vật',
+  },
+}
+
+function categoryLabel(value, lang = 'vi') {
+  return CATEGORY_LABELS[lang]?.[value] || value
 }
 
 const DELIVERY_LABELS = {
@@ -631,8 +768,9 @@ function downloadOrdersCsv(orders) {
   downloadBlob(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }), 'lyly-orders.csv')
 }
 
-function StatusPill({ children }) {
-  return <span className={`admin-status ${String(children).toLowerCase().replaceAll(' ', '-')}`}>{children}</span>
+function StatusPill({ children, status }) {
+  const statusClass = String(status || children).toLowerCase().replaceAll(' ', '-')
+  return <span className={`admin-status ${statusClass}`}>{children}</span>
 }
 
 function AdminLogo() {
@@ -799,7 +937,7 @@ function SetupCard({ id, title, copy, button, children, wide, tasks, onToggle })
   )
 }
 
-function ProductsPage({ meta, categories, products, onBulkEdit, onCreate, onEdit, onImport, onRemove }) {
+function ProductsPage({ meta, categories, products, copy, onBulkEdit, onCreate, onEdit, onImport, onRemove }) {
   const [query, setQuery] = useState('')
   const [statusTab, setStatusTab] = useState('all')
   const [selected, setSelected] = useState([])
@@ -821,6 +959,8 @@ function ProductsPage({ meta, categories, products, onBulkEdit, onCreate, onEdit
     stock: 'all',
   })
   const importInput = useRef(null)
+  const productCopy = copy || adminI18n.vi.productsPage
+  const localizedCategory = (category) => categoryLabel(category, productCopy.lang)
   const filterOptions = (name) => [...new Set(products.map((product) => product[name]).filter(Boolean))].sort()
   const activeFilterCount = Object.entries(filters).filter(([name, value]) => name !== 'includeSubcategories' && value !== 'all').length
   const categoryMatches = (product) => {
@@ -886,7 +1026,7 @@ function ProductsPage({ meta, categories, products, onBulkEdit, onCreate, onEdit
   const goToSku = () => {
     const product = products.find((item) => item.sku.toLowerCase() === sku.trim().toLowerCase())
     if (!product) {
-      setNotice('Không tìm thấy sản phẩm có SKU này.')
+      setNotice(productCopy.skuNotFound)
       return
     }
     setNotice('')
@@ -898,7 +1038,7 @@ function ProductsPage({ meta, categories, products, onBulkEdit, onCreate, onEdit
     try {
       const imported = productsFromCsv(await file.text(), categories, products)
       await onImport(imported)
-      setNotice(`Đã nhập ${imported.length} sản phẩm từ CSV.`)
+      setNotice(productCopy.imported(imported.length))
     } catch (error) {
       setNotice(error.message)
     } finally {
@@ -910,73 +1050,73 @@ function ProductsPage({ meta, categories, products, onBulkEdit, onCreate, onEdit
     <>
       <SectionTitle title={meta.products[0]} description={meta.products[1]} />
       <div className="product-action-bar">
-        <button className="admin-primary" type="button" onClick={onCreate}><Plus size={15} /> Thêm mới</button>
-        <button className="admin-secondary" type="button" disabled={!selected.length} onClick={() => setBulkOpen(true)}><Pencil size={15} /> Sửa hàng loạt</button>
-        <button className="admin-secondary" type="button" onClick={() => downloadCatalogPdf(visible)}><FileText size={15} /> Tải catalog PDF</button>
-        <button className="admin-secondary" type="button" onClick={() => downloadProductsCsv(visible)}><Download size={15} /> Xuất CSV</button>
-        <button className="admin-secondary" type="button" onClick={() => setImportGuideOpen(true)}><Upload size={15} /> Nhập CSV</button>
-        <button className="product-danger" type="button" onClick={removeSelected}><Trash2 size={15} /> Xóa đã chọn{selected.length ? ` (${selected.length})` : ''}</button>
+        <button className="admin-primary" type="button" onClick={onCreate}><Plus size={15} /> {productCopy.addNew}</button>
+        <button className="admin-secondary" type="button" disabled={!selected.length} onClick={() => setBulkOpen(true)}><Pencil size={15} /> {productCopy.bulkEdit}</button>
+        <button className="admin-secondary" type="button" onClick={() => downloadCatalogPdf(visible)}><FileText size={15} /> {productCopy.catalogPdf}</button>
+        <button className="admin-secondary" type="button" onClick={() => downloadProductsCsv(visible)}><Download size={15} /> {productCopy.exportCsv}</button>
+        <button className="admin-secondary" type="button" onClick={() => setImportGuideOpen(true)}><Upload size={15} /> {productCopy.importCsv}</button>
+        <button className="product-danger" type="button" onClick={removeSelected}><Trash2 size={15} /> {productCopy.deleteSelected}{selected.length ? ` (${selected.length})` : ''}</button>
         <input ref={importInput} type="file" accept=".csv,text/csv" hidden onChange={importCsv} />
       </div>
       {notice && <div className="product-notice"><span>{notice}</span><button type="button" onClick={() => setNotice('')}><X size={14} /></button></div>}
       <section className="admin-panel data-panel">
-        <div className="data-tabs"><button className={statusTab === 'all' ? 'active' : ''} type="button" onClick={() => setStatusTab('all')}>Tất cả ({products.length})</button><button className={statusTab === 'active' ? 'active' : ''} type="button" onClick={() => setStatusTab('active')}>Đang bán ({products.filter((product) => product.status === 'active').length})</button><button className={statusTab === 'draft' ? 'active' : ''} type="button" onClick={() => setStatusTab('draft')}>Bản nháp ({products.filter((product) => product.status === 'draft').length})</button></div>
+        <div className="data-tabs"><button className={statusTab === 'all' ? 'active' : ''} type="button" onClick={() => setStatusTab('all')}>{productCopy.tabs.all} ({products.length})</button><button className={statusTab === 'active' ? 'active' : ''} type="button" onClick={() => setStatusTab('active')}>{productCopy.tabs.active} ({products.filter((product) => product.status === 'active').length})</button><button className={statusTab === 'draft' ? 'active' : ''} type="button" onClick={() => setStatusTab('draft')}>{productCopy.tabs.draft} ({products.filter((product) => product.status === 'draft').length})</button></div>
         <div className="table-toolbar">
-          <label><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm kiếm sản phẩm" /></label>
-          <button className={activeFilterCount ? 'filter-active' : ''} type="button" aria-expanded={filtersOpen} onClick={() => setFiltersOpen(!filtersOpen)}><Filter size={15} /> Bộ lọc {activeFilterCount > 0 && <em>{activeFilterCount}</em>}</button>
+          <label><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={productCopy.search} /></label>
+          <button className={activeFilterCount ? 'filter-active' : ''} type="button" aria-expanded={filtersOpen} onClick={() => setFiltersOpen(!filtersOpen)}><Filter size={15} /> {productCopy.filters} {activeFilterCount > 0 && <em>{activeFilterCount}</em>}</button>
         </div>
         {filtersOpen && (
           <div className="product-filter-panel">
-            <label><span>Danh mục</span><select value={filters.category} onChange={(event) => setFilter('category', event.target.value)}><option value="all">Tất cả danh mục</option>{categories.filter((category) => category.active).map((category) => <option key={category.id}>{category.name}</option>)}</select></label>
-            <label><span>Nhà sản xuất</span><select value={filters.manufacturer} onChange={(event) => setFilter('manufacturer', event.target.value)}><option value="all">Tất cả</option>{filterOptions('manufacturer').map((value) => <option key={value}>{value}</option>)}</select></label>
-            <label><span>Nhà cung cấp</span><select value={filters.vendor} onChange={(event) => setFilter('vendor', event.target.value)}><option value="all">Tất cả</option>{filterOptions('vendor').map((value) => <option key={value}>{value}</option>)}</select></label>
-            <label><span>Kho hàng</span><select value={filters.warehouse} onChange={(event) => setFilter('warehouse', event.target.value)}><option value="all">Tất cả</option>{filterOptions('warehouse').map((value) => <option key={value}>{value}</option>)}</select></label>
-            <label><span>Loại sản phẩm</span><select value={filters.productType} onChange={(event) => setFilter('productType', event.target.value)}><option value="all">Tất cả</option>{filterOptions('productType').map((value) => <option key={value}>{value}</option>)}</select></label>
-            <label><span>Hiển thị storefront</span><select value={filters.published} onChange={(event) => setFilter('published', event.target.value)}><option value="all">Tất cả</option><option value="active">Đang hiển thị</option><option value="draft">Đang ẩn</option></select></label>
-            <label><span>Tồn kho</span><select value={filters.stock} onChange={(event) => setFilter('stock', event.target.value)}><option value="all">Tất cả</option><option value="in">Còn hàng</option><option value="low">Sắp hết hàng</option><option value="out">Hết hàng</option></select></label>
-            <label className="product-filter-checkbox"><input type="checkbox" checked={filters.includeSubcategories} onChange={(event) => setFilter('includeSubcategories', event.target.checked)} /><span>Tìm trong danh mục con</span></label>
-            <label className="product-sku-jump"><span>Đi thẳng tới SKU</span><div><input value={sku} onChange={(event) => setSku(event.target.value)} placeholder="Ví dụ: FRT-1024" /><button type="button" onClick={goToSku}>Mở</button></div></label>
-            <div className="product-filter-actions"><button className="admin-secondary" type="button" onClick={resetFilters}>Xóa lọc</button><button className="admin-primary" type="button" onClick={() => setFiltersOpen(false)}>Áp dụng</button></div>
+            <label><span>{productCopy.columns.category}</span><select value={filters.category} onChange={(event) => setFilter('category', event.target.value)}><option value="all">{productCopy.allCategories}</option>{categories.filter((category) => category.active).map((category) => <option key={category.id} value={category.name}>{localizedCategory(category.name)}</option>)}</select></label>
+            <label><span>{productCopy.manufacturer}</span><select value={filters.manufacturer} onChange={(event) => setFilter('manufacturer', event.target.value)}><option value="all">{productCopy.all}</option>{filterOptions('manufacturer').map((value) => <option key={value}>{value}</option>)}</select></label>
+            <label><span>{productCopy.vendor}</span><select value={filters.vendor} onChange={(event) => setFilter('vendor', event.target.value)}><option value="all">{productCopy.all}</option>{filterOptions('vendor').map((value) => <option key={value}>{value}</option>)}</select></label>
+            <label><span>{productCopy.warehouse}</span><select value={filters.warehouse} onChange={(event) => setFilter('warehouse', event.target.value)}><option value="all">{productCopy.all}</option>{filterOptions('warehouse').map((value) => <option key={value}>{value}</option>)}</select></label>
+            <label><span>{productCopy.productType}</span><select value={filters.productType} onChange={(event) => setFilter('productType', event.target.value)}><option value="all">{productCopy.all}</option>{filterOptions('productType').map((value) => <option key={value}>{value}</option>)}</select></label>
+            <label><span>{productCopy.storefrontDisplay}</span><select value={filters.published} onChange={(event) => setFilter('published', event.target.value)}><option value="all">{productCopy.all}</option><option value="active">{productCopy.visible}</option><option value="draft">{productCopy.hidden}</option></select></label>
+            <label><span>{productCopy.inventory}</span><select value={filters.stock} onChange={(event) => setFilter('stock', event.target.value)}><option value="all">{productCopy.all}</option><option value="in">{productCopy.inStock}</option><option value="low">{productCopy.lowStock}</option><option value="out">{productCopy.outOfStock}</option></select></label>
+            <label className="product-filter-checkbox"><input type="checkbox" checked={filters.includeSubcategories} onChange={(event) => setFilter('includeSubcategories', event.target.checked)} /><span>{productCopy.includeSubcategories}</span></label>
+            <label className="product-sku-jump"><span>{productCopy.skuJump}</span><div><input value={sku} onChange={(event) => setSku(event.target.value)} placeholder={productCopy.skuPlaceholder} /><button type="button" onClick={goToSku}>{productCopy.open}</button></div></label>
+            <div className="product-filter-actions"><button className="admin-secondary" type="button" onClick={resetFilters}>{productCopy.clearFilters}</button><button className="admin-primary" type="button" onClick={() => setFiltersOpen(false)}>{productCopy.apply}</button></div>
           </div>
         )}
         <div className="admin-table-wrap">
           <table className="admin-table product-table">
-            <thead><tr><th><input type="checkbox" checked={allVisibleSelected} onChange={toggleAll} /></th><th>Sản phẩm</th><th>Trạng thái</th><th>Tồn kho</th><th>Danh mục</th><th>Giá</th><th></th></tr></thead>
+            <thead><tr><th><input type="checkbox" checked={allVisibleSelected} onChange={toggleAll} /></th><th>{productCopy.columns.product}</th><th>{productCopy.columns.status}</th><th>{productCopy.columns.stock}</th><th>{productCopy.columns.category}</th><th>{productCopy.columns.price}</th><th></th></tr></thead>
             <tbody>
               {visible.map((product) => (
                 <tr key={product.id}>
                   <td><input type="checkbox" checked={selected.includes(product.id)} onChange={() => toggle(product.id)} /></td>
-                  <td><div className="product-cell"><img src={product.image} alt="" /><span><b>{product.name}</b><small>{product.sku} · {product.variants?.length ? `${product.variants.length} biến thể` : product.unit}</small></span></div></td>
-                  <td><StatusPill>{product.status === 'active' ? 'Active' : 'Draft'}</StatusPill></td>
-                  <td><span className={product.stock < 10 ? 'low-stock' : ''}>{product.stock} in stock</span></td>
-                  <td>{product.category}</td>
+                  <td><div className="product-cell"><img src={product.image} alt="" /><span><b>{product.name}</b><small>{product.sku} · {product.variants?.length ? productCopy.variants(product.variants.length) : product.unit}</small></span></div></td>
+                  <td><StatusPill status={product.status}>{product.status === 'active' ? productCopy.tabs.active : productCopy.tabs.draft}</StatusPill></td>
+                  <td><span className={product.stock < 10 ? 'low-stock' : ''}>{productCopy.stockCount(product.stock)}</span></td>
+                  <td>{localizedCategory(product.category)}</td>
                   <td><b>{money(product.price)}</b></td>
-                  <td><div className="row-actions"><button className="row-icon" type="button" onClick={() => onEdit(product)} title="Sửa sản phẩm"><Pencil size={15} /></button><button className="row-icon" type="button" onClick={() => removeProduct(product)} aria-label={`Delete ${product.name}`}><Trash2 size={15} /></button></div></td>
+                  <td><div className="row-actions"><button className="row-icon" type="button" onClick={() => onEdit(product)} title={productCopy.editTitle}><Pencil size={15} /></button><button className="row-icon" type="button" onClick={() => removeProduct(product)} aria-label={productCopy.deleteAria(product.name)}><Trash2 size={15} /></button></div></td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {!visible.length && <EmptyHint icon={ShoppingBag} title="Không tìm thấy sản phẩm" copy="Thử thay đổi từ khóa hoặc thêm sản phẩm mới." />}
+          {!visible.length && <EmptyHint icon={ShoppingBag} title={productCopy.emptyTitle} copy={productCopy.emptyCopy} />}
         </div>
       </section>
       {deleteRequest && (
         <ConfirmDeleteModal
-          title={deleteRequest.ids.length > 1 ? 'Xóa sản phẩm đã chọn?' : 'Xóa sản phẩm?'}
+          title={deleteRequest.ids.length > 1 ? productCopy.deleteManyTitle : productCopy.deleteOneTitle}
           message={deleteRequest.ids.length > 1
-            ? `Bạn có chắc muốn xóa ${deleteRequest.ids.length} sản phẩm đã chọn? Hành động này không thể hoàn tác.`
-            : `Bạn có chắc muốn xóa "${deleteRequest.names[0]}"? Hành động này không thể hoàn tác.`}
-          confirmLabel={deleteRequest.ids.length > 1 ? 'Xóa đã chọn' : 'Xóa sản phẩm'}
+            ? productCopy.deleteManyMessage(deleteRequest.ids.length)
+            : productCopy.deleteOneMessage(deleteRequest.names[0])}
+          confirmLabel={deleteRequest.ids.length > 1 ? productCopy.deleteManyConfirm : productCopy.deleteOneConfirm}
           onCancel={() => setDeleteRequest(null)}
           onConfirm={confirmRemove}
         />
       )}
       {selectionWarning && (
-        <Modal title="Chưa chọn sản phẩm" onClose={() => setSelectionWarning(false)}>
+        <Modal title={productCopy.noSelectionTitle} onClose={() => setSelectionWarning(false)}>
           <div className="confirm-delete">
             <Trash2 size={34} />
-            <p>Hãy chọn ít nhất một sản phẩm trong danh sách trước khi dùng nút Xóa đã chọn.</p>
+            <p>{productCopy.noSelectionCopy}</p>
             <div className="modal-actions">
-              <button className="admin-primary" type="button" onClick={() => setSelectionWarning(false)}>Đã hiểu</button>
+              <button className="admin-primary" type="button" onClick={() => setSelectionWarning(false)}>{productCopy.understood}</button>
             </div>
           </div>
         </Modal>
@@ -3808,7 +3948,7 @@ function AdminApp() {
 
   const renderPage = () => {
     if (page === 'dashboard') return <Dashboard tasks={tasks} setTasks={setTasks} orders={adminOrders} />
-    if (page === 'products') return <ProductsPage meta={localizedMeta} categories={categories} products={products} onBulkEdit={bulkEditProducts} onCreate={() => { setProductEditing(null); setProductModal(true) }} onEdit={(product) => { setProductEditing(product); setProductModal(true) }} onImport={importProducts} onRemove={removeProducts} />
+    if (page === 'products') return <ProductsPage meta={localizedMeta} categories={categories} products={products} copy={adminCopy.productsPage} onBulkEdit={bulkEditProducts} onCreate={() => { setProductEditing(null); setProductModal(true) }} onEdit={(product) => { setProductEditing(product); setProductModal(true) }} onImport={importProducts} onRemove={removeProducts} />
     if (page === 'categories') return <CategoriesPage meta={localizedMeta} categories={categories} products={products} onCreate={() => { setCategoryEditing(null); setCategoryModal(true) }} onEdit={(category) => { setCategoryEditing(category); setCategoryModal(true) }} onRemove={removeCategory} onToggle={toggleCategory} />
     if (page === 'orders') return <OrdersPage meta={localizedMeta} orders={adminOrders} focusedOrderId={focusedOrderId} onFocusedOrderHandled={() => setFocusedOrderId('')} shippingSettings={storeSettings.shipping || {}} onUpdate={saveOrder} onBulkUpdate={bulkSaveOrders} />
     if (page === 'customers') return <CustomersManagePage meta={localizedMeta} customers={adminCustomers} onCreate={() => { setCustomerEditing(null); setCustomerModal(true) }} onEdit={(customer) => { setCustomerDetail(null); setCustomerEditing(customer); setCustomerModal(true) }} onView={setCustomerDetail} onRemove={removeCustomer} />
