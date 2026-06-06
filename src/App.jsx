@@ -786,14 +786,18 @@ function CartPage({
         <section className="cart-page-main">
           <div className="cart-table admin-like">
             <div className="cart-table-head"><span>{copy.cart.product}</span><span>{copy.cart.quantity}</span><span>{copy.cart.total}</span></div>
-            {cart.length ? cart.map((item) => (
-              <div className="cart-row" key={item.id}>
-                <img src={item.image} alt="" />
-                <div><p>{formatPrice(item.price)} {item.oldPrice && <del>{formatPrice(item.oldPrice)}</del>}</p><b>{item.name}</b><small>{copy.cart.style}: {item.variantLabel || item.unit}</small></div>
-                <div className="cart-row-qty"><button type="button" onClick={() => onQuantity(item.id, -1)}><Minus size={14} /></button><span>{item.quantity}</span><button type="button" onClick={() => onQuantity(item.id, 1)}><Plus size={14} /></button><button type="button" onClick={() => onQuantity(item.id, -item.quantity)}>{copy.cart.remove}</button></div>
-                <strong>{formatPrice(item.price * item.quantity)} {item.oldPrice && <del>{formatPrice(item.oldPrice * item.quantity)}</del>}</strong>
-              </div>
-            )) : <div className="cart-page-empty"><ShoppingBag size={36} /><p>{copy.cart.empty}</p><a href="/products">{copy.cart.continueShopping}</a></div>}
+            {cart.length ? cart.map((item) => {
+              const product = products.find((candidate) => candidate.id === (item.productId || item.id)) || { id: item.productId || item.id, name: item.name }
+              const detailHref = productDetailHref(product)
+              return (
+                <div className="cart-row" key={item.id}>
+                  <a className="cart-row-image" href={detailHref} aria-label={`${copy.product.view} ${item.name}`}><img src={item.image} alt="" /></a>
+                  <div><p>{formatPrice(item.price)} {item.oldPrice && <del>{formatPrice(item.oldPrice)}</del>}</p><b><a href={detailHref}>{item.name}</a></b><small>{copy.cart.style}: {item.variantLabel || item.unit}</small></div>
+                  <div className="cart-row-qty"><button type="button" onClick={() => onQuantity(item.id, -1)}><Minus size={14} /></button><span>{item.quantity}</span><button type="button" onClick={() => onQuantity(item.id, 1)}><Plus size={14} /></button><button type="button" onClick={() => onQuantity(item.id, -item.quantity)}>{copy.cart.remove}</button></div>
+                  <strong>{formatPrice(item.price * item.quantity)} {item.oldPrice && <del>{formatPrice(item.oldPrice * item.quantity)}</del>}</strong>
+                </div>
+              )
+            }) : <div className="cart-page-empty"><ShoppingBag size={36} /><p>{copy.cart.empty}</p><a href="/products">{copy.cart.continueShopping}</a></div>}
           </div>
 
           <div className="related-cart-products">

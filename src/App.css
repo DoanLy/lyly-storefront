@@ -547,7 +547,9 @@ footer { color: #dfe9e2; background: #1e392e; }
 .cart-table-head { height: 43px; display: grid; grid-template-columns: 1fr 150px 120px; align-items: center; padding: 0 15px; border-bottom: 1px solid var(--line); color: #15201b; font-size: 12px; }
 .cart-row { display: grid; grid-template-columns: 84px 1fr 160px 115px; gap: 13px; align-items: center; padding: 16px 15px; border-bottom: 1px solid var(--line); }
 .cart-row:last-child { border-bottom: 0; }
+.cart-row-image { display: block; width: 72px; height: 78px; border-radius: 7px; }
 .cart-row img, .related-cart-row img { width: 72px; height: 78px; object-fit: cover; border: 1px solid var(--line); border-radius: 7px; }
+.cart-row-image:hover img, .cart-row b a:hover { border-color: #97b39f; color: #294b3a; }
 .cart-row p { margin: 0 0 4px; font-size: 11px; }
 .cart-row del, .related-cart-row del { color: #9a9f9b; }
 .cart-row b { display: block; color: #111916; font-size: 13px; }
