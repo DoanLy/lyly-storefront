@@ -1866,6 +1866,8 @@ function OrdersPage({ meta, orders, focusedOrderId = '', onFocusedOrderHandled, 
   const carrierOptions = (shippingSettings.carriers?.length ? shippingSettings.carriers : defaultShippingCarriers).filter((carrier) => carrier.enabled !== false)
   const shippingPartners = [...new Set([...carrierOptions.map((carrier) => carrier.name), ...orders.map((o) => o.shippingPartner)].filter(Boolean))]
 
+  const ord = copy.orders
+
   useEffect(() => {
     if (!focusedOrderId) return
     Promise.resolve().then(() => {
@@ -1919,7 +1921,6 @@ function OrdersPage({ meta, orders, focusedOrderId = '', onFocusedOrderHandled, 
     .filter((o) => o.payment === 'Paid' && !['Cancelled', 'Returned'].includes(o.delivery))
     .reduce((s, o) => s + o.total, 0)
 
-  const ord = copy.orders
   const toggleAll = () => setSelected(allSelected ? [] : visible.map((o) => o.id))
   const toggleSelected = (id) => setSelected((c) => c.includes(id) ? c.filter((i) => i !== id) : [...c, id])
   const updateOrder = async (order, changes) => {
