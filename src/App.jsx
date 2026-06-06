@@ -3194,7 +3194,7 @@ function App() {
             <a href="/blog">{t.nav.blog}</a>
           </nav>
           <div className="service-links">
-            <button type="button" onClick={() => setPickupOpen(true)}><Store size={28} /><span><small>{t.service.pickup}</small>{selectedPickup?.name || t.cart.selectStore} <ChevronDown size={14} /></span></button>
+            <button type="button" onClick={() => setPickupOpen(true)}><Store size={28} /><span><small>{t.service.pickup}</small><b>{selectedPickup?.name || t.cart.selectStore} <ChevronDown size={14} /></b></span></button>
             <a href="/delivery"><Package size={28} /><span><small>{t.service.delivery}</small>{t.service.seeEstimates}</span></a>
           </div>
         </div>

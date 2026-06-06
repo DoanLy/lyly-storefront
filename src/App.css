@@ -89,6 +89,7 @@ header { background: #fff; position: relative; z-index: 10; border-bottom: 1px s
 .service-links { display: flex; gap: 33px; }
 .service-links a, .service-links button { gap: 10px; border: 0; color: var(--ink); background: transparent; font-size: 13px; text-align: left; }
 .service-links span { align-items: flex-start; flex-direction: column; gap: 2px; font-weight: 600; }
+.service-links b { display: inline-flex; align-items: center; gap: 4px; color: inherit; font-size: 13px; font-weight: 700; line-height: 1.15; }
 .service-links small { color: var(--muted); font-size: 10px; font-weight: 500; }
 
 .hero-section { min-height: 530px; position: relative; overflow: hidden; background: #f7f1e6; }
