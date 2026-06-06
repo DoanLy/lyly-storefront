@@ -2959,6 +2959,12 @@ function App() {
     ? t.checkout.discountHint(discounts.find((discount) => discount.method !== 'automatic' && isDiscountActive(discount)).code)
     : ''
   const publicGeneralSettings = storeSettings.general || {}
+  const contactEmail = publicGeneralSettings.contactEmail || 'hello@lylyfreshmarket.com'
+  const socialLinks = {
+    instagram: 'https://www.instagram.com/lylyfreshmarket',
+    facebook: 'https://www.facebook.com/lylyfreshmarket',
+    email: `mailto:${contactEmail}`,
+  }
   const searchResults = useMemo(() => {
     const query = search.trim().toLowerCase()
     if (!query) return []
@@ -3138,9 +3144,9 @@ function App() {
     <div id="top">
       <div className="announcement">
         <div className="social-icons">
-          <Mail size={15} />
-          <b className="social-mark">f</b>
-          <b className="social-mark">ig</b>
+          <a href={socialLinks.email} aria-label="Email LyLy Fresh Market"><Mail size={15} /></a>
+          <a href={socialLinks.facebook} target="_blank" rel="noreferrer" aria-label="LyLy Fresh Market on Facebook"><b className="social-mark">f</b></a>
+          <a href={socialLinks.instagram} target="_blank" rel="noreferrer" aria-label="LyLy Fresh Market on Instagram"><b className="social-mark">ig</b></a>
         </div>
         <p><ChevronLeft size={16} /> {t.announcement} <b>FRESH20</b> <ChevronRight size={16} /></p>
         <button className="lang-toggle" type="button" onClick={toggleLang}>{t.langCode} <ChevronDown size={13} /></button>
@@ -3437,7 +3443,11 @@ function App() {
           <div className="footer-brand">
             <Logo />
             <p>{publicGeneralSettings.storeName || 'LyLy Fresh Market'} brings carefully selected groceries to your door.</p>
-            <div><a href="#footer"><b className="social-mark">ig</b></a><a href="#footer"><b className="social-mark">f</b></a><a href="#footer"><Mail size={18} /></a></div>
+            <div>
+              <a href={socialLinks.instagram} target="_blank" rel="noreferrer" aria-label="LyLy Fresh Market on Instagram"><b className="social-mark">ig</b></a>
+              <a href={socialLinks.facebook} target="_blank" rel="noreferrer" aria-label="LyLy Fresh Market on Facebook"><b className="social-mark">f</b></a>
+              <a href={socialLinks.email} aria-label="Email LyLy Fresh Market"><Mail size={18} /></a>
+            </div>
           </div>
           <div><h4>Shop</h4><a href="/collections">Categories</a><a href="/products">Best sellers</a><a href="/products">New arrivals</a><a href="/products">Special offers</a></div>
           <div><h4>About</h4><a href="/about-us">About us</a><a href="/our-stores">Our stores</a><a href="/faq">FAQ</a><a href="/blog">Journal</a><a href="/#footer">Contact</a></div>

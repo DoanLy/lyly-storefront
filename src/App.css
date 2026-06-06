@@ -24,6 +24,9 @@ button { cursor: pointer; }
 
 .announcement { height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 4.1%; background: #1e211f; color: white; font-size: 12px; letter-spacing: .03em; }
 .announcement .social-icons, .announcement p, .announcement span { display: flex; align-items: center; gap: 13px; }
+.social-icons a { display: inline-flex; align-items: center; justify-content: center; color: inherit; }
+.social-icons a:hover, .footer-brand div a:hover { opacity: .78; }
+.social-icons a:focus-visible, .footer-brand div a:focus-visible { outline: 2px solid #dce7d5; outline-offset: 3px; }
 .social-mark { font-size: 12px; line-height: 1; letter-spacing: -.04em; text-transform: lowercase; }
 .announcement p { margin: 0; gap: 10px; }
 .announcement > span { gap: 5px; }
