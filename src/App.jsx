@@ -2236,7 +2236,7 @@ function AboutPage({ products, onAdd, copy = storefrontI18n.en }) {
       </section>
       <section className="about-feature alternate">
         <div className="container about-feature-row">
-          <img src="https://images.unsplash.com/photo-1514517220039-0f8a2d8a6f32?auto=format&fit=crop&w=900&q=88" alt="Natural wood texture" />
+          <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=88" alt="Fresh produce market display" />
           <div>
             <p className="eyebrow">Sustainable choices</p>
             <h2>Better routines, less waste.</h2>
