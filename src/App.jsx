@@ -1668,10 +1668,14 @@ function StoreMapMock() {
   return (
     <div className="store-map" aria-label="Store map preview">
       <img src="https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?auto=format&fit=crop&w=1100&q=85" alt="" />
+      <div className="store-map-card">
+        <MapPin size={18} />
+        <span><b>4 pickup points</b><small>Paris and Maurecourt</small></span>
+      </div>
       <i className="pin one" />
       <i className="pin two" />
       <i className="pin three" />
-      <span className="map-control full">[]</span>
+      <span className="map-control full">Map</span>
       <span className="map-control move">+</span>
       <span className="map-control zoom">+<br />-</span>
     </div>
@@ -1694,8 +1698,9 @@ function StoresAccordion({ selectedId, onSelect }) {
               <div className="store-details">
                 <img src={location.image} alt="" />
                 <div>
-                  <p>{location.address}</p>
+                  <p><MapPin size={15} />{location.address}</p>
                   <p>{location.city}</p>
+                  <p><Clock3 size={15} />{location.ready}</p>
                   <b>Store Hours</b>
                   {location.hours.map((line) => <span key={line}>{line}</span>)}
                   {onSelect ? <button type="button" onClick={() => onSelect(location)}>Select location</button> : <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${location.address} ${location.city}`)}`} target="_blank" rel="noreferrer">Get directions</a>}
@@ -1712,15 +1717,36 @@ function StoresAccordion({ selectedId, onSelect }) {
 function OurStoresPage() {
   const [message, setMessage] = useState('')
   return (
-    <main className="info-page container">
+    <main className="info-page stores-page container">
       <div className="breadcrumbs"><a href="/">Home</a><ChevronRight size={13} /><b>Our stores</b></div>
-      <h1>Our stores</h1>
+      <section className="info-hero stores-hero">
+        <div>
+          <p className="eyebrow">Fresh market network</p>
+          <h1>Our stores</h1>
+          <p className="page-lede">Pick up daily market essentials from LyLy locations selected for fresh food, fast handoff, and helpful local service.</p>
+        </div>
+        <div className="info-hero-stats">
+          <span><b>{storeLocations.length}</b><small>Locations</small></span>
+          <span><b>2 hrs</b><small>Fast pickup</small></span>
+          <span><b>$0</b><small>Warehouse fee</small></span>
+        </div>
+      </section>
       <section className="stores-layout">
         <StoreMapMock />
-        <StoresAccordion />
+        <div className="store-panel">
+          <div className="panel-heading">
+            <span><Store size={18} /></span>
+            <div>
+              <h2>Find your LyLy point</h2>
+              <p>Choose a nearby store, check pickup timing, and get directions.</p>
+            </div>
+          </div>
+          <StoresAccordion />
+        </div>
       </section>
-      <section className="contact-layout">
+      <section className="contact-layout stores-contact-layout">
         <form className="contact-form" onSubmit={(event) => { event.preventDefault(); setMessage('Thanks. We will get back to you shortly.') }}>
+          <p className="eyebrow">Market support</p>
           <h2>Drop us a line</h2>
           <input required placeholder="Name" />
           <input required type="email" placeholder="Email" />
@@ -1731,12 +1757,14 @@ function OurStoresPage() {
           {message && <p>{message}</p>}
         </form>
         <article className="info-card">
+          <span className="info-card-icon"><Mail size={18} /></span>
           <h2>Mailing Address</h2>
           <p>For any issues related to our products, please send us a mail at our warehouse and we will try to provide a solution.</p>
           <b>Warehouse</b>
           <span>Fond du Val 23<br />Maurecourt, France</span>
         </article>
         <article className="info-card">
+          <span className="info-card-icon"><HelpCircle size={18} /></span>
           <h2>Have a question?</h2>
           <p>We have written some documentation to help you in purchasing from us.</p>
           <a href="/faq">FAQ</a>
@@ -1787,20 +1815,41 @@ function FaqPage() {
   const [openIndex, setOpenIndex] = useState(-1)
   const [sent, setSent] = useState(false)
   return (
-    <main className="info-page container">
+    <main className="info-page faq-page container">
       <div className="breadcrumbs"><a href="/">Home</a><ChevronRight size={13} /><b>Frequently asked questions</b></div>
-      <h1>Frequently asked questions</h1>
+      <section className="info-hero faq-hero">
+        <div>
+          <p className="eyebrow">Customer care</p>
+          <h1>Frequently asked questions</h1>
+          <p className="page-lede">Quick answers for delivery, pickup, order minimums, and fresh market service before you checkout.</p>
+        </div>
+        <div className="faq-hero-card">
+          <HelpCircle size={24} />
+          <span><b>Need a hand?</b><small>Send a question and our team will reply by email.</small></span>
+        </div>
+      </section>
       <section className="faq-layout">
-        <div className="faq-list">
-          {faqs.map(([question, answer], index) => (
-            <article className={openIndex === index ? 'open' : ''} key={question}>
-              <button type="button" onClick={() => setOpenIndex(openIndex === index ? -1 : index)}><b>{openIndex === index ? '-' : '+'}</b>{question}</button>
-              {openIndex === index && <p>{answer}</p>}
-            </article>
-          ))}
+        <div className="faq-column">
+          <div className="panel-heading">
+            <span><Leaf size={18} /></span>
+            <div>
+              <h2>Fresh market help</h2>
+              <p>Open a topic to view the answer.</p>
+            </div>
+          </div>
+          <div className="faq-list">
+            {faqs.map(([question, answer], index) => (
+              <article className={openIndex === index ? 'open' : ''} key={question}>
+                <button type="button" onClick={() => setOpenIndex(openIndex === index ? -1 : index)}><b>{openIndex === index ? '-' : '+'}</b>{question}</button>
+                {openIndex === index && <p>{answer}</p>}
+              </article>
+            ))}
+          </div>
         </div>
         <form className="ask-card" onSubmit={(event) => { event.preventDefault(); setSent(true) }}>
+          <p className="eyebrow">Ask LyLy</p>
           <h2>Do not find the answer? Ask us.</h2>
+          <p>Tell us what you need and we will follow up with clear next steps.</p>
           <input required placeholder="Name" />
           <input required type="email" placeholder="Email" />
           <textarea required placeholder="Message" />
