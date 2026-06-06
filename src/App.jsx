@@ -1784,7 +1784,7 @@ function FaqPage() {
     ['Delivery of ingredients, what is that?', 'We pack fresh ingredients for recipes and daily meals so you can cook without extra store runs.'],
     ['Grocery delivery', 'Grocery delivery is available for selected service zones and is calculated at checkout.'],
   ]
-  const [openIndex, setOpenIndex] = useState(1)
+  const [openIndex, setOpenIndex] = useState(-1)
   const [sent, setSent] = useState(false)
   return (
     <main className="info-page container">
