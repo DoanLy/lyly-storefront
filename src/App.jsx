@@ -3175,11 +3175,11 @@ function App() {
             <button className="account-button desktop-only" type="button" onClick={() => setAccountOpen(true)}>
               <User size={21} /> {storefrontUser ? getAccountName(storefrontUser, accountProfile) : t.account}
             </button>
-            <button className="cart-button" type="button" onClick={() => setCartOpen(true)}>
+            <a className="cart-button" href="/cart">
               <ShoppingCart size={20} />
               <span className="desktop-only">{formatPrice(subtotal)} ({cartCount})</span>
               <em className="mobile-only">{cartCount}</em>
-            </button>
+            </a>
           </div>
         </div>
         <div className="header-nav">
