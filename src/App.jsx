@@ -7,7 +7,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock3,
-  Eye,
   Filter,
   Heart,
   HelpCircle,
@@ -482,8 +481,8 @@ function ProductCard({ product, onAdd, copy = storefrontI18n.en }) {
           <img src={product.image} alt={product.name} />
         </a>
         <button className="quick-add" type="button" disabled={soldOut} onClick={() => onAdd(product)}>
-          {!soldOut && (productHasVariants(product) ? <Eye size={16} /> : <Plus size={16} />)}
-          <span>{soldOut ? copy.product.soldOut : productHasVariants(product) ? copy.product.chooseOptions : copy.product.addToCart}</span>
+          {!soldOut && <ShoppingCart size={16} />}
+          <span>{soldOut ? copy.product.soldOut : copy.product.addToCart}</span>
         </button>
       </div>
       <div className="product-detail">
